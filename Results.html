@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title><?= title ?></title>
+<style type="text/css">
+body {
+         font-size:          small;
+         font-family:        Verdana, Helvetica, Arial, sans-serif;
+    margin: 8px;
+}
+h1 {
+         font-size:          150%;
+}
+table {
+         border:             thin solid black;
+         border-collapse:    collapse;
+         margin-top:         20px;
+         margin-bottom:       20px;
+}
+caption {
+         text-align:         left;
+         font-weight:        bold;
+}
+th,td {
+         text-align:         left;
+         border:             thin solid gray;
+         padding:            5px;
+}
+th {
+         background-color:   #ccff99;
+}
+</style>
+</head>
+<body>
+<? if (refresh) { ?>
+<script type="text/javascript">
+(function () {
+"use strict";
+  window.setInterval(function refreshPage() {
+    window.location.reload(true);
+  }, 120000);
+})();
+</script>
+<? } ?>
+<? if (scroll) { ?>
+<script type="text/javascript">
+//change 1 to another integer to alter the scroll speed. Greater is faster
+(function () {
+"use strict";
+var speed = 1, currentpos = 0, alt = 1, curpos1 = 0, curpos2 = -1;
+function scrollwindow() {
+  var temp;
+  if (document.all) {
+    temp = document.body.scrollTop;
+  } else {
+    temp = window.pageYOffset;
+  }
+  if (alt === 0) {
+    alt = 1;
+  } else {
+    alt = 0;
+  }
+  if (alt === 0) {
+    curpos1 = temp;
+  } else {
+    curpos2 = temp;
+  }
+  if (curpos1 !== curpos2) {
+    if (document.all) {
+      currentpos = document.body.scrollTop + speed;
+    } else {
+      currentpos = window.pageYOffset + speed;
+    }
+    window.scrollTo(0, currentpos);
+  } else {
+    currentpos = 0;
+    window.scrollTo(0, currentpos);
+  }
+}
+function startit() {
+  setInterval(scrollwindow, 10);
+}
+function initialize() {
+  startit();
+}
+window.onload = initialize;
+})();
+</script>
+  <p>
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+  </p>
+<? } ?>
+<h1><?= title ?></h1>
+<? for (var i = 0; i < classes.length; ++i) {
+if (classes[i].results && classes[i].results.length > 0) { ?>
+<table>
+<caption><?= classes[i].name ?></caption>
+  <tr>
+     <th>Position</th>
+     <th>Name</th>
+     <th>Club</th>
+     <th>Class</th>
+     <th>Div</th>
+     <th>Time</th>
+     <th>Points</th>
+     <th>P/D</th>
+<? if (showNotes) { ?>
+     <th>Notes</th>
+<? } ?>
+  </tr>
+<? for (var j = 0; j < classes[i].results.length; ++j) {
+   if (classes[i].results[j].time) {
+   ?>
+  <tr>
+     <td><?= classes[i].results[j].posn ?></td>
+     <td><?!= classes[i].results[j].names.join("<br />").toUpperCase() ?></td>
+     <td><?!= classes[i].results[j].clubs.join("<br />").toUpperCase() ?></td>
+     <td><?!= classes[i].results[j].classes.join("<br />").toUpperCase() ?></td>
+     <td><?!= classes[i].results[j].divs.join("<br />") ?></td>
+     <td><?= formatTime(classes[i].results[j].time) ?></td>
+     <td><?!= classes[i].results[j].points.join("<br />") ?></td>
+     <td><?!= classes[i].results[j].pd.join("<br />") ?></td>
+     <? if (showNotes) { ?>
+     <td><?!= classes[i].results[j].notes.join("<br />") ?></td>
+     <? } ?>
+  </tr>
+  <? }} ?>
+</table>
+<? }} ?>
+<? if (pdTimes && pdTimes.length > 0) { ?>
+<? for (var i = 0; i < pdTimes.length; ++i) { ?>
+<table>
+<caption>P/D divs <?= pdTimes[i].title.split("").join(", ") ?> K1</caption>
+  <tbody><tr>
+     <th>P/D</th>
+     <th>Time</th>
+  </tr>
+<? for (var j = 0; j < pdTimes[i].times.length; ++j) { ?>
+  <tr>
+     <td><?= pdTimes[i].times[j].name ?></td>
+     <td><?= pdTimes[i].times[j].time ?></td>
+  </tr>
+<? } ?>
+</tbody></table>
+<? } } ?>
+<? if (clubPoints && clubPoints.length > 0) { ?>
+<table>
+<caption>Club points</caption>
+  <tbody><tr>
+     <th>Club</th>
+     <th>Points</th>
+     <th>Overall</th>
+  </tr>
+<? for (var i = 0; i < clubPoints.length; ++i) { ?>
+  <tr>
+     <td><?= clubPoints[i].name ?></td>
+     <td><?= clubPoints[i].totalPoints ?></td>
+     <td><?= clubPoints[i].haslerPoints ?></td>
+  </tr>
+<? } ?>
+</tbody></table>
+<? } ?>
+<? if (lightningPoints && lightningPoints.length > 0) { ?>
+<table>
+<caption>Lightning points</caption>
+  <tbody><tr>
+     <th>Club</th>
+     <th>Points</th>
+  </tr>
+<? for (var i = 0; i < lightningPoints.length; ++i) { ?>
+  <tr>
+     <td><?= lightningPoints[i].name ?></td>
+     <td><?= lightningPoints[i].totalPoints ?></td>
+  </tr>
+<? } ?>
+</tbody></table>
+<? } ?>
+</body>
+</html>
