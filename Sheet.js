@@ -28,7 +28,7 @@ function onEdit(e) {
         e.range.setComment("Number not found in Rankings");
       } else if (matches.length == 1) {
         // TODO Do this re-ordering of values via a util function
-        var dataRowValues = [matches[0][0], matches[0][1], matches[0][4], matches[0][2], matches[0][3], matches[0][5]]; // Surname	First name	BCU Number	Club	Class	Div
+        var dataRowValues = [matches[0][0], matches[0][1], matches[0][4], matches[0][2], matches[0][3], matches[0][5]]; // Surname  First name  BCU Number  Club  Class Div
         sheet.getRange(e.range.getRow(), 2, 1, 6).setValues([dataRowValues])
       } else {
         e.range.setComment("Multiple matches found in Rankings");
@@ -68,6 +68,10 @@ function addMenu() {
   {
     name : "Add Entries from File",
     functionName : "addEntriesFromFile"
+  },
+  {
+    name : "Import Entries from CSV",
+    functionName : "importEntries"
   },
   {
     name : "Clear Entries",
@@ -144,6 +148,13 @@ function addEntries() {
  */
 function addEntriesFromFile() {
   HRM.showAddLocalEntries();
+}
+
+/**
+ * Menu hook for uploading entries from a CSV file
+ */
+function importEntries() {
+  HRM.showImportEntries();
 }
 
 /**

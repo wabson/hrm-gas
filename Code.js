@@ -376,12 +376,234 @@ function showAddLocalEntries() {
   ss.show(app);
 }
 
-function findMatchingRaceSheet(raceName) {
-  var ass = SpreadsheetApp.getActiveSpreadsheet(), sheet = ass.getSheetByName(raceName);
+/**
+ * Display the dialog used to import entries from a CSV file stored in Google Docs
+ */
+function showImportEntries() {
+  // Dialog height in pixels
+  var dialogHeight = 130;
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Create the UiInstance object myapp and set the title text
+  var app = UiApp.createApplication().setTitle('Add Entries from CSV File').setHeight(dialogHeight);
+  
+  // Create a vertical panel called mypanel and add it to myapp
+  var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
+  //    upload = app.createFileUpload().setName('csvfile');
+  
+  var lb = app.createListBox(false).setId('importEntriesFileId').setName('spreadsheetId');
+  lb.setVisibleItemCount(1);
+
+  // add items to ListBox
+  var mySpreadsheets = DocsList.getFilesByType(DocsList.FileType.OTHER);
+  for (var i=0; i<mySpreadsheets.length; i++) {
+    if (mySpreadsheets[i].getName().match(/\.csv$/i)) {
+      lb.addItem(mySpreadsheets[i].getName(), mySpreadsheets[i].getId());
+    }
+  }
+  mypanel.add(lb);
+  //mypanel.add(upload);
+  
+  var addButton = app.createButton('Import Entries').setId("importEntriesAddBn");
+  var addHandler = app.createServerClickHandler('importEntries').addCallbackElement(lb);
+  addButton.addClickHandler(addHandler).addClickHandler(app.createClientHandler().forEventSource().setEnabled(false));
+  mypanel.add(addButton);
+  
+  // Status text
+  mypanel.add(app.createHTML("").setId("importEntriesResult").setVisible(false).setSize("100%", "100px").setStyleAttribute("overflow", "scroll"));
+  
+  // For the close button, we create a server click handler closeHandler and pass closeHandler to the close button as a click handler.
+  // The function close is called when the close button is clicked.
+  var closeButton = app.createButton('Done').setId("importEntriesCloseBn").setVisible(false);
+  var closeHandler = app.createServerClickHandler('close');
+  closeButton.addClickHandler(closeHandler).addClickHandler(app.createClientHandler().forEventSource().setEnabled(false));
+  mypanel.add(closeButton);
+
+  // Add my panel to myapp
+  app.add(mypanel);
+
+  ss.show(app);
+}
+
+/**
+ * Handler for importing entries from a CSV file stored in Google Docs. This is intended to be called when the dialog's submit button is clicked.
+ * TODO Support keeping boat numbers
+ * TODO Ensure that the first member of each crew 'lines up' with a boat number in the destination sheet
+ *
+ * @param {object} eventInfo Event information
+ * @return {AppInstance} Active application instance
+ */
+function importEntries(eventInfo) {
+  var app = UiApp.getActiveApplication();
+  // Because the upload control was named "csvfile" and added as a callback element to the
+  // button's click event, we have its value available in eventInfo.parameter.csvfile.
+  //var csvBlob = eventInfo.parameter.csvfile;
+  //for (var p in eventInfo.parameter) {
+  //  Logger.log("" + p + ": " + eventInfo.parameter[p]);
+  //}
+  //if (csvBlob)
+  //{
+  //  var csvData = csvToArray(csvBlob.contents),
+  var csvId = eventInfo.parameter.spreadsheetId;
+  if (csvId)
+  {
+    var csv = DocsList.getFileById(csvId),
+        csvData = csvToArray(csv.getContentAsString()),
+        ass = SpreadsheetApp.getActiveSpreadsheet(),
+        sheets = getRaceSheets(ass), sheet, rows, results = [], numCrewsByRace = {},
+        startRow = 1, // Assume a header row exists
+        newRows = {},
+        startCol = 1; // Number of columns to skip at the start of each row
+
+    for (var i=startRow; i<csvData.length; i++) {
+      // "Date","First Name","Last Name","Club","Class","BCU Number","Marathon Ranking","First Name","Last Name","Club","Class","BCU Number","Marathon Ranking","Race Class"
+      if (csvData[i].length >= 14) {
+        var raceClass = csvData[i][startCol+12], sourceData = csvData[i].slice(startCol, startCol+13); // Will yield a 13-value list
+        if (raceClass !== null && raceClass !== "") {
+          newRows[raceClass] = newRows[raceClass] || [];
+          numCrewsByRace[raceClass] = numCrewsByRace[raceClass] || 0;
+          newRows[raceClass].push(
+            [sourceData[1], sourceData[0], sourceData[4], sourceData[2], sourceData[3], sourceData[5]],
+            [sourceData[7], sourceData[6], sourceData[10], sourceData[8], sourceData[9], sourceData[11]]
+          ); // Surname, First name, BCU Number, Club, Class, Div
+          numCrewsByRace[raceClass] ++;
+        }
+      }
+    }
+    
+    for (var raceName in newRows) {
+      rows = newRows[raceName];
+      // Iterate through all paddlers
+      // TODO Below same code as in second part of addLocalEntries()
+      if (rows.length == 0) {
+        Logger.log("No rows for sheet " + raceName);
+        continue;
+      } else {
+        Logger.log("" + rows.length + " rows for sheet " + raceName);
+      }
+      
+      var dstsheet = findMatchingRaceSheet(raceName);
+      
+      if (dstsheet != null) {
+        // Find the latest row with a number but without a name in the sheet
+        var nextRow = getNextEntryRow(dstsheet);
+        if (nextRow > 0) {
+          Logger.log("Adding new rows at row " + nextRow);
+          if (dstsheet.getLastRow()-nextRow+1 >= rows.length) {
+            dstsheet.getRange(nextRow, 2, rows.length, 6).setValues(rows); // TODO Allow numbers to be added, in which case length will be 7 rather than 6
+            results.push("Added " + numCrewsByRace[raceName] + " crews to " + raceName);
+          } else {
+            throw "Too many rows to import into " + raceName + " (" + rows.length + " data rows, " + (dstsheet.getLastRow()-k) + " in sheet)";
+          }
+        } else {
+          throw("No space left in sheet " + raceName);
+        }
+      } else {
+        throw("Destination sheet " + raceName + " not found");
+      }
+    }
+  } else {
+    throw "Could not locate source spreadsheet";
+  }
+  
+  app.getElementById("importEntriesFileId").setVisible(false);
+  app.getElementById("importEntriesAddBn").setVisible(false);
+  app.getElementById("importEntriesResult").setHTML(results.join("<br />")).setVisible(true);
+  app.getElementById("importEntriesCloseBn").setVisible(true);
+
+  return app;
+}
+
+/* From http://stackoverflow.com/questions/1293147/javascript-code-to-parse-csv-data */
+// This will parse a delimited string into an array of
+// arrays. The default delimiter is the comma, but this
+// can be overriden in the second argument.
+function csvToArray( strData, strDelimiter ){
+  // Check to see if the delimiter is defined. If not,
+  // then default to comma.
+  strDelimiter = (strDelimiter || ",");
+  
+  // Create a regular expression to parse the CSV values.
+  var objPattern = new RegExp(
+    (
+      // Delimiters.
+      "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+      
+      // Quoted fields.
+      "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+      
+      // Standard fields.
+      "([^\"\\" + strDelimiter + "\\r\\n]*))"
+    ),
+    "gi"
+  );
+  
+  // Create an array to hold our data. Give the array
+  // a default empty first row.
+  var arrData = [[]];
+  
+  // Create an array to hold our individual pattern
+  // matching groups.
+  var arrMatches = null;
+  
+  // Keep looping over the regular expression matches
+  // until we can no longer find a match.
+  while (arrMatches = objPattern.exec( strData )){
+    
+    // Get the delimiter that was found.
+    var strMatchedDelimiter = arrMatches[ 1 ];
+    
+    // Check to see if the given delimiter has a length
+    // (is not the start of string) and if it matches
+    // field delimiter. If id does not, then we know
+    // that this delimiter is a row delimiter.
+    if (
+      strMatchedDelimiter.length &&
+      (strMatchedDelimiter != strDelimiter)
+      ){
+        // Since we have reached a new row of data,
+        // add an empty row to our data array.
+        arrData.push( [] );
+      }
+    
+    // Now that we have our delimiter out of the way,
+    // let's check to see which kind of value we
+    // captured (quoted or unquoted).
+    if (arrMatches[ 2 ]){
+      // We found a quoted value. When we capture
+      // this value, unescape any double quotes.
+      var strMatchedValue = arrMatches[ 2 ].replace(
+        new RegExp( "\"\"", "g" ),
+        "\""
+      );
+      
+    } else {
+      
+      // We found a non-quoted value.
+      var strMatchedValue = arrMatches[ 3 ];
+      
+    }
+    
+    
+    // Now that we have our value string, let's add
+    // it to the data array.
+    arrData[ arrData.length - 1 ].push( strMatchedValue );
+  }
+  
+  // Return the parsed data.
+  return( arrData );
+}
+
+function findMatchingRaceSheet(raceName, sheets) {
+  var ass = SpreadsheetApp.getActiveSpreadsheet(), sheet = null;
+  if (!sheets) { // First try simple match
+    sheet = ass.getSheetByName(raceName);
+  }
   if (sheet == null) {
     var k2re = /Div(\d)_(\d)/, nameMatch = raceName.match(k2re);
     if (nameMatch) { // K2 divisional race?
-      var sheets = ass.getSheets();
+      sheets = sheets || ass.getSheets(); // Fall back to active SS sheets if no list provided
       for (var i=0; i<sheets.length; i++) {
         var match = sheets[i].getName().match(k2re);
         // Does the potential destination sheet 'include' the source sheet? e.g. Div3_4 includes Div3_3 and Div4_4, Div 4_6 (hypothetical) would include Div5_6
@@ -651,7 +873,7 @@ function onAddEntrySearch(eventInfo, n) {
 
 /**
  * Find ranked competitors with the given name or BCU number. Returns an array of records each being a six-element array containing the following string values:
- * Surname	First name	Club	Class	BCU Number	Division
+ * Surname  First name  Club  Class BCU Number  Division
  *
  * @param {string} name Search for paddlers whose names match the given string
  * @return {array} Two-dimensional array containing matching rows from the Rankings sheet
