@@ -2451,3 +2451,56 @@ function calculatePoints(scriptProps) {
     clubsSheet.getRange(2, 5, unfoundClubs.length, 2).setValues(unfoundClubs);
   }
 }
+
+/**
+ * Set forumalas for all race sheets
+ */
+function setFormulas() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets();
+  for (var i=0; i<sheets.length; i++) {
+    var lastRow = sheets[i].getLastRow();
+    if (lastRow > 1) {
+      // Elapsed time
+      sheets[i].getRange(2, 12).setFormula('=IFERROR(IF(J2="dns","dns",IF(K2="rtd", "rtd", IF(AND(NOT(ISTEXT(K2)), NOT(ISTEXT(J2)), K2-J2 > 0), K2-J2+I2, ""))))');
+      sheets[i].getRange(2, 12, lastRow-1).setFormulaR1C1(sheets[i].getRange(2, 12).getFormulaR1C1());
+      // Posn
+      sheets[i].getRange(2, 13).setFormula('=IFERROR(RANK(L2,L$2:L$' + lastRow + ', 1))');
+      sheets[i].getRange(2, 13, lastRow-1).setFormulaR1C1(sheets[i].getRange(2, 13).getFormulaR1C1());
+    }
+  }
+}
+
+/**
+ * Set validation
+ */
+function setValidation() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets(), clubsSheet = ss.getSheetByName('Clubs'),
+    classRule = SpreadsheetApp.newDataValidation().requireValueInList('S,V,J,F,VF,JF,SC,VC,JC,FC,VFC,JFC'.split(','), true).build(),
+    divRule = SpreadsheetApp.newDataValidation().requireValueInList('1,2,3,4,5,6,7,8,9,U12M,U12F,U10M,U10F'.split(','), true).build(),
+    clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null;
+  for (var i=0; i<sheets.length; i++) {
+    var lastRow = sheets[i].getLastRow();
+    if (lastRow > 1) {
+      if (clubRule !== null) {
+        sheets[i].getRange(2, 5, lastRow-1).setDataValidation(clubRule);
+      }
+      sheets[i].getRange(2, 6, lastRow-1).setDataValidation(classRule);
+      sheets[i].getRange(2, 7, lastRow-1).setDataValidation(divRule);
+    }
+  }
+}
+
+/**
+ * Set formatting
+ */
+function setFormatting() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets();
+  for (var i=0; i<sheets.length; i++) {
+    var lastRow = sheets[i].getLastRow();
+    sheets[i].getRange(1, 1, lastRow, sheets[i].getLastColumn()).setFontFamily("Courier New");
+    if (lastRow > 1) {
+      sheets[i].getRange(2, 10, lastRow-1, 3).setNumberFormat("HH:mm:ss");
+
+    }
+  }
+}

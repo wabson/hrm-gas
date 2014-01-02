@@ -226,3 +226,22 @@ function showRaceLevies() {
 function showEditRaceDetails() {
   HRM.showEditRaceDetails();
 }
+
+/**
+ * Menu hook for setting formulas
+ */
+function setFormulas() {
+  HRM.setFormulas();
+}
+/**
+ * Menu hook for setting validation
+ */
+function setValidation() {
+  HRM.setValidation();
+}
+/**
+ * Menu hook for setting formatting
+ */
+function setFormatting() {
+  HRM.setFormatting();
+}
