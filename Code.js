@@ -233,7 +233,7 @@ function clearEntriesSheet(sheet) {
     throw "Could not find entries sheet " + sheetName;
   }
   if (sheet.getLastRow() > 2 && sheet.getLastColumn() > 2) {
-    sheet.getRange(2, 2, sheet.getLastRow()-1, sheet.getLastColumn()-1).clear({contentsOnly:true, commentsOnly:true});
+    sheet.getRange(2, 2, sheet.getLastRow()-1, sheet.getLastColumn()-1).clear({contentsOnly: true, commentsOnly: true, formatOnly: true});
   }
 }
 
@@ -242,6 +242,8 @@ function clearAllEntries() {
   for (var i=0; i<sheets.length; i++) {
     clearEntriesSheet(sheets[i]);
   }
+  setDataValidation();
+  setFormulas();
 }
 
 /**
