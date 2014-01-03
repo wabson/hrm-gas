@@ -496,7 +496,7 @@ function importEntries(eventInfo) {
             dstsheet.getRange(nextRow, 2, rows.length, 6).setValues(rows); // TODO Allow numbers to be added, in which case length will be 7 rather than 6
             results.push("Added " + numCrewsByRace[raceName] + " crews to " + raceName);
           } else {
-            throw "Too many rows to import into " + raceName + " (" + rows.length + " data rows, " + (dstsheet.getLastRow()-k) + " in sheet)";
+            throw "Too many rows to import into " + raceName + " (" + rows.length + " data rows, " + (dstsheet.getLastRow()-nextRow+1) + " in sheet)";
           }
         } else {
           throw("No space left in sheet " + raceName);
@@ -680,7 +680,7 @@ function addLocalEntries(eventInfo) {
             dstsheet.getRange(nextRow, 2, rows.length, 6).setValues(rows); // TODO Allow numbers to be added, in which case length will be 7 rather than 6
             results.push("Added " + numCrews + " crews to " + dstsheet.getName());
           } else {
-            throw "Too many rows to import into " + dstsheet.getName() + " (" + rows.length + " data rows, " + (dstsheet.getLastRow()-k) + " in sheet)";
+            throw "Too many rows to import into " + dstsheet.getName() + " (" + rows.length + " data rows, " + (dstsheet.getLastRow()-nextRow+1) + " in sheet)";
           }
         } else {
           throw("No space left in sheet " + sheet.getName());
