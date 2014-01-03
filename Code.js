@@ -1814,7 +1814,7 @@ function setStartTimes(eventInfo) {
   } else {
     throw "Invalid time format, must be MM:SS or HH:MM:SS";
   }
-  var entries = getEntryRowData(sheet.getRange(2, 1, sheet.getLastRow()-1, 10)), entry;
+  var entriesRange = sheet.getRange(2, 1, sheet.getLastRow()-1, 10), entries = getEntryRowData(entriesRange), entry, newTime, changedCount = 0;
   if (entries.length > 0) {
     // Assume that the entries are in a continuous range, for now
     Logger.log("Found " + entries.length + " entries");
@@ -1833,11 +1833,15 @@ function setStartTimes(eventInfo) {
       if (!entry.boatNumber) {
         throw "Boat number not found for entry " + entry;
       }
-      Logger.log("Adding time to row " + entry.rowNumber);
-      timeValues[entry.rowNumber-2][0] = time;
+      newTime = (""+entry.values[0][9]).toLowerCase() != "dns" ? time : entry.values[0][9];
+      Logger.log("Setting time '" + newTime + "' for row " + entry.rowNumber);
+      timeValues[entry.rowNumber-2][0] = newTime;
+      if (newTime != "dns") {
+        changedCount ++;
+      }
     }
     sheet.getRange(2, 10, timeValues.length, 1).setValues(timeValues);
-    app.getElementById("setStartTimes-result").setText("Set start time " + time + " for " + entries.length + " crews");
+    app.getElementById("setStartTimes-result").setText("Set start time " + time + " for " + changedCount + " crews");
     app.getElementById("setStartTimes-time").setValue("");
   } else {
     throw "No entries in race " + raceName;
