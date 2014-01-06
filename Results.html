@@ -46,61 +46,51 @@ th {
 <? } ?>
 <? if (scroll) { ?>
 <script type="text/javascript">
-//change 1 to another integer to alter the scroll speed. Greater is faster
 (function () {
 "use strict";
-var speed = 1, currentpos = 0, alt = 1, curpos1 = 0, curpos2 = -1;
-function scrollwindow() {
-  var temp;
-  if (document.all) {
-    temp = document.body.scrollTop;
-  } else {
-    temp = window.pageYOffset;
-  }
-  if (alt === 0) {
-    alt = 1;
-  } else {
-    alt = 0;
-  }
-  if (alt === 0) {
-    curpos1 = temp;
-  } else {
-    curpos2 = temp;
-  }
-  if (curpos1 !== curpos2) {
-    if (document.all) {
-      currentpos = document.body.scrollTop + speed;
-    } else {
-      currentpos = window.pageYOffset + speed;
-    }
-    window.scrollTo(0, currentpos);
-  } else {
-    currentpos = 0;
-    window.scrollTo(0, currentpos);
-  }
-}
-function startit() {
-  setInterval(scrollwindow, 10);
-}
 function initialize() {
-  startit();
+  var resultsHeight = document.getElementById('results-container').clientHeight;
+  if (resultsHeight > window.innerHeight) {
+    // Set results to be just off the page and make them visible
+    document.getElementById('results').style.paddingTop = "" + window.innerHeight + "px";
+    document.getElementById('results').style.visibility = "visible";
+    // Start scrolling
+    document.getElementById('results').style.animationDuration = "" + ((resultsHeight - window.innerHeight) / 80) + "s"; // 80 pixels per second, only works in FF for now
+    document.getElementById('results').className = "scrolling-results";
+    // Hard-code the container height to avoid messing up the percentage-based position on the child
+    document.getElementById('results-container').style.height = "" + document.getElementById('results-container').clientHeight + "px";
+  }
 }
 window.onload = initialize;
 })();
 </script>
-  <p>
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
-  </p>
+<style type="text/css">
+body {
+  margin: 0;
+  padding: 0;
+}
+#results-container {
+  overflow: hidden;
+  margin: 0px 10px;
+}
+#results {
+  position: relative;
+  visibility: hidden;
+}
+.scrolling-results {
+  -webkit-animation: position_results 40s linear 0s infinite normal;
+     -moz-animation: position_results 40s linear 0s infinite normal;
+       -o-animation: position_results 40s linear 0s infinite normal;
+          animation: position_results 40s linear 0s infinite normal;
+}
+@-webkit-keyframes position_results { from { top:0%; } to { top:-100%; }  }
+   @-moz-keyframes position_results { from { top:0%; } to { top:-100%; }  }
+     @-o-keyframes position_results { from { top:0%; } to { top:-100%; }  }
+        @keyframes position_results { from { top:0%; } to { top:-100%; }  }
+</style>
 <? } ?>
+<div id="results-container">
+<div id="results">
 <h1><?= title ?></h1>
 <? for (var i = 0; i < classes.length; ++i) {
 if (classes[i].results && classes[i].results.length > 0) { ?>
@@ -186,5 +176,7 @@ if (classes[i].results && classes[i].results.length > 0) { ?>
 <? } ?>
 </tbody></table>
 <? } ?>
+</div>
+</div>
 </body>
 </html>
