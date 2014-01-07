@@ -160,6 +160,10 @@ function startAnimation() {
     $('#page').addClass('scrolling');
     // Hard-code the container height to avoid messing up the percentage-based position on the child
     $('#results-container').css('height', '' + (resultsHeight + screenHeight) + 'px');
+  } else {
+    $('#results-data').css({
+      visibility: 'visible'
+    });
   }
   $('#results').addClass('scrolling-results');
 }
@@ -184,7 +188,7 @@ function showData(data) {
 }
 
 function showResults(data) {
-  var races = data.races, div = $('#results-races'), html = "";
+  var races = data.races, div = $('#results-races'), html = '';
   div.empty();
   for (var i = 0; i < races.length; i++) {
     if (races[i].results && races[i].results.length > 0) {
@@ -226,6 +230,9 @@ function showResults(data) {
       }
       html += ('</table>');
     }
+  }
+  if (html == '') {
+    html = '<p>No results to display</p>';
   }
   div.append(html);
 }

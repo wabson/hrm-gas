@@ -73,14 +73,15 @@ function getRaceResults(key) {
     if ("Finishes" == sheets[i].getName()) {
       break;
     }
-    var results = [];
+    var results = [], lastbn = 0;
     var range = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, 16), values = range.getValues();
     for (var j=0; j<values.length; j++) {
       var rowvalues = values[j];
       if (parseInt(rowvalues[0]) && rowvalues[1] == "") {
         break;
       }
-      var name = "" + rowvalues[2] + " " + rowvalues[1],
+      var bn = rowvalues[0],
+          name = "" + rowvalues[2] + " " + rowvalues[1],
           club = "" + rowvalues[4],
           class = "" + rowvalues[5],
           div = "" + rowvalues[6],
@@ -88,21 +89,26 @@ function getRaceResults(key) {
           points = rowvalues[14],
           pd = rowvalues[13],
           notes = rowvalues[15];
-      if (name != "" && name != " ") {
-        if (rowvalues[0]) {
-          results.push({ posn: rowvalues[12], names: [name], clubs: [club], classes: [class], divs: [div], time: time, points: [points], pd: [pd], notes: [notes] });
-        } else {
+      if (name.trim() != "") {
+        if (bn) {
+          if (time) {
+            results.push({num: bn, posn: rowvalues[12], names: [name], clubs: [club], classes: [class], divs: [div], time: time, points: [points], pd: [pd], notes: [notes] });
+          }
+        } else if (results.length > 0) {
           var last = results.pop();
-          last.names.push(name);
-          last.clubs.push(club);
-          last.classes.push(class);
-          last.divs.push(div);
-          last.points.push(points);
-          last.pd.push(pd);
-          last.notes.push(notes);
+          if (lastbn != 0 && lastbn == last.num) { // Check it is the same boat as we may have skipped some if missing a time
+            last.names.push(name);
+            last.clubs.push(club);
+            last.classes.push(class);
+            last.divs.push(div);
+            last.points.push(points);
+            last.pd.push(pd);
+            last.notes.push(notes);
+          }
           results.push(last);
         }
       }
+      lastbn = bn;
     }
     classes.push({name: sheets[i].getName(), results: results.sort(sortResults) })
   }
