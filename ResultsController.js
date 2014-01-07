@@ -11,7 +11,7 @@ function doGet(e) {
     case "results":
       return printResults(e);
     case "entries":
-      return printEntries(e)
+      return printResults(e);
     default:
       throw "Unsupported action " + action;
   }
@@ -42,6 +42,7 @@ function printResults(e) {
   var template = HtmlService.createTemplateFromFile('Results');
   var ss = SpreadsheetApp.openById(key);
   var title = ss.getName();
+  template.show = e.parameter.show || "results";
   template.key = key;
   template.title = title;
   template.scroll = scroll;
@@ -161,34 +162,48 @@ function getRaceResults(key) {
   return data;
 }
 
-/**
- * Print entries summary
- *
- * @param {object} e Event information
- */
-function printEntries(e) {
-  var key = null, refresh, scroll = false;
-  for(var k in e.parameter) {
-    if ("key" == k) {
-      key = e.parameter[k];
-    }
-    if ("refresh" == k) {
-      refresh = e.parameter[k];
-    }
-    if ("scroll" == k) {
-      scroll = e.parameter[k];
-    }
-  }
+function getRaceEntries(key) {
   if (!key) {
     throw "You must specify a document";
   }
-  var template = HtmlService.createTemplateFromFile('Entries');
-  var ss = SpreadsheetApp.openById(key);
-  var title = ss.getName();
-  template.key = key;
-  template.title = title;
-  template.scroll = scroll;
-  return template.evaluate();
+  var ss = SpreadsheetApp.openById(key), 
+    data = {}, classes = [],
+    sheets = ss.getSheets();
+
+  for (var i=0; i<sheets.length; i++) {
+    if ("Finishes" == sheets[i].getName()) {
+      break;
+    }
+    var results = [];
+    var range = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, 13), values = range.getValues();
+    for (var j=0; j<values.length; j++) {
+      var rowvalues = values[j];
+      if (parseInt(rowvalues[0]) && rowvalues[1] == "") {
+        break;
+      }
+      var name = "" + rowvalues[2] + " " + rowvalues[1],
+        num = "" + rowvalues[0],
+        club = "" + rowvalues[4],
+        class = "" + rowvalues[5],
+        div = "" + rowvalues[6];
+      if (name != "" && name != " ") {
+        if (rowvalues[0]) {
+          results.push({ num: num, names: [name], clubs: [club], classes: [class], divs: [div] });
+        } else {
+          var last = results.pop();
+          last.names.push(name);
+          last.clubs.push(club);
+          last.classes.push(class);
+          last.divs.push(div);
+          results.push(last);
+        }
+      }
+    }
+    classes.push({name: sheets[i].getName(), results: results });
+  }
+  data.entries = classes;
+  data.lastUpdated = getLastUpdated(key);
+  return data;
 }
 
 function getLastEntryRow(sheet) {

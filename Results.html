@@ -73,24 +73,32 @@ body {
       <div id="results-pdtimes"></div>
       <div id="results-club-points"></div>
       <div id="results-lightning-points"></div>
+      <div id="entries-data"></div>
     </div> <!-- end #results-data -->
   </div> <!-- end #results -->
 </div> <!-- end #results-container -->
 </div> <!-- end #page -->
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>
-
-var key = "<?= key ?>", scroll = "<?= scroll ?>", newData = null, lastUpdated = null;
+var key = "<?= key ?>", show = "<?= show ?>", scroll = "<?= scroll ?>", newData = null, lastUpdated = null;
 
 // The code in this function runs when the page is loaded.
 $(function() {
   // Initial data load
-  google.script.run.withSuccessHandler(onDataLoaded).getRaceResults(key);
+  if (show == 'entries') {
+    google.script.run.withSuccessHandler(onDataLoaded).getRaceEntries(key);
+  } else {
+    google.script.run.withSuccessHandler(onDataLoaded).getRaceResults(key);
+  }
 });
 
 function onDataLoaded(data) {
   $('#messages').hide();
-  showData(data);
+  if (show == 'entries') {
+    showEntries(data.entries);
+  } else {
+    showData(data);
+  }
   if (scroll == "1" || scroll == "true") {
     console.log("Starting animation");
     startAnimation();
@@ -155,6 +163,7 @@ function startAnimation() {
   }
   $('#results').addClass('scrolling-results');
 }
+
 function stopAnimation() {
   $('#results').removeClass('scrolling-results');
 }
@@ -285,6 +294,41 @@ function showLightningPoints(lightningPoints) {
     }
     html += ('</tbody></table>');
   }
+  div.append(html);
+}
+
+function showEntries(entries) {
+  var div = $('#entries-data'), html = "";
+  div.empty();
+  var m = 0;
+  for (var i = 0; i < entries.length; ++i) {
+    if (entries[i].results && entries[i].results.length > 0) {
+      html += '<table>';
+      html += '<caption>' + entries[i].name + '</caption>';
+      html += '  <tbody><tr>';
+      html += '     <th>Boat Num</th>';
+      html += '     <th>Name</th>';
+      html += '     <th>Club</th>';
+      html += '     <th>Class</th>';
+      html += '     <th>Div</th>';
+      html += '  </tr>';
+      var n = 0;
+      for (var j = 0; j < entries[i].results.length; ++j) {
+        n ++;
+        html += '  <tr>';
+        html += '     <td>' + entries[i].results[j].num + '</td>';
+        html += '     <td>' + entries[i].results[j].names.join("<br />").toUpperCase() + '</td>';
+        html += '     <td>' + entries[i].results[j].clubs.join("<br />").toUpperCase() + '</td>';
+        html += '     <td>' + entries[i].results[j].classes.join("<br />").toUpperCase() + '</td>';
+        html += '     <td>' + entries[i].results[j].divs.join("<br />") + '</td>';
+        html += '  </tr>';
+      }
+      m += n;
+      html += '</tbody></table>';
+      html += '<p>Total ' + n + ' entries</p>';
+    }
+  }
+  html += '<p>Grand total ' + m + ' entries</p>';
   div.append(html);
 }
 </script>
