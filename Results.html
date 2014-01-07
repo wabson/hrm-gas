@@ -6,68 +6,33 @@
 <title><?= title ?></title>
 <style type="text/css">
 body {
-         font-size:          small;
-         font-family:        Verdana, Helvetica, Arial, sans-serif;
-    margin: 8px;
-}
-h1 {
-         font-size:          150%;
-}
-table {
-         border:             thin solid black;
-         border-collapse:    collapse;
-         margin-top:         20px;
-         margin-bottom:       20px;
-}
-caption {
-         text-align:         left;
-         font-weight:        bold;
-}
-th,td {
-         text-align:         left;
-         border:             thin solid gray;
-         padding:            5px;
-}
-th {
-         background-color:   #ccff99;
-}
-</style>
-</head>
-<body>
-<? if (refresh) { ?>
-<script type="text/javascript">
-(function () {
-"use strict";
-  window.setInterval(function refreshPage() {
-    window.location.reload(true);
-  }, 120000);
-})();
-</script>
-<? } ?>
-<? if (scroll) { ?>
-<script type="text/javascript">
-(function () {
-"use strict";
-function initialize() {
-  var resultsHeight = document.getElementById('results-container').clientHeight;
-  if (resultsHeight > window.innerHeight) {
-    // Set results to be just off the page and make them visible
-    document.getElementById('results').style.paddingTop = "" + window.innerHeight + "px";
-    document.getElementById('results').style.visibility = "visible";
-    // Start scrolling
-    document.getElementById('results').style.animationDuration = "" + ((resultsHeight - window.innerHeight) / 80) + "s"; // 80 pixels per second, only works in FF for now
-    document.getElementById('results').className = "scrolling-results";
-    // Hard-code the container height to avoid messing up the percentage-based position on the child
-    document.getElementById('results-container').style.height = "" + document.getElementById('results-container').clientHeight + "px";
-  }
-}
-window.onload = initialize;
-})();
-</script>
-<style type="text/css">
-body {
+  font-size:          small;
+  font-family:        Verdana, Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
+}
+h1 {
+  font-size: 150%;
+}
+table {
+  border: thin solid black;
+  border-collapse: collapse;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+caption {
+  text-align: left;
+  font-weight: bold;
+}
+th,td {
+  text-align: left;
+  border: thin solid gray;
+  padding: 5px;
+}
+th {
+  background-color:   #ccff99;
+}
+body {
 }
 #results-container {
   overflow: hidden;
@@ -75,108 +40,244 @@ body {
 }
 #results {
   position: relative;
+}
+#results-data {
   visibility: hidden;
 }
 .scrolling-results {
-  -webkit-animation: position_results 40s linear 0s infinite normal;
-     -moz-animation: position_results 40s linear 0s infinite normal;
-       -o-animation: position_results 40s linear 0s infinite normal;
-          animation: position_results 40s linear 0s infinite normal;
+  -webkit-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
+     -moz-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
+       -o-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
+          animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
 }
 @-webkit-keyframes position_results { from { top:0%; } to { top:-100%; }  }
    @-moz-keyframes position_results { from { top:0%; } to { top:-100%; }  }
      @-o-keyframes position_results { from { top:0%; } to { top:-100%; }  }
         @keyframes position_results { from { top:0%; } to { top:-100%; }  }
 </style>
-<? } ?>
+</head>
+<body>
 <div id="results-container">
-<div id="results">
-<h1><?= title ?></h1>
-<? for (var i = 0; i < classes.length; ++i) {
-if (classes[i].results && classes[i].results.length > 0) { ?>
-<table>
-<caption><?= classes[i].name ?></caption>
-  <tr>
-     <th>Position</th>
-     <th>Name</th>
-     <th>Club</th>
-     <th>Class</th>
-     <th>Div</th>
-     <th>Time</th>
-     <th>Points</th>
-     <th>P/D</th>
+  <div id="results">
+    <h1><?= title ?></h1>
+    <div id="messages">Loading...</div>
+    <div id="results-data">
+      <div id="results-races"></div>
+      <div id="results-pd"></div>
+      <div id="results-club-points"></div>
+      <div id="results-lightning-points"></div>
+    </div> <!-- end #results-data -->
+  </div> <!-- end #results -->
+</div> <!-- end #results-container -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+
+var key = "<?= key ?>", scroll = "<?= scroll ?>", newData = null, lastUpdated = null;
+
+// The code in this function runs when the page is loaded.
+$(function() {
+  // Initial data load
+  google.script.run.withSuccessHandler(onDataLoaded).getRaceResults(key);
+});
+
+function onDataLoaded(data) {
+  $('#messages').hide();
+  showData(data);
+  if (scroll == "1" || scroll == "true") {
+    console.log("Starting animation");
+    startAnimation();
+    // Check for updates
+    window.setTimeout(checkLastUpdated, <?= checkInterval*1000 ?>);
+  } else {
+    $('#results-data').hide().css('visibility', 'visible').fadeIn(600);
+  }
+  if (data.lastUpdated) {
+    lastUpdated = data.lastUpdated;
+  }
+}
+
+function checkLastUpdated() {
+  google.script.run.withSuccessHandler(onLastUpdatedSuccess).getLastUpdated(key);
+}
+
+function onLastUpdatedSuccess(updated) {
+  if (updated !== null && updated != lastUpdated) {
+    reloadData();
+  }
+  window.setTimeout(checkLastUpdated, <?= checkInterval*1000 ?>); // Queue up the function again
+}
+
+function reloadData() {
+  console.log("Reload data");
+  google.script.run.withSuccessHandler(onDataReloaded).getRaceResults(key);
+}
+
+function onDataReloaded(data) {
+  if (scroll == "1" || scroll == "true") {
+    $('#results').fadeOut(900, function() {
+      stopAnimation();
+      showData(data);
+      $('#results').delay(900).show(0, function() {
+        startAnimation();
+      });
+    });
+  } else {
+    showData(data);
+  }
+  if (data.lastUpdated) {
+    lastUpdated = data.lastUpdated;
+  }
+}
+
+function startAnimation() {
+  var resultsHeight = $('#results').height(), screenHeight = window.innerHeight;
+  if (resultsHeight > window.innerHeight) {
+    // Set results to be just off the page and make them visible
+    $('#results').css({
+      paddingTop: '' + screenHeight + 'px',
+      animationDuration: '' + ((resultsHeight + screenHeight) / 80) + 's' // 80 pixels per second, only works in FF for now
+    });
+    $('#results-data').css({
+      visibility: 'visible'
+    });
+    // Start scrolling
+    $('#results').addClass('scrolling-results');
+    // Hard-code the container height to avoid messing up the percentage-based position on the child
+    $('#results-container').css('height', '' + (resultsHeight + screenHeight) + 'px');
+  }
+  $('#results').addClass('scrolling-results');
+}
+function stopAnimation() {
+  $('#results').removeClass('scrolling-results');
+}
+
+function showData(data) {
+  if (data.races) {
+    showResults(data.races);
+  }
+  if (data.pdTimes) {
+    showPdTimes(data.pdTimes);
+  }
+  if (data.clubPoints) {
+    showClubPoints(data.clubPoints);
+  }
+  if (data.lightningPoints) {
+    showLightningPoints(data.lightningPoints);
+  }
+}
+
+function showResults(races) {
+  var div = $('#results-races'), html = "";
+  div.empty();
+  for (var i = 0; i < races.length; i++) {
+    if (races[i].results && races[i].results.length > 0) {
+      html += ('<table>')
+      html += ('<caption>' + races[i].name + '</caption>');
+      html += ('  <tr>');
+      html += ('     <th>Position</th>');
+      html += ('     <th>Name</th>');
+      html += ('     <th>Club</th>');
+      html += ('     <th>Class</th>');
+      html += ('     <th>Div</th>');
+      html += ('     <th>Time</th>');
+      html += ('     <th>Points</th>');
+      html += ('     <th>P/D</th>');
 <? if (showNotes) { ?>
-     <th>Notes</th>
+      html += ('     <th>Notes</th>');
 <? } ?>
-  </tr>
-<? for (var j = 0; j < classes[i].results.length; ++j) {
-   if (classes[i].results[j].time) {
-   ?>
-  <tr>
-     <td><?= classes[i].results[j].posn ?></td>
-     <td><?!= classes[i].results[j].names.join("<br />").toUpperCase() ?></td>
-     <td><?!= classes[i].results[j].clubs.join("<br />").toUpperCase() ?></td>
-     <td><?!= classes[i].results[j].classes.join("<br />").toUpperCase() ?></td>
-     <td><?!= classes[i].results[j].divs.join("<br />") ?></td>
-     <td><?= formatTime(classes[i].results[j].time) ?></td>
-     <td><?!= classes[i].results[j].points.join("<br />") ?></td>
-     <td><?!= classes[i].results[j].pd.join("<br />") ?></td>
+      html += ('  </tr>')
+      for (var j = 0; j < races[i].results.length; ++j) {
+        if (races[i].results[j].time) {
+          html += ('  <tr>');
+          html += ('     <td>' + races[i].results[j].posn + '</td>');
+          html += ('     <td>' + races[i].results[j].names.join("<br />").toUpperCase() + '</td>');
+          html += ('     <td>' + races[i].results[j].clubs.join("<br />").toUpperCase() + '</td>');
+          html += ('     <td>' + races[i].results[j].classes.join("<br />").toUpperCase() + '</td>');
+          html += ('     <td>' + races[i].results[j].divs.join("<br />") + '</td>');
+          html += ('     <td>' + races[i].results[j].time + '</td>');
+          html += ('     <td>' + races[i].results[j].points.join("<br />") + '</td>');
+          html += ('     <td>' + races[i].results[j].pd.join("<br />") + '</td>');
      <? if (showNotes) { ?>
-     <td><?!= classes[i].results[j].notes.join("<br />") ?></td>
+          html += ('     <td>' + races[i].results[j].notes.join("<br />") + '</td>');
      <? } ?>
-  </tr>
-  <? }} ?>
-</table>
-<? }} ?>
-<? if (pdTimes && pdTimes.length > 0) { ?>
-<? for (var i = 0; i < pdTimes.length; ++i) { ?>
-<table>
-<caption>P/D divs <?= pdTimes[i].title.split("").join(", ") ?> K1</caption>
-  <tbody><tr>
-     <th>P/D</th>
-     <th>Time</th>
-  </tr>
-<? for (var j = 0; j < pdTimes[i].times.length; ++j) { ?>
-  <tr>
-     <td><?= pdTimes[i].times[j].name ?></td>
-     <td><?= pdTimes[i].times[j].time ?></td>
-  </tr>
-<? } ?>
-</tbody></table>
-<? } } ?>
-<? if (clubPoints && clubPoints.length > 0) { ?>
-<table>
-<caption>Club points</caption>
-  <tbody><tr>
-     <th>Club</th>
-     <th>Points</th>
-     <th>Overall</th>
-  </tr>
-<? for (var i = 0; i < clubPoints.length; ++i) { ?>
-  <tr>
-     <td><?= clubPoints[i].name ?></td>
-     <td><?= clubPoints[i].totalPoints ?></td>
-     <td><?= clubPoints[i].haslerPoints ?></td>
-  </tr>
-<? } ?>
-</tbody></table>
-<? } ?>
-<? if (lightningPoints && lightningPoints.length > 0) { ?>
-<table>
-<caption>Lightning points</caption>
-  <tbody><tr>
-     <th>Club</th>
-     <th>Points</th>
-  </tr>
-<? for (var i = 0; i < lightningPoints.length; ++i) { ?>
-  <tr>
-     <td><?= lightningPoints[i].name ?></td>
-     <td><?= lightningPoints[i].totalPoints ?></td>
-  </tr>
-<? } ?>
-</tbody></table>
-<? } ?>
-</div>
-</div>
+          html += ('       </tr>');
+        }
+      }
+      html += ('</table>');
+    }
+  }
+  div.append(html);
+}
+
+function showPdTimes(pdTimes) {
+  var div = $('#results-pdtimes');
+  div.empty();
+  if (pdTimes && pdTimes.length > 0) {
+    for (var i = 0; i < pdTimes.length; ++i) {
+      div.append('<table>');
+      div.append('<caption>P/D divs ' + pdTimes[i].title.split("").join(", ") + ' K1</caption>');
+      div.append('  <tbody><tr>');
+      div.append('     <th>P/D</th>');
+      div.append('     <th>Time</th>');
+      div.append('  </tr>');
+      for (var j = 0; j < pdTimes[i].times.length; ++j) {
+        div.append('  <tr>');
+        div.append('     <td>' + pdTimes[i].times[j].name + '</td>');
+        div.append('     <td>' + pdTimes[i].times[j].time + '</td>');
+        div.append('  </tr>');
+      }
+      div.append('</tbody></table>');
+    }
+  }
+}
+
+function showClubPoints(clubPoints) {
+  if (clubPoints && clubPoints.length > 0) {
+    div.append('<table>');
+    div.append('<caption>Club points</caption>');
+    div.append('  <tbody><tr>');
+    div.append('     <th>Club</th>');
+    div.append('     <th>Points</th>');
+    div.append('     <th>Overall</th>');
+    div.append('  </tr>');
+    for (var i = 0; i < clubPoints.length; ++i) {
+      div.append('  <tr>');
+      div.append('     <td>' + clubPoints[i].name + '</td>');
+      div.append('     <td>' + clubPoints[i].totalPoints + '</td>');
+      div.append('     <td>' + clubPoints[i].haslerPoints + '</td>');
+      div.append('  </tr>');
+    }
+    div.append('</tbody></table>');
+  }
+}
+
+function showLightningPoints(lightningPoints) {
+  if (lightningPoints && lightningPoints.length > 0) {
+    div.append('<table>');
+    div.append('<caption>Lightning points</caption>');
+    div.append('  <tbody><tr>');
+    div.append('     <th>Club</th>');
+    div.append('     <th>Points</th>');
+    div.append('  </tr>');
+    for (var i = 0; i < lightningPoints.length; ++i) {
+      div.append('  <tr>');
+      div.append('     <td>' + lightningPoints[i].name + '</td>');
+      div.append('     <td>' + lightningPoints[i].totalPoints + '</td>');
+      div.append('  </tr>');
+    }
+    div.append('</tbody></table>');
+  }
+}
+
+function onAminationEnd(e) {
+  console.log("Animation iteration");
+  if (newData ==! null) {
+    console.log("New data available");
+    showData(newData);
+    // TODO reinitialise CSS parameters in startAnimation()
+    newData = null;
+  }
+}
+</script>
 </body>
 </html>

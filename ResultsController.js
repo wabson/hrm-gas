@@ -42,8 +42,32 @@ function printResults(e) {
   var template = HtmlService.createTemplateFromFile('Results');
   var ss = SpreadsheetApp.openById(key);
   var title = ss.getName();
-  var classes = [];
-  var sheets = ss.getSheets();
+  template.key = key;
+  template.title = title;
+  template.scroll = scroll;
+  template.checkInterval = 30; // Interval in seconds between update checks
+  template.defaultScrollPeriod = 40; // Time to complete a complete scroll when enabled, if the code cannot override this
+  template.showNotes = showNotes;
+  var output = template.evaluate();
+  output.setSandboxMode(HtmlService.SandboxMode.NATIVE);
+  output.setTitle(title);
+  return output;
+}
+
+/**
+ * Get results for display
+ *
+ * @function getRaceResults
+ */
+function getRaceResults(key) {
+  if (!key) {
+    throw "You must specify a document";
+  }
+  var template = HtmlService.createTemplateFromFile('Results'),
+      ss = SpreadsheetApp.openById(key),
+      data = {},
+      classes = [],
+      sheets = ss.getSheets();
   for (var i=0; i<sheets.length; i++) {
     if ("Finishes" == sheets[i].getName()) {
       break;
@@ -59,7 +83,7 @@ function printResults(e) {
           club = "" + rowvalues[4],
           class = "" + rowvalues[5],
           div = "" + rowvalues[6],
-          time = rowvalues[11],
+          time = formatTime(rowvalues[11]),
           points = rowvalues[14],
           pd = rowvalues[13],
           notes = rowvalues[15];
@@ -128,19 +152,13 @@ function printResults(e) {
       }
     }
   }
-  template.pdTimes = pdTimes;
-  template.clubPoints = clubPoints;
-  template.lightningPoints = lightningPoints;
-  template.key = key;
-  template.title = title;
-  template.classes = classes;
-  template.refresh = refresh;
-  template.scroll = scroll;
-  template.showNotes = showNotes;
-  var output = template.evaluate();
-  output.setSandboxMode(HtmlService.SandboxMode.NATIVE);
-  output.setTitle(title);
-  return output;
+  data.pdTimes = pdTimes;
+  data.clubPoints = clubPoints;
+  data.lightningPoints = lightningPoints;
+  data.races = classes;
+  data.lastUpdated = getLastUpdated(key);
+  Logger.log("Return " + classes.length + " races");
+  return data;
 }
 
 /**
@@ -167,44 +185,8 @@ function printEntries(e) {
   var template = HtmlService.createTemplateFromFile('Entries');
   var ss = SpreadsheetApp.openById(key);
   var title = ss.getName();
-  var classes = [];
-  var sheets = ss.getSheets();
-  for (var i=0; i<sheets.length; i++) {
-    if ("Finishes" == sheets[i].getName()) {
-      break;
-    }
-    var results = [];
-    var range = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, 13), values = range.getValues();
-    for (var j=0; j<values.length; j++) {
-      var rowvalues = values[j];
-      if (parseInt(rowvalues[0]) && rowvalues[1] == "") {
-        break;
-      }
-      var name = "" + rowvalues[2] + " " + rowvalues[1],
-          num = "" + rowvalues[0],
-          club = "" + rowvalues[4],
-          class = "" + rowvalues[5],
-          div = "" + rowvalues[6],
-          time = rowvalues[11];
-      if (name != "" && name != " ") {
-        if (rowvalues[0]) {
-          results.push({ num: num, names: [name], clubs: [club], classes: [class], divs: [div] });
-        } else {
-          var last = results.pop();
-          last.names.push(name);
-          last.clubs.push(club);
-          last.classes.push(class);
-          last.divs.push(div);
-          results.push(last);
-        }
-      }
-    }
-    classes.push({name: sheets[i].getName(), results: results })
-  }
   template.key = key;
   template.title = title;
-  template.classes = classes;
-  template.refresh = refresh;
   template.scroll = scroll;
   return template.evaluate();
 }
@@ -281,5 +263,14 @@ function sortResults(r1, r2) {
   else if (typeof t1 == "string" && typeof t2 == "number")
   {
     return 1;
+  }
+}
+
+function getLastUpdated(key) {
+  var file = DocsList.getFileById(key);
+  if (file) {
+    return file.getLastUpdated().toString();
+  } else {
+    return null;
   }
 }
