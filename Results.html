@@ -159,7 +159,7 @@ function stopAnimation() {
 
 function showData(data) {
   if (data.races) {
-    showResults(data.races);
+    showResults(data);
   }
   if (data.pdTimes) {
     showPdTimes(data.pdTimes);
@@ -172,8 +172,8 @@ function showData(data) {
   }
 }
 
-function showResults(races) {
-  var div = $('#results-races'), html = "";
+function showResults(data) {
+  var races = data.races, div = $('#results-races'), html = "";
   div.empty();
   for (var i = 0; i < races.length; i++) {
     if (races[i].results && races[i].results.length > 0) {
@@ -186,8 +186,10 @@ function showResults(races) {
       html += ('     <th>Class</th>');
       html += ('     <th>Div</th>');
       html += ('     <th>Time</th>');
-      html += ('     <th>Points</th>');
-      html += ('     <th>P/D</th>');
+      if (data.clubPoints && data.clubPoints.length)
+        html += ('     <th>Points</th>');
+      if (data.pdTimes && data.pdTimes.length)
+        html += ('     <th>P/D</th>');
 <? if (showNotes) { ?>
       html += ('     <th>Notes</th>');
 <? } ?>
@@ -201,8 +203,10 @@ function showResults(races) {
           html += ('     <td>' + races[i].results[j].classes.join("<br />").toUpperCase() + '</td>');
           html += ('     <td>' + races[i].results[j].divs.join("<br />") + '</td>');
           html += ('     <td>' + races[i].results[j].time + '</td>');
-          html += ('     <td>' + races[i].results[j].points.join("<br />") + '</td>');
-          html += ('     <td>' + races[i].results[j].pd.join("<br />") + '</td>');
+          if (data.clubPoints && data.clubPoints.length)
+            html += ('     <td>' + races[i].results[j].points.join("<br />") + '</td>');
+          if (data.pdTimes && data.pdTimes.length)
+            html += ('     <td>' + races[i].results[j].pd.join("<br />") + '</td>');
      <? if (showNotes) { ?>
           html += ('     <td>' + races[i].results[j].notes.join("<br />") + '</td>');
      <? } ?>
