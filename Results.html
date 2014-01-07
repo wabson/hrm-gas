@@ -68,7 +68,7 @@ body {
     <div id="messages">Loading...</div>
     <div id="results-data">
       <div id="results-races"></div>
-      <div id="results-pd"></div>
+      <div id="results-pdtimes"></div>
       <div id="results-club-points"></div>
       <div id="results-lightning-points"></div>
     </div> <!-- end #results-data -->
@@ -216,63 +216,70 @@ function showResults(races) {
 }
 
 function showPdTimes(pdTimes) {
-  var div = $('#results-pdtimes');
+  var div = $('#results-pdtimes'), html = "";
   div.empty();
   if (pdTimes && pdTimes.length > 0) {
     for (var i = 0; i < pdTimes.length; ++i) {
-      div.append('<table>');
-      div.append('<caption>P/D divs ' + pdTimes[i].title.split("").join(", ") + ' K1</caption>');
-      div.append('  <tbody><tr>');
-      div.append('     <th>P/D</th>');
-      div.append('     <th>Time</th>');
-      div.append('  </tr>');
+      html += ('<table>');
+      html += ('<caption>P/D divs ' + pdTimes[i].title.split("").join(", ") + ' K1</caption>');
+      html += ('  <tbody><tr>');
+      html += ('     <th>P/D</th>');
+      html += ('     <th>Time</th>');
+      html += ('  </tr>');
       for (var j = 0; j < pdTimes[i].times.length; ++j) {
-        div.append('  <tr>');
-        div.append('     <td>' + pdTimes[i].times[j].name + '</td>');
-        div.append('     <td>' + pdTimes[i].times[j].time + '</td>');
-        div.append('  </tr>');
+        html += ('  <tr>');
+        html += ('     <td>' + pdTimes[i].times[j].name + '</td>');
+        html += ('     <td>' + pdTimes[i].times[j].time + '</td>');
+        html += ('  </tr>');
       }
-      div.append('</tbody></table>');
+      html += ('</tbody></table>');
     }
   }
+  div.append(html);
 }
 
 function showClubPoints(clubPoints) {
+  var div = $('#results-club-points'), html = "";
+  div.empty();
   if (clubPoints && clubPoints.length > 0) {
-    div.append('<table>');
-    div.append('<caption>Club points</caption>');
-    div.append('  <tbody><tr>');
-    div.append('     <th>Club</th>');
-    div.append('     <th>Points</th>');
-    div.append('     <th>Overall</th>');
-    div.append('  </tr>');
+    html += ('<table>');
+    html += ('<caption>Club points</caption>');
+    html += ('  <tbody><tr>');
+    html += ('     <th>Club</th>');
+    html += ('     <th>Points</th>');
+    html += ('     <th>Overall</th>');
+    html += ('  </tr>');
     for (var i = 0; i < clubPoints.length; ++i) {
-      div.append('  <tr>');
-      div.append('     <td>' + clubPoints[i].name + '</td>');
-      div.append('     <td>' + clubPoints[i].totalPoints + '</td>');
-      div.append('     <td>' + clubPoints[i].haslerPoints + '</td>');
-      div.append('  </tr>');
+      html += ('  <tr>');
+      html += ('     <td>' + clubPoints[i].name + '</td>');
+      html += ('     <td>' + clubPoints[i].totalPoints + '</td>');
+      html += ('     <td>' + clubPoints[i].haslerPoints + '</td>');
+      html += ('  </tr>');
     }
-    div.append('</tbody></table>');
+    html += ('</tbody></table>');
   }
+  div.append(html);
 }
 
 function showLightningPoints(lightningPoints) {
+  var div = $('#results-lightning-points'), html = "";
+  div.empty();
   if (lightningPoints && lightningPoints.length > 0) {
-    div.append('<table>');
-    div.append('<caption>Lightning points</caption>');
-    div.append('  <tbody><tr>');
-    div.append('     <th>Club</th>');
-    div.append('     <th>Points</th>');
-    div.append('  </tr>');
+    html += ('<table>');
+    html += ('<caption>Lightning points</caption>');
+    html += ('  <tbody><tr>');
+    html += ('     <th>Club</th>');
+    html += ('     <th>Points</th>');
+    html += ('  </tr>');
     for (var i = 0; i < lightningPoints.length; ++i) {
-      div.append('  <tr>');
-      div.append('     <td>' + lightningPoints[i].name + '</td>');
-      div.append('     <td>' + lightningPoints[i].totalPoints + '</td>');
-      div.append('  </tr>');
+      html += ('  <tr>');
+      html += ('     <td>' + lightningPoints[i].name + '</td>');
+      html += ('     <td>' + lightningPoints[i].totalPoints + '</td>');
+      html += ('  </tr>');
     }
-    div.append('</tbody></table>');
+    html += ('</tbody></table>');
   }
+  div.append(html);
 }
 </script>
 </body>
