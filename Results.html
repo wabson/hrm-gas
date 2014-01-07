@@ -92,6 +92,10 @@ $(function() {
   }
 });
 
+function isScrollingEnabled() {
+  return scroll == "1" || scroll == "true";
+}
+
 function onDataLoaded(data) {
   $('#messages').hide();
   if (show == 'entries') {
@@ -99,7 +103,7 @@ function onDataLoaded(data) {
   } else {
     showData(data);
   }
-  if (scroll == "1" || scroll == "true") {
+  if (isScrollingEnabled()) {
     console.log("Starting animation");
     startAnimation();
     // Check for updates
@@ -129,7 +133,7 @@ function reloadData() {
 }
 
 function onDataReloaded(data) {
-  if (scroll == "1" || scroll == "true") {
+  if (isScrollingEnabled()) {
     $('#results').fadeOut(900, function() {
       stopAnimation();
       showData(data);
@@ -232,7 +236,7 @@ function showResults(data) {
     }
   }
   if (html == '') {
-    html = '<p>No results to display</p>';
+    html = isScrollingEnabled() ? '<p>Results will be displayed here as they become available</p>' : '<p>No results to display</p>';
   }
   div.append(html);
 }
