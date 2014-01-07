@@ -44,7 +44,11 @@ body {
 #results-data {
   visibility: hidden;
 }
-.scrolling-results {
+.scrolling {
+  height: 100vh;
+  overflow: hidden;
+}
+.scrolling #results {
   -webkit-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
      -moz-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
        -o-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
@@ -57,6 +61,7 @@ body {
 </style>
 </head>
 <body>
+<div id="page">
 <div id="results-container">
   <div id="results">
     <h1><?= title ?></h1>
@@ -69,6 +74,7 @@ body {
     </div> <!-- end #results-data -->
   </div> <!-- end #results -->
 </div> <!-- end #results-container -->
+</div> <!-- end #page -->
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>
 
@@ -141,7 +147,7 @@ function startAnimation() {
       visibility: 'visible'
     });
     // Start scrolling
-    $('#results').addClass('scrolling-results');
+    $('#page').addClass('scrolling');
     // Hard-code the container height to avoid messing up the percentage-based position on the child
     $('#results-container').css('height', '' + (resultsHeight + screenHeight) + 'px');
   }
