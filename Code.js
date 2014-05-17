@@ -40,7 +40,7 @@ function loadRankings(eventInfo) {
     Logger.log("Clearing existing rankings");
     clearRankings();
   }
-  loadRankingsData(clubId, current == 'true');
+  loadRankingsXLS(clubId, current == 'true');
   app.close();
   return app;
 }
@@ -67,9 +67,16 @@ function showLoadRankings() {
   lb.addItem("All Clubs", "");
 
   // add items to ListBox
-  var clubs = getClubList();
-  for (var i=0; i<clubs.length; i++) {
-    lb.addItem(clubs[i].name, clubs[i].code);
+  try
+  {
+    var clubs = getClubList();
+    for (var i=0; i<clubs.length; i++) {
+      lb.addItem(clubs[i].name, clubs[i].code);
+    }
+  }
+  catch (e)
+  {
+    // Do nothing
   }
   mypanel.add(lb);
   var cb = app.createCheckBox("Clear existing records first").setValue(true).setId('clear').setName('clear'), 
@@ -158,12 +165,23 @@ function loadRankingsData(clubName, onlyLatest) {
  * @param {string} clubName Code of the club which should be loaded, if null then rankings from all clubs will be loaded
  */
 function loadRankingsXLS(clubName) {
-  var response = UrlFetchApp.fetch(rankingsUri);
+  var pageResp = UrlFetchApp.fetch("http://canoeracing.org.uk/marathon/index.php/latest-marathon-ranking-list/"), pageSrc = pageResp.getContentText(),
+    reMatch = /<a href="(.*)">Ranking List<\/a>/ig.exec(pageSrc);
+  if (!reMatch) {
+    throw("Ranking list URL not found");
+  }
+  var rankingListUrl = reMatch[1], response = UrlFetchApp.fetch(rankingListUrl);
   if (response.getResponseCode() == 200) {
-    DocsList.createFile(response.getBlob());
+    //DocsList.createFile(response.getBlob());
     // Need to convert to Google Sheets native format
     // Blocked by http://code.google.com/p/google-apps-script-issues/issues/detail?id=1019
-    throw("Not yet implemented!");
+    //throw("Not yet implemented!");
+    var file = {
+      title: 'RankingList.xls'
+    };
+    file = Drive.Files.insert(file, response.getBlob(), {
+      convert: true
+    });
   } else {
     throw "An error was encountered loading the rankings spreadsheet (code: " + response.getResponseCode() + ")";
   }
@@ -171,18 +189,30 @@ function loadRankingsXLS(clubName) {
   // TODO refactor the following code into a common method, shared between loadRankingsXLS() and loadRankingsData()
   var sheetName = "Rankings";
   // Locate Rankings sheet or create it if it doesn't already exist
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName, ss.getSheets().length);
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sourceSS = SpreadsheetApp.openById(file.id),
+    sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName, ss.getSheets().length), 
+    sourceRange = sourceSS.getActiveSheet().getDataRange(), sourceHeaderRange = sourceSS.getActiveSheet().getRange(1, 1, 1, sourceRange.getWidth());
   
-  if (data.length > 0)
+  if (sourceRange.getHeight() > 0)
   {
-    var destinationRange = sheet.getRange(1 + sheet.getLastRow(), 1, data.length, columnNames.length);
-    var dataRows = [];
-    for (var j=0; j < data.length; j++)
-    {
-      dataRows.push([data[j]['surname'], data[j]['first_name'], data[j]['club'], data[j]['class'], data[j]['bcu_number'], data[j]['division']]);
-    }
-    destinationRange.setValues(dataRows);
+    var destinationRange = sheet.getRange(sheet.getLastRow(), 1, sourceRange.getHeight(), sourceRange.getWidth()),
+      headerRange = sheet.getRange(1, 1, 1, sourceRange.getWidth());
+    // Copying ranges directly is not supported between spreadsheets
+    destinationRange.setValues(sourceRange.getValues());
+    // Set expiration date formats (column F)
+    sheet.getRange(2, 6, sourceRange.getHeight()-1, 1).setNumberFormat("dd/MM/yyyy");
+    // Set header row format
+    headerRange.setBackgrounds(sourceHeaderRange.getBackgrounds());
+    headerRange.setHorizontalAlignments(sourceHeaderRange.getHorizontalAlignments());
+    var numberFormats = sourceHeaderRange.getNumberFormats();
+    // Override date number format as it does not seem to get applied correctly
+    numberFormats[0][7] = "dd/MM/yyyy";
+    headerRange.setNumberFormats(numberFormats);
+
+    Browser.msgBox("Added " + (sourceRange.getHeight()-1) + " rankings");
   }
+
+  DriveApp.removeFile(DriveApp.getFileById(file.id));
 }
 
 /**
