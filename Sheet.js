@@ -12,7 +12,7 @@ function onEdit(e) {
   var sheet = e.range.getSheet();
   // If we are in a race sheet and this is a name or similar then capitalise the value
   var sheetName = sheet.getName();
-  if (e.value && typeof e.value == "string" && e.range.getColumn() > 1 && e.range.getColumn() < 8 && 
+  if (e.value && typeof e.value == "string" && e.range.geRow() > 1 && e.range.getColumn() > 1 && e.range.getColumn() < 8 &&
     sheetName != "Finishes" && sheetName != "Rankings" && sheetName != "Clubs" && sheetName != "Results" && 
       sheetName != "PandD" && sheetName != "Summary") {
         if (e.value.toUpperCase() != e.value) {
