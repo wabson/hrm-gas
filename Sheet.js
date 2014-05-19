@@ -245,3 +245,9 @@ function setValidation() {
 function setFormatting() {
   HRM.setFormatting();
 }
+/**
+ * Menu hook for setting race sheet headings
+ */
+function setRaceSheetHeadings() {
+  HRM.setRaceSheetHeadings();
+}

@@ -17,6 +17,7 @@ var rankingsUri = "http://www.marathon-canoeing.org.uk/marathon/media/RankingLis
  * Race sheet column names
  */
  var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Posn", "P/D", "Points", "Notes"];
+ var raceSheetColumnAlignments = ["left", "left", "left", "left", "center", "left", "left", "center", "right", "right", "center", "center", "center", "center", "center", "center", "left"];
 
 /**
  * ID assigned to this library
@@ -2597,5 +2598,26 @@ function setFormatting() {
     if (lastRow > 1) {
       sheets[i].getRange(2, getRaceColumnNumber("Start"), lastRow-1, 3).setNumberFormat("HH:mm:ss");
     }
+  }
+}
+
+/**
+ * Re-set the column names on all race sheets, including contents and formats
+ */
+function setRaceSheetHeadings() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets(), headersRange;
+  for (var i=0; i<sheets.length; i++) {
+    headersRange = sheets[i].getRange(1, 1, 1, raceSheetColumnNames.length);
+    // Clear existing header
+    sheets[i].getRange(1, 1, 1, sheet.getLastColumn()).clear();
+    // Set the new values and format
+    headersRange.setValues([raceSheetColumnNames]);
+    headersRange.setHorizontalAlignments([raceSheetColumnAlignments]);
+    headersRange.setFontFamily("Courier New");
+    headersRange.setFontWeight("bold");
+    headersRange.setBackground("#ccffff");
+    headersRange.setBorder(true, true, true, true, true, true);
+    // Set the last column header (Notes) to be italicised
+    sheets[i].getRange(1, raceSheetColumnNames.length).setFontStyle("italic");
   }
 }
