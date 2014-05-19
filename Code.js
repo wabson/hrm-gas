@@ -9,9 +9,14 @@
 /**
  * Rankings sheet column names
  */
-var columnNames = ["Surname", "First name", "Club", "Class", "BCU Number", "Division"];
+var rankingsSheetColumnNames = ["Surname", "First name", "Club", "Class", "BCU Number", "Expiry", "Division"];
 var rankingsSheetName = "Rankings";
 var rankingsUri = "http://www.marathon-canoeing.org.uk/marathon/media/RankingList.xls";
+
+/**
+ * Race sheet column names
+ */
+ var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid"];
 
 /**
  * ID assigned to this library
@@ -140,7 +145,7 @@ function loadRankingsData(clubName, onlyLatest) {
   swQuery("hasler_marathon_ranking_list", baseQuery, function appendRankings(data) {
     if (data.length > 0)
     {
-      var destinationRange = sheet.getRange(1 + sheet.getLastRow(), 1, data.length, columnNames.length);
+      var destinationRange = sheet.getRange(1 + sheet.getLastRow(), 1, data.length, rankingsSheetColumnNames.length);
       var dataRows = [];
       for (var j=0; j < data.length; j++)
       {
@@ -252,7 +257,7 @@ function clearRankings() {
     throw "Could not find Rankings sheet";
   }
   sheet.clear();
-  sheet.appendRow(columnNames);
+  sheet.appendRow(rankingsSheetColumnNames);
 }
 
 /**
@@ -282,7 +287,7 @@ function clearAllEntries() {
  * @param {array} items List of items as object literals. Must include the properties 'surname', 'first_name', 'club', 'class', 'bcu_number' and 'division'
  */
 function addRankings(items) {
-  var destinationRange = sheet.getRange(2 + (batchSize * batchNum), 1, items.length, columnNames.length);
+  var destinationRange = sheet.getRange(2 + (batchSize * batchNum), 1, items.length, rankingsSheetColumnNames.length);
   var dataRows = [];
   for (var j=0; j < data.length; j++)
   {
@@ -885,8 +890,10 @@ function onAddEntrySearch(eventInfo, n) {
     var matches = findRankings(name.trim());
     if (matches.length > 0) {
       for (var i=0; i<matches.length; i++) {
-        var itemName = "" + matches[i][0] + ", " + matches[i][1] + " (" + matches[i][2] + ", " + matches[i][3] + ")",
-          itemValue = "" + matches[i][0] + "|" + matches[i][1] + "|" + matches[i][2] + "|" + matches[i][3] + "|" + matches[i][4] + "|" + matches[i][5];
+        var expiryDate = matches[i]["Expiry"],
+          itemName = "" + matches[i]["Surname"] + ", " + matches[i]["First name"] + " (" + matches[i]["Club"] + ", " + matches[i]["Class"] + ")",
+          itemValue = "" + matches[i]["Surname"] + "|" + matches[i]["First name"] + "|" + matches[i]["Club"] + "|" + matches[i]["Class"] + "|" + 
+            matches[i]["BCU Number"] + "|" + (expiryDate instanceof Date ? expiryDate.toDateString() : expiryDate) + "|" + matches[i]["Division"];
         list.addItem(itemName, itemValue);
       }
     } else {
@@ -903,9 +910,18 @@ function onAddEntrySearch(eventInfo, n) {
   return app;
 }
 
+function arrayZip(keys, values)
+{
+  var obj = {};
+  for (var i = 0; i < keys.length; i++) {
+    obj[keys[i]] = values[i];
+  };
+  return obj;
+}
+
 /**
- * Find ranked competitors with the given name or BCU number. Returns an array of records each being a six-element array containing the following string values:
- * Surname  First name  Club  Class BCU Number  Division
+ * Find ranked competitors with the given name or BCU number. Returns an array of records each being a seven-element array containing the following string values:
+ * Surname, First name, Club, Class, BCU Number, BCU Expiration, Division
  *
  * @param {string} name Search for paddlers whose names match the given string
  * @return {array} Two-dimensional array containing matching rows from the Rankings sheet
@@ -916,16 +932,16 @@ function findRankings(name) {
   if (sheet) {
     if (name) { // check name is not empty
       var isBCUNum = bcuRegexp.test(name.toUpperCase()), 
-          range = sheet.getRange(2, 1, sheet.getLastRow()-1, 6), values = range.getValues();
+          range = sheet.getRange(2, 1, sheet.getLastRow()-1, rankingsSheetColumnNames.length), values = range.getValues();
       for (var i=0; i<values.length; i++) {
         if (isBCUNum) { // BCU number
           var bcu = String(values[i][4]).toUpperCase().trim(), result = bcuRegexp.exec(bcu);
           if (result && (bcu == name || result[1] == name)) { // Match the whole number or just the content between the slashes (if present)
-            matches.push(values[i]);
+            matches.push(arrayZip(rankingsSheetColumnNames, values[i]));
           }
         } else { // Name
           if ((""+values[i][0]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0 || (""+values[i][1]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0) {
-            matches.push(values[i]);
+            matches.push(arrayZip(rankingsSheetColumnNames, values[i]));
           }
         }
       }
@@ -966,11 +982,22 @@ function add(eventInfo) {
     var selectedClass = eventInfo.parameter.className,
         sheetName = ("Auto" == selectedClass) ? getTabName(items1, items2) : selectedClass;
     
-    var result = addEntryToSheet(
-      [items1[0], items1[1], items1[4], items1[2], items1[3], items1[5]],
-      (items2.length > 0 ? [items2[0], items2[1], items2[4], items2[2], items2[3], items2[5]] : null),
-      sheetName
-    );
+    var row1 = [items1[rankingsSheetColumnNames.indexOf("Surname")], items1[rankingsSheetColumnNames.indexOf("First name")], items1[rankingsSheetColumnNames.indexOf("BCU Number")], 
+        items1[rankingsSheetColumnNames.indexOf("Expiry")], items1[rankingsSheetColumnNames.indexOf("Club")], items1[rankingsSheetColumnNames.indexOf("Class")], 
+        items1[rankingsSheetColumnNames.indexOf("Division")]],
+      row2 = (items2.length > 0 ? [items2[rankingsSheetColumnNames.indexOf("Surname")], items2[rankingsSheetColumnNames.indexOf("First name")], items2[rankingsSheetColumnNames.indexOf("BCU Number")], 
+        items2[rankingsSheetColumnNames.indexOf("Expiry")], items2[rankingsSheetColumnNames.indexOf("Club")], items2[rankingsSheetColumnNames.indexOf("Class")], 
+        items2[rankingsSheetColumnNames.indexOf("Division")]] : null),
+      result;
+    // Convert dates
+    if (row1[3]) {
+      row1[3] = new Date(row1[3]);
+    }
+    if (row2 && row2[3]) {
+      row2[3] = new Date(row2[3]);
+    }
+
+    result = addEntryToSheet(row1, row2, sheetName);
     
     if (result && result.boatNumber) {
       app.getElementById("result").setText("Added " + result.boatNumber + " " + crew + " in " + sheetName);
@@ -1154,7 +1181,7 @@ function addEntryToSheet(row1, row2, sheetName) {
         throw("Could not add entry of size " + rowValues.length + " in row " + nextRowPos + " (" + nextRowSize + " rows available)");
       }
     }
-    var rowRange = sheet.getRange(nextRowPos, 2, rowValues.length, 6);
+    var rowRange = sheet.getRange(nextRowPos, 2, rowValues.length, rowValues[0].length);
     rowRange.setValues(rowValues);
   }
   return { boatNumber: nextBoatNum, rowNumber: nextRowPos };
@@ -1227,10 +1254,11 @@ function getRaceNames(spreadsheet) {
  * @return {string} Name of the division
  */
 function getRaceName(crew1, crew2) {
-  var div1 = crew1[5],
+  var divIndex = rankingsSheetColumnNames.indexOf("Division"), 
+      div1 = crew1[divIndex],
       div2 = null;
   if (crew2.length > 0) {
-      div2 = crew2[5];
+      div2 = crew2[divIndex];
   } else {
     return parseInt(div1) ? ("Div" + parseInt(div1)) : div1;
   }

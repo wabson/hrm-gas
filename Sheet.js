@@ -12,7 +12,7 @@ function onEdit(e) {
   var sheet = e.range.getSheet();
   // If we are in a race sheet and this is a name or similar then capitalise the value
   var sheetName = sheet.getName();
-  if (e.value && typeof e.value == "string" && e.range.geRow() > 1 && e.range.getColumn() > 1 && e.range.getColumn() < 8 &&
+  if (e.value && typeof e.value == "string" && e.range.getRow() > 1 && e.range.getColumn() > 1 && e.range.getColumn() < 8 &&
     sheetName != "Finishes" && sheetName != "Rankings" && sheetName != "Clubs" && sheetName != "Results" && 
       sheetName != "PandD" && sheetName != "Summary") {
         if (e.value.toUpperCase() != e.value) {
@@ -28,8 +28,8 @@ function onEdit(e) {
         e.range.setComment("Number not found in Rankings");
       } else if (matches.length == 1) {
         // TODO Do this re-ordering of values via a util function
-        var dataRowValues = [matches[0][0], matches[0][1], matches[0][4], matches[0][2], matches[0][3], matches[0][5]]; // Surname  First name  BCU Number  Club  Class Div
-        sheet.getRange(e.range.getRow(), 2, 1, 6).setValues([dataRowValues])
+        var dataRowValues = [matches[0]['Surname'], matches[0]['First name'], matches[0]['BCU Number'], matches[0]['Expiry'], matches[0]['Club'], matches[0]['Class'], matches[0]['Division']]; // Surname  First name  BCU Number  Club  Class Div
+        sheet.getRange(e.range.getRow(), 2, 1, 7).setValues([dataRowValues])
       } else {
         e.range.setComment("Multiple matches found in Rankings");
       }
