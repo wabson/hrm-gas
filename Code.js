@@ -2590,12 +2590,16 @@ function setValidation() {
  * Set formatting
  */
 function setFormatting() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets();
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     var lastRow = sheets[i].getLastRow();
     sheets[i].getRange(1, 1, lastRow, sheets[i].getLastColumn()).setFontFamily("Courier New");
-    // Set Start, Finish and Elapsed columns to show as times
+    // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
     if (lastRow > 1) {
+      sheets[i].getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 3).setNumberFormat("0");
+      sheets[i].getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 3).setNumberFormat("dd/MM/yyyy");
+      sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1, 3).setNumberFormat("0");
+      sheets[i].getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 3).setNumberFormat("£0.00");
       sheets[i].getRange(2, getRaceColumnNumber("Start"), lastRow-1, 3).setNumberFormat("HH:mm:ss");
     }
   }
@@ -2605,18 +2609,13 @@ function setFormatting() {
  * Re-set the column names on all race sheets, including contents and formats
  */
 function setRaceSheetHeadings() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets(), headersRange;
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = getRaceSheets(), headersRange;
   for (var i=0; i<sheets.length; i++) {
     headersRange = sheets[i].getRange(1, 1, 1, raceSheetColumnNames.length);
     // Clear existing header
-    sheets[i].getRange(1, 1, 1, sheet.getLastColumn()).clear();
+    sheets[i].getRange(1, 1, 1, sheets[i].getLastColumn()).clear().setBorder(false, false, false, false, false, false);
     // Set the new values and format
-    headersRange.setValues([raceSheetColumnNames]);
-    headersRange.setHorizontalAlignments([raceSheetColumnAlignments]);
-    headersRange.setFontFamily("Courier New");
-    headersRange.setFontWeight("bold");
-    headersRange.setBackground("#ccffff");
-    headersRange.setBorder(true, true, true, true, true, true);
+    headersRange.setValues([raceSheetColumnNames]).setHorizontalAlignments([raceSheetColumnAlignments]).setFontFamily("Courier New").setFontWeight("bold").setBackground("#ccffff").setBorder(true, true, true, true, true, true);
     // Set the last column header (Notes) to be italicised
     sheets[i].getRange(1, raceSheetColumnNames.length).setFontStyle("italic");
   }
