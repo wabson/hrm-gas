@@ -16,7 +16,7 @@ var rankingsUri = "http://www.marathon-canoeing.org.uk/marathon/media/RankingLis
 /**
  * Race sheet column names
  */
- var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid"];
+ var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Posn", "P/D", "Points", "Notes"];
 
 /**
  * ID assigned to this library
@@ -277,7 +277,7 @@ function clearAllEntries() {
   for (var i=0; i<sheets.length; i++) {
     clearEntriesSheet(sheets[i]);
   }
-  setDataValidation();
+  setValidation();
   setFormulas();
 }
 
@@ -2517,19 +2517,40 @@ function calculatePoints(scriptProps) {
 }
 
 /**
+ * Return the number (starting from 1, not zero) of the column with the specified header, or -1 if not found
+ */
+function getRaceColumnNumber(colName) {
+  return raceSheetColumnNames.indexOf(colName) + 1;
+}
+
+/**
+ * Return the letter denoting of the column with the specified header in A1 notation, or '' if not found
+ */
+function getRaceColumnA1(colName) {
+  var index = raceSheetColumnNames.indexOf(colName) + 1;
+  return index > -1 ? String.fromCharCode(64 + index) : '';
+}
+
+/**
  * Set forumalas for all race sheets
  */
 function setFormulas() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets();
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets(),
+    timePlusMinusColA1 = getRaceColumnA1("Time+/-"), startColA1 = getRaceColumnA1("Start"), finishColA1 = getRaceColumnA1("Finish"), elapsedColA1 = getRaceColumnA1("Elapsed"), 
+    elapsedCol = getRaceColumnNumber("Elapsed"), posnCol = getRaceColumnNumber("Posn");
   for (var i=0; i<sheets.length; i++) {
     var lastRow = sheets[i].getLastRow();
     if (lastRow > 1) {
       // Elapsed time
-      sheets[i].getRange(2, 12).setFormula('=IFERROR(IF(J2="dns","dns",IF(K2="rtd", "rtd", IF(AND(NOT(ISTEXT(K2)), NOT(ISTEXT(J2)), K2-J2 > 0), K2-J2+I2, ""))))');
-      sheets[i].getRange(2, 12, lastRow-1).setFormulaR1C1(sheets[i].getRange(2, 12).getFormulaR1C1());
+      if (elapsedCol > 0) {
+        sheets[i].getRange(2, elapsedCol).setFormula('=IFERROR(IF('+startColA1+'2="dns","dns",IF('+finishColA1+'2="rtd", "rtd", IF(AND(NOT(ISTEXT('+finishColA1+'2)), NOT(ISTEXT('+startColA1+'2)), '+finishColA1+'2-'+startColA1+'2 > 0), '+finishColA1+'2-'+startColA1+'2+'+timePlusMinusColA1+'2, ""))))');
+        sheets[i].getRange(2, elapsedCol, lastRow-1).setFormulaR1C1(sheets[i].getRange(2, elapsedCol).getFormulaR1C1());
+      }
       // Posn
-      sheets[i].getRange(2, 13).setFormula('=IFERROR(RANK(L2,L$2:L$' + lastRow + ', 1))');
-      sheets[i].getRange(2, 13, lastRow-1).setFormulaR1C1(sheets[i].getRange(2, 13).getFormulaR1C1());
+      if (posnCol > 0) {
+        sheets[i].getRange(2, posnCol).setFormula('=IFERROR(RANK('+elapsedColA1+'2,'+elapsedColA1+'$2:'+elapsedColA1+'$' + lastRow + ', 1))');
+        sheets[i].getRange(2, posnCol, lastRow-1).setFormulaR1C1(sheets[i].getRange(2, posnCol).getFormulaR1C1());
+      }
     }
   }
 }
@@ -2543,13 +2564,23 @@ function setValidation() {
     divRule = SpreadsheetApp.newDataValidation().requireValueInList('1,2,3,4,5,6,7,8,9,U12M,U12F,U10M,U10F'.split(','), true).build(),
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null;
   for (var i=0; i<sheets.length; i++) {
-    var lastRow = sheets[i].getLastRow();
+    var lastRow = sheets[i].getLastRow(), r;
     if (lastRow > 1) {
+      Logger.log("Setting validation for sheet " + sheets[i].getName());
       if (clubRule !== null) {
-        sheets[i].getRange(2, 5, lastRow-1).setDataValidation(clubRule);
+        r = sheets[i].getRange(2, getRaceColumnNumber("Club"), lastRow-1);
+        if (r)
+          r.clearDataValidations();
+          r.setDataValidation(clubRule);
       }
-      sheets[i].getRange(2, 6, lastRow-1).setDataValidation(classRule);
-      sheets[i].getRange(2, 7, lastRow-1).setDataValidation(divRule);
+      r = sheets[i].getRange(2, getRaceColumnNumber("Class"), lastRow-1);
+      if (r)
+        r.clearDataValidations();
+        r.setDataValidation(classRule);
+      r = sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1);
+      if (r)
+        r.clearDataValidations();
+        r.setDataValidation(divRule);
     }
   }
 }
@@ -2562,9 +2593,9 @@ function setFormatting() {
   for (var i=0; i<sheets.length; i++) {
     var lastRow = sheets[i].getLastRow();
     sheets[i].getRange(1, 1, lastRow, sheets[i].getLastColumn()).setFontFamily("Courier New");
+    // Set Start, Finish and Elapsed columns to show as times
     if (lastRow > 1) {
-      sheets[i].getRange(2, 10, lastRow-1, 3).setNumberFormat("HH:mm:ss");
-
+      sheets[i].getRange(2, getRaceColumnNumber("Start"), lastRow-1, 3).setNumberFormat("HH:mm:ss");
     }
   }
 }
