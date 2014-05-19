@@ -16,8 +16,13 @@ var rankingsUri = "http://www.marathon-canoeing.org.uk/marathon/media/RankingLis
 /**
  * Race sheet column names
  */
- var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Posn", "P/D", "Points", "Notes"];
- var raceSheetColumnAlignments = ["left", "left", "left", "left", "center", "left", "left", "center", "right", "right", "center", "center", "center", "center", "center", "center", "left"];
+var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Posn", "Notes"];
+var raceSheetColumnAlignments = ["left", "left", "left", "left", "center", "left", "left", "center", "right", "right", "center", "center", "center", "center", "left"];
+// For Hasler races, add the Promotion and Points columns before Notes
+if (isHaslerRace()) {
+  raceSheetColumnNames.splice(raceSheetColumnNames.length - 1, 0, "P/D", "Points");
+  raceSheetColumnAlignments.splice(raceSheetColumnAlignments.length - 1, 0, "center", "center");
+}
 
 /**
  * ID assigned to this library
@@ -1319,6 +1324,13 @@ function combineDivs(div1, div2) {
     }
     return div;
   }
+}
+
+/**
+ * Return true if the current spreadsheet represents a race within the Hasler system, false otherwise
+ */
+function isHaslerRace() {
+  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName("PandD") !== null;
 }
 
 /**
