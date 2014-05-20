@@ -68,31 +68,28 @@ function getRaceResults(key) {
       ss = SpreadsheetApp.openById(key),
       data = {},
       classes = [],
-      sheets = ss.getSheets();
+      sheets = getRaceSheets(ss);
+
   for (var i=0; i<sheets.length; i++) {
-    if ("Finishes" == sheets[i].getName()) {
-      break;
-    }
-    var results = [], lastbn = 0;
-    var range = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, 16), values = range.getValues();
-    for (var j=0; j<values.length; j++) {
-      var rowvalues = values[j];
-      if (parseInt(rowvalues[0]) && rowvalues[1] == "") {
+    var results = [], lastbn = 0, rows = getTableRows(sheets[i]);
+    for (var j=0; j<rows.length; j++) {
+      var row = rows[j];
+      if (parseInt(row['Number']) && row['Surname'] == "") {
         break;
       }
-      var bn = rowvalues[0],
-          name = "" + rowvalues[2] + " " + rowvalues[1],
-          club = "" + rowvalues[4],
-          class = "" + rowvalues[5],
-          div = "" + rowvalues[6],
-          time = formatTime(rowvalues[11]),
-          points = rowvalues[14],
-          pd = rowvalues[13],
-          notes = rowvalues[15];
+      var bn = row['Number'],
+          name = "" + row['First name'] + " " + row['Surname'],
+          club = "" + row['Club'],
+          class = "" + row['Class'],
+          div = "" + row['Div'],
+          time = formatTime(row['Elapsed']),
+          points = row['Points'],
+          pd = row['P/D'],
+          notes = row['Notes'];
       if (name.trim() != "") {
         if (bn) {
           if (time) {
-            results.push({num: bn, posn: rowvalues[12], names: [name], clubs: [club], classes: [class], divs: [div], time: time, points: [points], pd: [pd], notes: [notes] });
+            results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [class], divs: [div], time: time, points: [points], pd: [pd], notes: [notes] });
           }
         } else if (results.length > 0) {
           var last = results.pop();
@@ -174,26 +171,22 @@ function getRaceEntries(key) {
   }
   var ss = SpreadsheetApp.openById(key), 
     data = {}, classes = [],
-    sheets = ss.getSheets();
+    sheets = getRaceSheets(ss);
 
   for (var i=0; i<sheets.length; i++) {
-    if ("Finishes" == sheets[i].getName()) {
-      break;
-    }
-    var results = [];
-    var range = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, 13), values = range.getValues();
-    for (var j=0; j<values.length; j++) {
-      var rowvalues = values[j];
-      if (parseInt(rowvalues[0]) && rowvalues[1] == "") {
+    var results = [], rows = getTableRows(sheets[i]);
+    for (var j=0; j<rows.length; j++) {
+      var row = rows[j];
+      if (parseInt(row['Number']) && row['Surname'] == "") {
         break;
       }
-      var name = "" + rowvalues[2] + " " + rowvalues[1],
-        num = "" + rowvalues[0],
-        club = "" + rowvalues[4],
-        class = "" + rowvalues[5],
-        div = "" + rowvalues[6];
-      if (name != "" && name != " ") {
-        if (rowvalues[0]) {
+      var name = "" + row['First name'] + " " + row['Surname'],
+        num = "" + row['Number'],
+        club = "" + row['Club'],
+        class = "" + row['Class'],
+        div = "" + row['Div'];
+      if (name.trim() != "") {
+        if (row['Number']) {
           results.push({ num: num, names: [name], clubs: [club], classes: [class], divs: [div] });
         } else {
           var last = results.pop();
