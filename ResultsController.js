@@ -50,6 +50,7 @@ function printResults(e) {
   template.defaultScrollPeriod = 40; // Time to complete a complete scroll when enabled, if the code cannot override this
   template.showNotes = showNotes;
   var output = template.evaluate();
+  Logger.log(template.getCode());
   output.setSandboxMode(HtmlService.SandboxMode.NATIVE);
   output.setTitle(title);
   return output;
@@ -287,4 +288,9 @@ function getLastUpdated(key) {
   } else {
     return null;
   }
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename)
+      .getContent();
 }
