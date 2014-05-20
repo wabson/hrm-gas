@@ -128,7 +128,7 @@ function showResults(data) {
         html += ('     <th>Points</th>');
       if (data.pdTimes && data.pdTimes.length)
         html += ('     <th>P/D</th>');
-      if (showNotes) {
+      if (showNotes == "1" || showNotes == "true") {
         html += ('     <th>Notes</th>');
       }
       html += ('  </tr>')
@@ -145,7 +145,7 @@ function showResults(data) {
             html += ('     <td>' + races[i].results[j].points.join("<br />") + '</td>');
           if (data.pdTimes && data.pdTimes.length)
             html += ('     <td>' + races[i].results[j].pd.join("<br />") + '</td>');
-          if (showNotes) {
+          if (showNotes == "1" || showNotes == "true") {
             html += ('     <td>' + races[i].results[j].notes.join("<br />") + '</td>');
           }
           html += ('       </tr>');

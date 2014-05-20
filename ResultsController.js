@@ -23,8 +23,7 @@ function doGet(e) {
  * @param {object} e Event information
  */
 function printResults(e) {
-  var key = null, refresh, scroll = false,
-      showNotes = e.parameter.notes == "1";
+  var key = null, refresh, scroll = false, showNotes = false;
   for(var k in e.parameter) {
     if ("key" == k) {
       key = e.parameter[k];
@@ -34,6 +33,9 @@ function printResults(e) {
     }
     if ("scroll" == k) {
       scroll = e.parameter[k];
+    }
+    if ("showNotes" == k) {
+      showNotes = e.parameter[k];
     }
   }
   if (!key) {
