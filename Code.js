@@ -945,18 +945,21 @@ function findRankings(name) {
   var matches = [], bcuRegexp = /^\s*[A-Z]*\/?(\d+)\/?[A-Z]*\s*$/;
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName("Rankings");
   if (sheet) {
-    if (name) { // check name is not empty
+    if (sheet.getLastRow() < 2) {
+      throw "No data in Rankings sheet";
+    }
+    if (name) { // check name is not emptysheet.getLastRow()
       var isBCUNum = bcuRegexp.test(name.toUpperCase()), 
-          range = sheet.getRange(2, 1, sheet.getLastRow()-1, rankingsSheetColumnNames.length), values = range.getValues();
-      for (var i=0; i<values.length; i++) {
+          range = sheet.getRange(1, 1, sheet.getLastRow()-1, sheet.getLastColumn()), values = range.getValues(), columnNames = values[0];
+      for (var i=1; i<values.length; i++) {
         if (isBCUNum) { // BCU number
-          var bcu = String(values[i][4]).toUpperCase().trim(), result = bcuRegexp.exec(bcu);
+          var bcu = String(values[i][columnNames.indexOf("BCU Number")]).toUpperCase().trim(), result = bcuRegexp.exec(bcu);
           if (result && (bcu == name || result[1] == name)) { // Match the whole number or just the content between the slashes (if present)
-            matches.push(arrayZip(rankingsSheetColumnNames, values[i]));
+            matches.push(arrayZip(columnNames, values[i]));
           }
         } else { // Name
-          if ((""+values[i][0]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0 || (""+values[i][1]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0) {
-            matches.push(arrayZip(rankingsSheetColumnNames, values[i]));
+          if ((""+values[i][columnNames.indexOf("Surname")]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0 || (""+values[i][columnNames.indexOf("First name")]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0) {
+            matches.push(arrayZip(columnNames, values[i]));
           }
         }
       }

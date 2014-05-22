@@ -25,13 +25,23 @@ function onEdit(e) {
     if (headerRange.getValue() == "BCU Number") {
       var matches = HRM.findRankings(""+e.value);
       if (matches.length == 0) {
-        e.range.setComment("Number not found in Rankings");
+        e.range.setComment("BCU Number " + e.value + " not known");
       } else if (matches.length == 1) {
         // TODO Do this re-ordering of values via a util function
-        var dataRowValues = [matches[0]['Surname'], matches[0]['First name'], matches[0]['BCU Number'], matches[0]['Expiry'], matches[0]['Club'], matches[0]['Class'], matches[0]['Division']]; // Surname  First name  BCU Number  Club  Class Div
-        sheet.getRange(e.range.getRow(), 2, 1, 7).setValues([dataRowValues])
+        var dataRowValues = [], raceHeaders = HRM.getTableHeaders(sheet), headerName;
+        for (var i = 1; i < raceHeaders.length; i++) {
+          headerName = raceHeaders[i] == "Div" ? "Division" : raceHeaders[i]; // translate from rankings data to race sheet headings
+          dataRowValues.push(matches[0][headerName] || "");
+        };
+        // Remove empty values from the end
+        while (dataRowValues.length > 0 && dataRowValues[dataRowValues.length-1] === "") {
+          dataRowValues.pop();
+        }
+        //var dataRowValues = [matches[0]['Surname'], matches[0]['First name'], matches[0]['BCU Number'], matches[0]['Expiry'], matches[0]['Club'], matches[0]['Class'], matches[0]['Division']]; // Surname  First name  BCU Number  Club  Class Div
+        sheet.getRange(e.range.getRow(), 2, 1, dataRowValues.length).setValues([dataRowValues]);
+        e.range.clearNote();
       } else {
-        e.range.setComment("Multiple matches found in Rankings");
+        e.range.setComment("Multiple matches found for " + e.value);
       }
     }
   }
