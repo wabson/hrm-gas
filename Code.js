@@ -1038,7 +1038,11 @@ function add(eventInfo) {
  */
 function getTableHeaders(sheet) {
   var range = sheet.getRange(1, 1, 1, sheet.getLastColumn()), values = range.getValues();
-  return values.length > 0 ? values[0] : [];
+  var headers =  values.length > 0 ? values[0] : [];
+  while (headers.length > 0 && headers[headers.length - 1] === "") {
+    headers.pop();
+  }
+  return headers;
 }
 
 /**
@@ -1906,7 +1910,8 @@ function setStartTimes(eventInfo) {
   var app = UiApp.getActiveApplication(),
       time = eventInfo.parameter.time,
       raceName = eventInfo.parameter.raceName,
-      sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(raceName);
+      sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(raceName),
+      finishColIndex = getTableColumnIndex("Finish");
   if (raceName == "") {
     throw "You must select a race";
   }
@@ -1923,7 +1928,7 @@ function setStartTimes(eventInfo) {
   } else {
     throw "Invalid time format, must be MM:SS or HH:MM:SS";
   }
-  var entriesRange = sheet.getRange(2, 1, sheet.getLastRow()-1, 10), entries = getEntryRowData(entriesRange), entry, newTime, changedCount = 0;
+  var entriesRange = sheet.getRange(2, 1, sheet.getLastRow()-1, finishColIndex + 1), entries = getEntryRowData(entriesRange), entry, newTime, changedCount = 0;
   if (entries.length > 0) {
     // Assume that the entries are in a continuous range, for now
     Logger.log("Found " + entries.length + " entries");
@@ -1942,14 +1947,14 @@ function setStartTimes(eventInfo) {
       if (!entry.boatNumber) {
         throw "Boat number not found for entry " + entry;
       }
-      newTime = (""+entry.values[0][9]).toLowerCase() != "dns" ? time : entry.values[0][9];
+      newTime = (""+entry.values[0][finishColIndex]).toLowerCase() != "dns" ? time : entry.values[0][9];
       Logger.log("Setting time '" + newTime + "' for row " + entry.rowNumber);
       timeValues[entry.rowNumber-2][0] = newTime;
       if (newTime != "dns") {
         changedCount ++;
       }
     }
-    sheet.getRange(2, 10, timeValues.length, 1).setValues(timeValues);
+    sheet.getRange(2, finishColIndex + 1, timeValues.length, 1).setValues(timeValues);
     app.getElementById("setStartTimes-result").setText("Set start time " + time + " for " + changedCount + " crews");
     app.getElementById("setStartTimes-time").setValue("");
   } else {
@@ -2044,9 +2049,9 @@ function setFinishTimes(eventInfo) {
     finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 2).setValues(finishValues);
   }
   // Fetch all of the entries
-  var allEntries = [], sheets = getRaceSheets();
+  var allEntries = [], sheets = getRaceSheets(), finishColNum = getTableColumnIndex("Finish") + 1;
   for (var i=0; i<sheets.length; i++) {
-    allEntries = allEntries.concat(getEntryRowData(sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, 6)));
+    allEntries = allEntries.concat(getEntryRowData(sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, getTableColumnIndex("Class"))));
   }
   // Now check against the entries to locate the row and sheet in which the boat is found
   var entry;
@@ -2081,7 +2086,7 @@ function setFinishTimes(eventInfo) {
   // Finally we can set the values in the sheets
   for (var i=0; i<times.length; i++) {
     Logger.log("Adding finish time " + times[i].time + " to row " + times[i].rowNumber + ", sheet " + times[i].sheet.getName());
-    times[i].sheet.getRange(times[i].rowNumber, 11).setValue(times[i].time);
+    times[i].sheet.getRange(times[i].rowNumber, finishColNum).setValue(times[i].time);
   }
   app.getElementById("setFinishTimes-result").setText("Set start times for " + times.length + " crews");
   app.getElementById("setFinishTimes-times").setValue("");
@@ -2108,7 +2113,7 @@ function getNextFinishesRow(sheet) {
 function getTimesAndPD(sheet) {
   var lastNonBlank = 0;
   if (sheet.getLastRow() > 1) {
-    var startRow = 2, range = sheet.getRange(startRow, 1, sheet.getLastRow()-1, 14), values = range.getValues();
+    var startRow = 2, range = sheet.getRange(startRow, 1, sheet.getLastRow()-1, getTableColumnIndex("P/D") + 1), values = range.getValues();
     for (var i=0; i<values.length; i++) {
       if (values[i][0] != "") { // If there is a time then add the row
         lastNonBlank = i;
@@ -2124,7 +2129,7 @@ function setPD(sheet, values) {
     colValues.push([values[i][13]]);
   }
   if (colValues.length > 0) {
-    var startRow = 2, range = sheet.getRange(startRow, 14, colValues.length, 1);
+    var startRow = 2, range = sheet.getRange(startRow, getTableColumnIndex("P/D") + 1, colValues.length, 1);
     range.setValues(colValues);
   }
 }
@@ -2144,7 +2149,7 @@ function numEntries(values) {
 }
 
 function medianTime(values) {
-  var times = [], timeColIndex = 11, pdColIndex = 13;
+  var times = [], timeColIndex = getTableColumnIndex("Elapsed");
   for (var i=0; i<values.length; i++) {
     if (values[i][0] != "" && (values[i][timeColIndex] instanceof Date)) { // If there is a time then add the row
       times.push(timeInMillis(values[i][timeColIndex]));
@@ -2183,7 +2188,7 @@ function overallZero(divZeroes) {
 }
 
 function pdStatus(values, pFactors, dFactors, raceDiv) {
-  var status = "", classDivIndex = 6, classColIndex = 5, timeColIndex = 11, time = timeInMillis(values[timeColIndex]);
+  var status = "", classDivIndex = 6, classColIndex = 5, timeColIndex = getTableColumnIndex("Elapsed"), time = timeInMillis(values[timeColIndex]);
   // Rule 32(h) and 33(g) Paddlers transferred from another division are not eligible for promotion/demotion
   if ((""+values[0]).indexOf(""+raceDiv) != 0) {
     Logger.log("Transferred from another division, skipping");
@@ -2241,7 +2246,7 @@ function getNextColumnRow(sheet, column) {
 function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFactors, dFactors) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), 
       sheetName, sheetValues = new Array(10), sheets = new Array(10), sheet, zeroTimes = [], 
-      timeColIndex = 11, pdColIndex = 13, pdTimeRows = [],
+      timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D"), pdTimeRows = [],
       min;
   if (sourceFactors.length != calculateFromDivs.length) {
     throw "Number of source factors must be the same as the number of source sheets";
@@ -2354,13 +2359,13 @@ function calculatePromotions() {
 }
 
 function calculatePointsBoundary(entries, raceName) {
-  var boatNum, pd, time;
+  var boatNum, pd, time, timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D");
   // No cut-off for Div9
   if (raceName[0] == "9") {
     return null;
   }
   for (var i=0; i<entries.length; i++) {
-    boatNum = entries[i].boatNumber, pd = entries[i].values[0][13], time = entries[i].values[0][11];
+    boatNum = entries[i].boatNumber, pd = entries[i].values[0][pdColIndex], time = entries[i].values[0][timeColIndex];
     // Skip boats transferred from another division (i.e. strange numbers)
     if (raceName && raceName[0] != (""+boatNum)[0]) {
       continue;
@@ -2428,7 +2433,9 @@ function calculatePoints(scriptProps) {
   }
   
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
-      clubsSheet = ss.getSheetByName("Clubs"), clubRows = [], clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, lightningPoints, unfoundClubs = [];
+      clubsSheet = ss.getSheetByName("Clubs"), clubRows = [], clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, lightningPoints, unfoundClubs = [],
+      clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"), 
+      pdColIndex = getTableColumnIndex("P/D"), numHeaders = raceSheetColumnNames.length;
   if (clubsSheet != null) {
     // Clear existing calculated values
     if (clubsSheet.getLastRow() > 1 && clubsSheet.getLastColumn() > 4) {
@@ -2466,20 +2473,20 @@ function calculatePoints(scriptProps) {
     }
     divStr = sheets[i].getName().replace("Div", "");
     isHaslerRace = sheets[i].getName().indexOf("Div") == 0, isLightningRace = sheets[i].getName().match(/U\d+/) != null;
-    var sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, 16), sheetValues = sheetRange.getValues();
+    var sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, numHeaders), sheetValues = sheetRange.getValues();
     colValues = Array(sheetRange.getNumRows());
     entries = getEntryRowData(sheetRange);
     // Calculate 110% boundary - time of fastest crew NOT promoted for K1 or 110% of winning boat for K2
     // Boats must not have been transferred from another division
-    entries.sort( function(a,b) {return (parseInt(a.values[0][12])||999) - (parseInt(b.values[0][12])||999);} ); // Sort by position, ascending then blanks (non-finishers)
+    entries.sort( function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);} ); // Sort by position, ascending then blanks (non-finishers)
     boundary = calculatePointsBoundary(entries, divStr);
     // Allocate points to clubs within the region
     var count = 20, pointsByBoatNum = new Array(99);
     var boatNum, pd, time, minPoints = (divStr[0] == "9" ? 2 : 1);
     for (var j=0; j<entries.length; j++) {
-      boatNum = entries[j].boatNumber, pd = entries[j].values[0][13], time = entries[j].values[0][11], 
-        club1 = entries[j].values[0][4], club2 = entries[j].values[1] ? entries[j].values[1][4] : "",
-        posn = parseInt(entries[j].values[0][12]) || 0;
+      boatNum = entries[j].boatNumber, pd = entries[j].values[0][pdColIndex], time = entries[j].values[0][timeColIndex], 
+        club1 = entries[j].values[0][clubColIndex], club2 = entries[j].values[1] ? entries[j].values[1][clubColIndex] : "",
+        posn = parseInt(entries[j].values[0][posnColIndex]) || 0;
       if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0)) {
         if (isHaslerRace && boundary && time instanceof Date && boundary < timeInMillis(time)) {
           pointsByBoatNum[entries[j].boatNumber] = minPoints;
@@ -2568,18 +2575,39 @@ function calculatePoints(scriptProps) {
 }
 
 /**
+ * Return the zero-based index of the column with the specified header name, or -1 if not found. Columns are looked up from the spreadsheet.
+ * 
+ * Return values are cached for 5 minutes, after this the name will be looked up again in the spreadsheet.
+ *
+ * @param colName The name of the column header to look for
+ * @param sheet The sheet in which to look for table headings (optional, defaults to the first sheet in the current spreadsheet if not specified/null)
+ */
+function getTableColumnIndex(colName, sheet) {
+  sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  var cache = CacheService.getPrivateCache(), cacheKey = "col_index__" + sheet.getName() + "__" + colName;
+  var cached = cache.get(cacheKey);
+  if (cached != null) {
+     return +cached; // convert to a number
+  }
+  var headers = getTableHeaders(SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]); // takes some time
+  var index = headers.indexOf(colName);
+  cache.put(cacheKey, index, 300); // cache for 5 minutes
+  return index;
+}
+
+/**
  * Return the number (starting from 1, not zero) of the column with the specified header, or -1 if not found
  */
 function getRaceColumnNumber(colName) {
-  return raceSheetColumnNames.indexOf(colName) + 1;
+  return getTableColumnIndex(colName) + 1;
 }
 
 /**
  * Return the letter denoting of the column with the specified header in A1 notation, or '' if not found
  */
 function getRaceColumnA1(colName) {
-  var index = raceSheetColumnNames.indexOf(colName) + 1;
-  return index > -1 ? String.fromCharCode(64 + index) : '';
+  var index = getTableColumnIndex(colName);
+  return index > -1 ? String.fromCharCode(65 + index) : '';
 }
 
 /**
