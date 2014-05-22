@@ -37,7 +37,6 @@ function onEdit(e) {
         while (dataRowValues.length > 0 && dataRowValues[dataRowValues.length-1] === "") {
           dataRowValues.pop();
         }
-        //var dataRowValues = [matches[0]['Surname'], matches[0]['First name'], matches[0]['BCU Number'], matches[0]['Expiry'], matches[0]['Club'], matches[0]['Class'], matches[0]['Division']]; // Surname  First name  BCU Number  Club  Class Div
         sheet.getRange(e.range.getRow(), 2, 1, dataRowValues.length).setValues([dataRowValues]);
         e.range.clearNote();
       } else {
@@ -73,33 +72,33 @@ function addMenu() {
   null,
   {
     name : "Add Entries",
-    functionName : "addEntries"
+    functionName : "showAddEntries"
   },
   {
     name : "Add Entries from File",
-    functionName : "addEntriesFromFile"
+    functionName : "showAddLocalEntries"
   },
   {
     name : "Import Entries from CSV",
-    functionName : "importEntries"
+    functionName : "showImportEntries"
   },
   {
     name : "Clear Entries",
-    functionName : "clearEntries"
+    functionName : "showClearEntries"
   },
   null,
   {
     name: "Modify Crews",
-    functionName: "modifyCrews"
+    functionName: "showModifyCrews"
   },
   null,
   {
     name: "Set Start Times",
-    functionName: "setStartTimes"
+    functionName: "showSetStartTimes"
   },
   {
     name: "Set Finish Times",
-    functionName: "setFinishTimes"
+    functionName: "showSetFinishTimes"
   },
   {
     name: "Calculate Promotions",
@@ -149,49 +148,49 @@ function clearRankings() {
 /**
  * Menu hook for adding entries
  */
-function addEntries() {
+function showAddEntries() {
   HRM.showAddEntries();
 }
 
 /**
  * Menu hook for adding entries from a file
  */
-function addEntriesFromFile() {
+function showAddLocalEntries() {
   HRM.showAddLocalEntries();
 }
 
 /**
  * Menu hook for uploading entries from a CSV file
  */
-function importEntries() {
+function showImportEntries() {
   HRM.showImportEntries();
 }
 
 /**
  * Menu hook for clearing existing entries
  */
-function clearEntries() {
+function showClearEntries() {
   HRM.showClearEntries();
 }
 
 /**
  * Menu hook for moving or deleting crews
  */
-function modifyCrews() {
+function showModifyCrews() {
   HRM.showModifyCrews();
 }
 
 /**
  * Menu hook for setting start times
  */
-function setStartTimes() {
+function showSetStartTimes() {
   HRM.showSetStartTimes();
 }
 
 /**
  * Menu hook for setting finish times
  */
-function setFinishTimes() {
+function showSetFinishTimes() {
   HRM.showSetFinishTimes();
 }
 
