@@ -124,6 +124,11 @@ function addMenu() {
   {
     name : "Finance Summary",
     functionName : "showRaceLevies"
+  },
+  null,
+  {
+    name : "New K4 Sheet",
+    functionName : "createK4Sheet"
   }];
   sheet.addMenu("HRM", entries);
 }
@@ -261,8 +266,8 @@ function setFormatting() {
 /**
  * Menu hook for setting race sheet headings
  */
-function setRaceSheetHeadings() {
-  HRM.setRaceSheetHeadings();
+function setAllRaceSheetHeadings() {
+  HRM.setAllRaceSheetHeadings();
 }
 /**
  * Menu hook for saving HTML
@@ -281,4 +286,10 @@ function saveResultsHTML() {
  */
 function updateEntriesFromRankings() {
   HRM.updateEntriesFromRankings();
+}
+/**
+ * Menu hooks for creating new spreadsheets
+ */
+function createK4Sheet() {
+  HRM.createK4Sheet();
 }

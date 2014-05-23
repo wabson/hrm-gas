@@ -34,6 +34,13 @@ var PROJECT_ID = "AKfycbzymqCQ6rUDYiNeG63i9vYeXaSE1YtiHDEgRHFQ0TdXaBSwkLs";
  */
 var clubs = [];
 
+var RACE_SHEETS_K4 = [['RaceA', 101, 10, 4], ['RaceB', 201, 10, 4], ['RaceC', 301, 10, 4], ['Rocket', 1001, 10, 4]];
+var RACE_SHEETS_HASLER = [['Div1', 101, 50, 1], ['Div2', 201, 50, 1], ['Div3', 301, 50, 1], ['Div4', 401, 50, 1], ['Div5', 501, 50, 1], ['Div6', 601, 50, 1]];
+var EXTRA_SHEETS_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
+var EXTRA_SHEETS_NON_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
+
+var hrmTypes = [];
+
 /**
  * Button handler for load rankings dialog
  *
@@ -2764,17 +2771,62 @@ function setFormatting() {
 }
 
 /**
+ * Re-set the column names on a specific race sheet, including contents and formats
+ */
+function setRaceSheetHeadings(sheet) {
+  var headersRange = sheet.getRange(1, 1, 1, raceSheetColumnNames.length);
+  // Clear existing header
+  sheet.getRange(1, 1, 1, sheet.getLastColumn()).clear().setBorder(false, false, false, false, false, false);
+  // Set the new values and format
+  headersRange.setValues([raceSheetColumnNames]).setHorizontalAlignments([raceSheetColumnAlignments]).setFontFamily("Courier New").setFontWeight("bold").setBackground("#ccffff").setBorder(true, true, true, true, true, true);
+  // Set the last column header (Notes) to be italicised
+  sheet.getRange(1, raceSheetColumnNames.length).setFontStyle("italic");
+}
+
+/**
  * Re-set the column names on all race sheets, including contents and formats
  */
-function setRaceSheetHeadings() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = getRaceSheets(), headersRange;
+function setAllRaceSheetHeadings() {
+  var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    headersRange = sheets[i].getRange(1, 1, 1, raceSheetColumnNames.length);
-    // Clear existing header
-    sheets[i].getRange(1, 1, 1, sheets[i].getLastColumn()).clear().setBorder(false, false, false, false, false, false);
-    // Set the new values and format
-    headersRange.setValues([raceSheetColumnNames]).setHorizontalAlignments([raceSheetColumnAlignments]).setFontFamily("Courier New").setFontWeight("bold").setBackground("#ccffff").setBorder(true, true, true, true, true, true);
-    // Set the last column header (Notes) to be italicised
-    sheets[i].getRange(1, raceSheetColumnNames.length).setFontStyle("italic");
+    setRaceSheetHeadings(sheets[i]);
+  }
+}
+
+/**
+ * Create a new spreadsheet to manage a race
+ */
+function createRaceSpreadsheet(name, raceSheets, extraSheets) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet().copy(name), sheets = ss.getSheets(), tempSheet = ss.insertSheet("Temp");
+  // Delete preexisting sheets
+  for (var i = 0; i < sheets.length; i++) {
+    ss.deleteSheet(sheets[i]);
+  };
+  // Add new race sheets
+  for (var i = 0; i < raceSheets.length; i++) {
+    var sheet = ss.insertSheet(raceSheets[i][0]);
+    var values = [], numRows = raceSheets[i][2] * raceSheets[i][3]; // Number of places * crew size
+    for (var j = 0; j < numRows; j++) {
+      values.push([j % raceSheets[i][3] == 0 ? raceSheets[i][1] + j/raceSheets[i][3] : '']);
+    };
+    sheet.getRange(2, 1, numRows, 1).setValues(values).setFontFamily("Courier New").setFontWeight("bold").setBackground("#ffff99").setBorder(true, false, false, true, false, false);
+    setRaceSheetHeadings(sheet);
+  }
+  for (var i = 0; i < extraSheets.length; i++) {
+    sheet = ss.insertSheet(extraSheets[i]);
+  }
+  // Finally remove the temp sheet (we need this as we're not allowed to delete all sheets up-front)
+  ss.deleteSheet(tempSheet);
+}
+
+/**
+ * Create a new spreadsheet to manage a K4 race
+ */
+function createK4Sheet() {
+  var raceName = Browser.inputBox(
+    'Enter file name:',
+    Browser.Buttons.OK_CANCEL);
+  if (raceName) {
+    createRaceSpreadsheet(raceName, RACE_SHEETS_K4, EXTRA_SHEETS_NON_HASLER);
   }
 }
