@@ -34,7 +34,12 @@ function saveResultsHTML() {
     template[k] = data[k];
   }
   var outputHtml = template.evaluate().getContent();
-  DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  var htmlFile = DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
+  showLinkDialog('Publish HTML',
+    "<p>Race results published to Google Drive:</p>",
+    "https://googledrive.com/host/" + htmlFile.getId()
+  );
 }
 
 /**

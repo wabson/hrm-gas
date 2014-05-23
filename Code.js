@@ -1408,19 +1408,29 @@ function showEntriesURL() {
  * Display the URL for accessing results
  */
 function showWebURL(type) {
+  // Create the UiInstance object myapp and set the title text
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), capitalizedType = type.charAt(0).toUpperCase() + type.slice(1),
+    url = "https://script.google.com/macros/exec?service=" + PROJECT_ID + "&key=" + ss.getId() + "&show=" + type;
+  showLinkDialog('View ' + capitalizedType + ' Summary',
+    "<p>Use this link to access the live " + type + ":</p>",
+    url);
+}
+
+/**
+ * Display a dialog with a link, which the user can close with an OK button
+ */
+function showLinkDialog(title, text, linkHref, linkText, linkTarget, dialogHeight) {
   // Dialog height in pixels
-  var dialogHeight = 125;
+  dialogHeight = dialogHeight||125;
   
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
-  var capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
-  var app = UiApp.createApplication().setTitle('View ' + capitalizedType + ' Summary').setHeight(dialogHeight),
+  var app = UiApp.createApplication().setTitle(title).setHeight(dialogHeight),
       mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
   
-  var url = "https://script.google.com/macros/exec?service=" + PROJECT_ID + "&key=" + ss.getId() + "&show=" + type;
-  mypanel.add(app.createHTML("<p>Use this link to access the live " + type + ":</p>"));
-  mypanel.add(app.createAnchor(url, url).setTarget("results"));
+  mypanel.add(app.createHTML(text));
+  mypanel.add(app.createAnchor(linkText||linkHref, linkHref).setTarget(linkTarget||"_blank"));
   
   var closeButton = app.createButton('OK');
   var closeHandler = app.createServerClickHandler('close');

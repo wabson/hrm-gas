@@ -110,12 +110,16 @@ function addMenu() {
   },
   null,
   {
-    name : "View Entries",
+    name : "Live Entries",
     functionName : "showEntriesURL"
   },
   {
-    name : "View Results",
+    name : "Live Results",
     functionName : "showResultsURL"
+  },
+  {
+    name : "Publish Results",
+    functionName : "saveResultsHTML"
   },
   {
     name : "Finance Summary",
@@ -265,4 +269,10 @@ function setRaceSheetHeadings() {
  */
 function setRaceSheetHeadings() {
   HRM.setRaceSheetHeadings();
+}
+/**
+ * Menu hook for saving HTML
+ */
+function saveResultsHTML() {
+  HRM.saveResultsHTML();
 }
