@@ -1035,6 +1035,73 @@ function add(eventInfo) {
 }
 
 /**
+ * Convert ranking data row to an entry row by translating property names
+ */
+function rankingToEntryData(ranking) {
+  var entry = {};
+  for (var k in ranking) {
+    entry[k == "Division" ? "Div" : k] = ranking[k];
+  }
+  return entry;
+}
+
+function lookupInTable(rows, key, matchValue) {
+  var matches = [];
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i][key] === matchValue) {
+      matches.push(rows[i]);
+    }
+  }
+  return matches;
+}
+
+/**
+ * Look through all the current entries and update with any new data from the rankings sheet
+ */
+function updateEntriesFromRankings() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = getRaceSheets(ss);
+  var rankingData = getTableRows(rankingsSheet), sheet;
+  for (var i = 0; i < sheets.length; i++) {
+    sheet = sheets[i];
+    var raceData = getTableRows(sheet);
+    if (raceData.length > 0) {
+      for (var j = 0; j < raceData.length; j++) {
+        var bcuNum = raceData[j]['BCU Number'];
+        if (bcuNum) {
+          Logger.log("BCU Number: " + bcuNum);
+          var matches = lookupInTable(rankingData, 'BCU Number', bcuNum);
+          if (matches.length == 1) {
+            Logger.log("Found match: " + matches[0]);
+            var update = rankingToEntryData(matches[0]);
+            for (var p in update) {
+              Logger.log("Set " + p + ": " + update[p]);
+              raceData[j][p] = update[p];
+            }
+          }
+        }
+      }
+      setTableRowValues(sheet, raceData, "Surname", "Div");
+    }
+  }
+}
+
+function setTableRowValues(sheet, values, startColumnName, endColumnName) {
+  if (values.length == 0) {
+    return;
+  }
+  var headers = getTableHeaders(sheet);
+  var valueList = new Array(values.length);
+  for (var i = 0; i < values.length; i++) {
+    var row = new Array();
+    for (var j = (startColumnName ? headers.indexOf(startColumnName) : 0); j < (endColumnName ? headers.indexOf(endColumnName) + 1 : headers.length); j++) {
+      row.push(values[i][headers[j]]);
+    }
+    valueList[i] = row;
+  }
+  sheet.getRange(2, (startColumnName ? headers.indexOf(startColumnName) + 1 : 1), valueList.length, valueList[0].length).setValues(valueList);
+}
+
+/**
  * Return an array containing the list of table heading cells taken from row 1 in the given sheet
  *
  * Return {array} Array containing the heading cell values, which may be empty if there were no values in row 1

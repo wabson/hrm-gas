@@ -276,3 +276,9 @@ function setRaceSheetHeadings() {
 function saveResultsHTML() {
   HRM.saveResultsHTML();
 }
+/**
+ * Menu hook for updating entries from ranking data
+ */
+function updateEntriesFromRankings() {
+  HRM.updateEntriesFromRankings();
+}
