@@ -359,7 +359,7 @@ function addLocalRankings(eventInfo) {
   if (ssId)
   {
     var ss = SpreadsheetApp.openById(ssId),
-        sheet = ss.getActiveSheet();
+        sheet = ss.getSheetByName("Rankings") || ss.getActiveSheet(); // Take the sheet named 'Rankings' or just the first one otherwise
     
     var ass = SpreadsheetApp.getActiveSpreadsheet(),
         rsheet = ass.getSheetByName("Rankings");
