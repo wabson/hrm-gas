@@ -368,9 +368,11 @@ function addLocalRankings(eventInfo) {
       throw "Current spreadsheet has no Rankings sheet";
     }
     
-    var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 6), values = range.getValues();
+    var range = sheet.getRange(2, 1, sheet.getLastRow()-1, sheet.getLastColumn()), values = range.getValues();
     //throw "hello" + values.length;
-    var destinationRange = rsheet.getRange(rsheet.getLastRow() + 1, 1, values.length, 6);
+    if (values.length > 0) {
+      var destinationRange = rsheet.getRange(rsheet.getLastRow() + 1, 1, values.length, values[0].length);
+    }
     
     destinationRange.setValues(values);
   } else {
@@ -2814,6 +2816,9 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets) {
   }
   for (var i = 0; i < extraSheets.length; i++) {
     sheet = ss.insertSheet(extraSheets[i]);
+    if (extraSheets[i] == "Rankings") {
+      sheet.appendRow(rankingsSheetColumnNames);
+    }
   }
   // Finally remove the temp sheet (we need this as we're not allowed to delete all sheets up-front)
   ss.deleteSheet(tempSheet);
