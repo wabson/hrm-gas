@@ -22,6 +22,26 @@ function doGet(e) {
  *
  * @param {object} e Event information
  */
+function saveResultsHTML() {
+  var template = HtmlService.createTemplateFromFile('ResultsStatic');
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var title = ss.getName();
+  template.show = "results";
+  template.showNotes = false;
+  template.title = title;
+  var data = getRaceResultsFromSpreadsheet(ss);
+  for (var k in data) {
+    template[k] = data[k];
+  }
+  var outputHtml = template.evaluate().getContent();
+  DriveApp.createFile(title, outputHtml, MimeType.HTML);
+}
+
+/**
+ * Print results summary
+ *
+ * @param {object} e Event information
+ */
 function printResults(e) {
   var key = null, refresh, scroll = false, showNotes = false;
   for(var k in e.parameter) {
@@ -67,9 +87,17 @@ function getRaceResults(key) {
   if (!key) {
     throw "You must specify a document";
   }
-  var template = HtmlService.createTemplateFromFile('Results'),
-      ss = SpreadsheetApp.openById(key),
-      data = {},
+  var ss = SpreadsheetApp.openById(key);
+  return getRaceResultsFromSpreadsheet(ss);
+}
+
+/**
+ * Get results for display
+ *
+ * @function getRaceResultsFromSpreadsheet
+ */
+function getRaceResultsFromSpreadsheet(ss) {
+  var data = {},
       classes = [],
       sheets = getRaceSheets(ss);
 
@@ -163,7 +191,7 @@ function getRaceResults(key) {
   data.clubPoints = clubPoints;
   data.lightningPoints = lightningPoints;
   data.races = classes;
-  data.lastUpdated = getLastUpdated(key);
+  data.lastUpdated = getLastUpdated(ss.getId());
   Logger.log("Return " + classes.length + " races");
   return data;
 }

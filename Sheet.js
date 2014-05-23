@@ -260,3 +260,9 @@ function setFormatting() {
 function setRaceSheetHeadings() {
   HRM.setRaceSheetHeadings();
 }
+/**
+ * Menu hook for saving HTML
+ */
+function setRaceSheetHeadings() {
+  HRM.setRaceSheetHeadings();
+}
