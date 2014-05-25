@@ -29,6 +29,8 @@ if (SpreadsheetApp.getActiveSpreadsheet() && isHaslerRace()) {
  */
 var PROJECT_ID = "AKfycbzymqCQ6rUDYiNeG63i9vYeXaSE1YtiHDEgRHFQ0TdXaBSwkLs";
 
+var NUMBER_FORMAT_DATE = "dd/MM/yyyy";
+
 /**
  * List of canoe clubs
  */
@@ -218,13 +220,13 @@ function loadRankingsXLS(clubName) {
     // Copying ranges directly is not supported between spreadsheets
     destinationRange.setValues(sourceRange.getValues());
     // Set expiration date formats (column F)
-    sheet.getRange(2, 6, sourceRange.getHeight()-1, 1).setNumberFormat("dd/MM/yyyy");
+    sheet.getRange(2, 6, sourceRange.getHeight()-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
     // Set header row format
     headerRange.setBackgrounds(sourceHeaderRange.getBackgrounds());
     headerRange.setHorizontalAlignments(sourceHeaderRange.getHorizontalAlignments());
     var numberFormats = sourceHeaderRange.getNumberFormats();
     // Override date number format as it does not seem to get applied correctly
-    numberFormats[0][7] = "dd/MM/yyyy";
+    numberFormats[0][7] = NUMBER_FORMAT_DATE;
     headerRange.setNumberFormats(numberFormats);
 
     Browser.msgBox("Added " + (sourceRange.getHeight()-1) + " rankings");
@@ -375,6 +377,8 @@ function addLocalRankings(eventInfo) {
     }
     
     destinationRange.setValues(values);
+    // Expiration date must be formatted as a date or getValues() returns it as an integer
+    sheet.getRange(destinationRange.getRow(), 6, destinationRange.getHeight(), 1).setNumberFormat(NUMBER_FORMAT_DATE);
   } else {
     throw "Could not locate source spreadsheet";
   }
@@ -2764,7 +2768,7 @@ function setFormatting() {
     // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
     if (lastRow > 1) {
       sheets[i].getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 3).setNumberFormat("0");
-      sheets[i].getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 3).setNumberFormat("dd/MM/yyyy");
+      sheets[i].getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_DATE);
       sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1, 3).setNumberFormat("0");
       sheets[i].getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 3).setNumberFormat("£0.00");
       sheets[i].getRange(2, getRaceColumnNumber("Start"), lastRow-1, 3).setNumberFormat("HH:mm:ss");
