@@ -2835,3 +2835,45 @@ function createK4Sheet() {
     createRaceSpreadsheet(raceName, RACE_SHEETS_K4, EXTRA_SHEETS_NON_HASLER);
   }
 }
+
+function populateFromHtmlResults() {
+  var raceUrl = Browser.inputBox(
+    'Enter results URL:',
+    Browser.Buttons.OK_CANCEL
+  );
+  var html = UrlFetchApp.fetch(raceUrl), pageSrc = html.getContentText(), lines = pageSrc.split(/\r?\n/);
+  var sheetName = null, values = [], newvalues = [], line;
+  for (var i = 0; i < lines.length; i++) {
+    line = lines[i].trim();
+    if (/<caption>(.+)<\/caption>/i.test(line)) {
+      sheetName = /<caption>(.+)<\/caption>/i.exec(line)[1];
+    }
+    else if (line == "<tr>") {
+      newvalues = [];
+    }
+    else if (line == "</tr>") {
+      if (newvalues.length == 8) {
+        values.push([newvalues[1][0], '', '', newvalues[2][0], newvalues[3][0], newvalues[4][0], '', '', '', '', newvalues[5][0], newvalues[0][0], newvalues[7][0], newvalues[6][0]]);
+        if (newvalues[1].length == 2) { // are there 2 names?
+          values.push([newvalues[1][1], '', '', newvalues[2][1]||'', newvalues[3][1]||'', newvalues[4][1]||'', '', '', '', '', '', '', (newvalues[7][1]||'').replace("&nbsp", ""), newvalues[6][1]||'']);
+        }
+      }
+      newvalues = [];
+    }
+    else if (/<td>(.*)<\/td>/i.test(line)) {
+      cellText = /<td>(.*)<\/td>/i.exec(line)[1];
+      newvalues.push(cellText.split(/<br ?\/?>/));
+    }
+    else if (line.indexOf("</table>") > -1 || i == lines.length-1) { // Register for last line in case spreadsheet is truncated
+      if (sheetName && values.length > 0) {
+        var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName);
+        if (!sheet) {
+          throw "Sheet " + sheetName + " not found!";
+        }
+        sheet.getRange(2, 2, values.length, 14).setValues(values);
+      }
+      sheetName = null;
+      values = [];
+    }
+  }
+}

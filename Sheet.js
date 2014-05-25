@@ -293,3 +293,6 @@ function updateEntriesFromRankings() {
 function createK4Sheet() {
   HRM.createK4Sheet();
 }
+function populateFromHtmlResults() {
+  HRM.populateFromHtmlResults();
+}
