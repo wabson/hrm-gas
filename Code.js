@@ -2840,12 +2840,56 @@ function createK4Sheet() {
   }
 }
 
+
+function getElementsByTagName(element, tagName) {  
+  var data = [];
+  var descendants = element.getDescendants();  
+  for(i in descendants) {
+    var elt = descendants[i].asElement();     
+    if( elt !=null && elt.getName()== tagName) data.push(elt);      
+  }
+  return data;
+}
+
 function populateFromHtmlResults() {
   var raceUrl = Browser.inputBox(
     'Enter results URL:',
     Browser.Buttons.OK_CANCEL
   );
-  var html = UrlFetchApp.fetch(raceUrl), pageSrc = html.getContentText(), lines = pageSrc.split(/\r?\n/);
+  var html = UrlFetchApp.fetch(raceUrl), pageSrc = html.getContentText().replace('"-//W3C//DTD XHTML 1.0 Strict//EN""', '"-//W3C//DTD XHTML 1.0 Strict//EN" "').replace(/& /g, '&amp; ').replace('</body></html><html><body>', ''),
+      xmldoc = XmlService.parse(pageSrc), root = xmldoc.getRootElement(), tableEls = getElementsByTagName(root, 'table');
+  for (var i = 0; i < tableEls.length; i++) {
+    var sheetName = getElementsByTagName(tableEls[i], 'caption')[0].getText(), rows = getElementsByTagName(tableEls[i], 'tr'), values = [];
+    for (var j = 0; j < rows.length; j++) {
+      var cells = getElementsByTagName(rows[j], 'td'), newvalues = [];
+      for (var k = 0; k < cells.length; k++) {
+        var cellparts = [];
+        for (var l = 0; l < cells[k].getContentSize(); l++) {
+          if (cells[k].getContent(l).asText()) {
+            cellparts.push(cells[k].getContent(l).asText().getValue());
+          }
+        }
+        Logger.log(cellparts);
+        newvalues.push(cellparts);
+      }
+      if (newvalues.length == 8) {
+        values.push([newvalues[1][0], '', '', newvalues[2][0].replace('SM', 'S').replace('VM', 'V').replace('JM', 'J'), newvalues[3][0], newvalues[4][0], '', '', '', '', newvalues[5][0], newvalues[0][0]||'', newvalues[7][0]||'', newvalues[6][0]||'']);
+        if (newvalues[1].length == 2) { // are there 2 names?
+          values.push([newvalues[1][1], '', '', (newvalues[2][1]||'').replace('SM', 'S').replace('VM', 'V').replace('JM', 'J'), newvalues[3][1]||'', newvalues[4][1]||'', '', '', '', '', '', '', (newvalues[7][1]||'').replace("&nbsp", ""), newvalues[6][1]||'']);
+        }
+      }
+    }
+    if (values.length > 0) {
+      var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName);
+      if (!sheet) {
+        throw "Sheet " + sheetName + " not found!";
+      }
+      sheet.getRange(2, 2, values.length, 14).setValues(values);
+    }
+  }
+  /*
+  //var html = UrlFetchApp.fetch(raceUrl), pageSrc = html.getContentText(), lines = pageSrc.split(/(?:\r?\n)? {3,}/);
+  var html = UrlFetchApp.fetch(raceUrl), pageSrc = html.getContentText(), lines = pageSrc.split(/ {2,}(?=<[a-z]+>)/);
   var sheetName = null, values = [], newvalues = [], line;
   for (var i = 0; i < lines.length; i++) {
     line = lines[i].trim();
@@ -2857,9 +2901,9 @@ function populateFromHtmlResults() {
     }
     else if (line == "</tr>") {
       if (newvalues.length == 8) {
-        values.push([newvalues[1][0], '', '', newvalues[2][0], newvalues[3][0], newvalues[4][0], '', '', '', '', newvalues[5][0], newvalues[0][0], newvalues[7][0], newvalues[6][0]]);
+        values.push([newvalues[1][0], '', '', newvalues[2][0].replace('SM', 'S').replace('VM', 'V').replace('JM', 'J'), newvalues[3][0], newvalues[4][0], '', '', '', '', newvalues[5][0], newvalues[0][0], newvalues[7][0], newvalues[6][0]]);
         if (newvalues[1].length == 2) { // are there 2 names?
-          values.push([newvalues[1][1], '', '', newvalues[2][1]||'', newvalues[3][1]||'', newvalues[4][1]||'', '', '', '', '', '', '', (newvalues[7][1]||'').replace("&nbsp", ""), newvalues[6][1]||'']);
+          values.push([newvalues[1][1], '', '', (newvalues[2][1]||'').replace('SM', 'S').replace('VM', 'V').replace('JM', 'J'), newvalues[3][1]||'', newvalues[4][1]||'', '', '', '', '', '', '', (newvalues[7][1]||'').replace("&nbsp", ""), newvalues[6][1]||'']);
         }
       }
       newvalues = [];
@@ -2880,4 +2924,5 @@ function populateFromHtmlResults() {
       values = [];
     }
   }
+    */
 }
