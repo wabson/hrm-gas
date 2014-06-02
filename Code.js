@@ -3023,6 +3023,9 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       if (columnNames.indexOf("Elapsed") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Elapsed") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_TIME);
       }
+      if (columnNames.indexOf("Paid") > -1) {
+        newSheet.getRange(1, columnNames.indexOf("Paid") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+      }
       if (autoResize === true) {
         autoResizeColumns(newSheet);
       }
