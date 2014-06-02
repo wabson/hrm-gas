@@ -242,15 +242,17 @@ function getRaceEntriesFromSpreadsheet(ss) {
       }
       var name = "" + row['First name'] + " " + row['Surname'],
         num = "" + row['Number'],
+        expiry = "" + formatDate(row['Expiry']),
         club = "" + row['Club'],
         class = "" + row['Class'],
         div = "" + row['Div'];
       if (name.trim() != "") {
         if (row['Number']) {
-          results.push({ num: num, names: [name], clubs: [club], classes: [class], divs: [div] });
+          results.push({ num: num, names: [name], expiry: [expiry], clubs: [club], classes: [class], divs: [div] });
         } else {
           var last = results.pop();
           last.names.push(name);
+          last.expiry.push(expiry);
           last.clubs.push(club);
           last.classes.push(class);
           last.divs.push(div);
@@ -287,7 +289,25 @@ function formatTime(val) {
     if (typeof val == "string") {
       return val.toLowerCase();
     } else {
-      return formatTimePart(val.getHours()) + ":" + formatTimePart(val.getMinutes()) + ":" + formatTimePart(val.getSeconds());
+      return "" + val.getHours() + ":" + formatTimePart(val.getMinutes()) + ":" + formatTimePart(val.getSeconds());
+    }
+  } else {
+    return "";
+  }
+}
+
+/**
+ * Format the given date value, which may be a Date object or a string, e.g. 'dns'
+ *
+ * @param {Date|string} Input value to format
+ * @return {string} row value to display for the given date
+ */
+function formatDate(val) {
+  if (val) {
+    if (typeof val == "string") {
+      return val.toLowerCase();
+    } else {
+      return formatTimePart(val.getDate()) + "/" + formatTimePart(val.getMonth() + 1) + "/" + formatTimePart(val.getYear());
     }
   } else {
     return "";
