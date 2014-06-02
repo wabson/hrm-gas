@@ -122,6 +122,14 @@ function addMenu() {
     functionName : "saveResultsHTML"
   },
   {
+    name : "Print Entries",
+    functionName : "createPrintableEntries"
+  },
+  {
+    name : "Print Results",
+    functionName : "createPrintableResults"
+  },
+  {
     name : "Finance Summary",
     functionName : "showRaceLevies"
   },
@@ -295,4 +303,16 @@ function createK4Sheet() {
 }
 function populateFromHtmlResults() {
   HRM.populateFromHtmlResults();
+}
+/**
+ * Menu hook for creating printable entries sheets
+ */
+function createPrintableEntries() {
+  HRM.createPrintableEntries();
+}
+/**
+ * Menu hook for creating printable results sheets
+ */
+function createPrintableResults() {
+  HRM.createPrintableResults();
 }

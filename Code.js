@@ -23,6 +23,8 @@ if (SpreadsheetApp.getActiveSpreadsheet() && isHaslerRace()) {
   raceSheetColumnNames.splice(raceSheetColumnNames.length - 1, 0, "P/D", "Points");
   raceSheetColumnAlignments.splice(raceSheetColumnAlignments.length - 1, 0, "center", "center");
 }
+var printableResultColumnNames = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn", "P/D", "Points"];
+var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid"];
 
 /**
  * ID assigned to this library
@@ -30,6 +32,9 @@ if (SpreadsheetApp.getActiveSpreadsheet() && isHaslerRace()) {
 var PROJECT_ID = "AKfycbzymqCQ6rUDYiNeG63i9vYeXaSE1YtiHDEgRHFQ0TdXaBSwkLs";
 
 var NUMBER_FORMAT_DATE = "dd/MM/yyyy";
+var NUMBER_FORMAT_TIME = "[h]:mm:ss";
+var NUMBER_FORMAT_CURRENCY = "£0.00";
+var NUMBER_FORMAT_INTEGER = "0";
 
 /**
  * List of canoe clubs
@@ -947,6 +952,28 @@ function arrayZip(keys, values)
   return obj;
 }
 
+function objUnzip(obj, keys, ignoreMissing, defaultValue) {
+  var k, values = [];
+  ignoreMissing = typeof ignoreMissing != "undefined" ? ignoreMissing : false;
+  for (var i = 0; i < keys.length; i++) {
+    k = keys[i];
+    if (typeof obj[k] != "undefined") {
+      values.push(obj[k]);
+    } else {
+      if (ignoreMissing !== true) {
+        if (typeof defaultValue != "undefined") {
+          values.push(defaultValue);
+        } else {
+          throw "Value for key " + k + " cannot be missing and a default value was not provided";
+        }
+      } else {
+        // Do nothing since we should ignore the property
+      }
+    }
+  }
+  return values;
+}
+
 /**
  * Find ranked competitors with the given name or BCU number. Returns an array of records each being a seven-element array containing the following string values:
  * Surname, First name, Club, Class, BCU Number, BCU Expiration, Division
@@ -1185,13 +1212,18 @@ function getEntryRows(sheet) {
 /**
  * Return a full list of the spreadsheet rows, grouped into entries
  *
+ * @param {Boolean} returnEmptyEntries Set to true if you want to return entries without any data in them i.e. just the numbers
  * @return {array} Array of objects, each object represents an entry and includes the raw values from the rows
  */
-function getEntryRowData(range, config) {
+function getEntryRowData(range, returnEmptyEntries) {
   // Find the latest row with a number but without a name in the sheet
-  var values = range.getValues(), rows = [], currEntry = null;
-  for (var i=0; i<values.length; i++) {
-    if (values[i][0] && !((""+values[i][1]).trim() == "" && (""+values[i][2]).trim() == "" && (""+values[i][3]).trim() == "")) { // Number present and a name or BCU number
+  var values = range.getValues(), rows = [], currEntry = null, headers, startRow = 0;
+  if (range.getRow() == 1) { // has the header row been included?
+    headers = values[0];
+    startRow = 1;
+  }
+  for (var i=startRow; i<values.length; i++) {
+    if (returnEmptyEntries || values[i][0] && !((""+values[i][1]).trim() == "" && (""+values[i][2]).trim() == "" && (""+values[i][3]).trim() == "")) { // Number present and a name or BCU number
       Logger.log("getEntryRowValues: Add " + values[i][0]);
       if (currEntry != null) {
         rows.push(currEntry);
@@ -1200,12 +1232,16 @@ function getEntryRowData(range, config) {
         boatNumber: values[i][0], 
         rowNumber: range.getRow() + i,
         values: [values[i]],
+        rows: headers ? [arrayZip(headers, values[i])] : null,
         sheet: range.getSheet()
       };
       currRows = [];
     } else if ((""+values[i][0]).trim() == "") { // No number
       if (currEntry != null) {
         currEntry.values.push(values[i]);
+        if (headers) {
+          currEntry.rows.push(arrayZip(headers, values[i]));
+        }
       }
     } else { // Number present but no details, this is not a completed entry
       if (currEntry != null) {
@@ -2767,11 +2803,13 @@ function setFormatting() {
     sheets[i].getRange(1, 1, lastRow, sheets[i].getLastColumn()).setFontFamily("Courier New");
     // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
     if (lastRow > 1) {
-      sheets[i].getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 3).setNumberFormat("0");
-      sheets[i].getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_DATE);
-      sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1, 3).setNumberFormat("0");
-      sheets[i].getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 3).setNumberFormat("£0.00");
-      sheets[i].getRange(2, getRaceColumnNumber("Start"), lastRow-1, 3).setNumberFormat("HH:mm:ss");
+      sheets[i].getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_INTEGER);
+      if (getRaceColumnNumber("Expiry")) {
+        sheets[i].getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_DATE);
+      }
+      sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_INTEGER);
+      sheets[i].getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+      sheets[i].getRange(2, getRaceColumnNumber("Start"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_TIME);
     }
   }
 }
@@ -2925,4 +2963,51 @@ function populateFromHtmlResults() {
     }
   }
     */
+}
+
+function createPrintableEntries() {
+  createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false);
+}
+
+function createPrintableResults() {
+  // TODO Resize columns
+  createPrintableSpreadsheet(null, printableResultColumnNames, "Posn", true);
+}
+
+function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  name = name || ss.getName() + " (Printable)";
+  var newss = SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss);
+  // Copy existing sheets
+  for (var i = 0; i < srcSheets.length; i++) {
+    if (srcSheets[i].isSheetHidden()) {
+      continue;
+    }
+    var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[i]) - 1 : srcSheets[i].getLastRow();
+    if (lastRow > 1) {
+      var newSheet = newss.insertSheet(srcSheets[i].getName()), srcRange = srcSheets[i].getRange(1, 1, lastRow, srcSheets[i].getLastColumn()), values = [columnNames], 
+          entries = getEntryRowData(srcRange, !truncateEmpty);
+      // Sort entries
+      if (sortColumn !== null) {
+        entries.sort( function(a,b) {return (parseInt(a.rows[0][sortColumn])||999) - (parseInt(b.rows[0][sortColumn])||999);} ); // Sort by position, ascending then blanks (non-finishers)
+      }
+      // Add entries into the table
+      entries.forEach(function(a) {
+        values.push(objUnzip(a.rows[0], columnNames, false, ''));
+        if (a.rows.length > 1) {
+          values.push(objUnzip(a.rows[1], columnNames, false, ''));
+        }
+      });
+      var targetRange = newSheet.getRange(1, 1, values.length, values[0].length);
+      targetRange.setValues(values);
+      targetRange.setFontFamily("Courier New");
+      newSheet.getRange(1, 1, 1, values[0].length).setBorder(true, true, true, true, true, true).setFontWeight("bold").setBackground("#ccffff"); // 1st row
+      newSheet.getRange(2, 1, values.length-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
+      if (columnNames.indexOf("Elapsed") > -1) {
+        newSheet.getRange(1, columnNames.indexOf("Elapsed") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_TIME);
+      }
+    }
+  }
+  // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
+  newss.deleteSheet(newss.getSheets()[0]);
 }
