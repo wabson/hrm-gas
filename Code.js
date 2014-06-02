@@ -2965,18 +2965,33 @@ function populateFromHtmlResults() {
     */
 }
 
+function autoResizeAllColumns(sheet) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    autoResizeColumns(sheets[i]);
+  };
+}
+
+function autoResizeColumns(sheet) {
+  var numColumns = sheet.getLastColumn();
+  for (var i = 1; i <= numColumns; i++) {
+    sheet.autoResizeColumn(i);
+  };
+}
+
 function createPrintableEntries() {
   createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false);
 }
 
 function createPrintableResults() {
-  // TODO Resize columns
-  createPrintableSpreadsheet(null, printableResultColumnNames, "Posn", true);
+  // 'autoResizeColumn' is not available yet in the new version of Google Sheets
+  createPrintableSpreadsheet(null, printableResultColumnNames, "Posn", true, false);
 }
 
-function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty) {
+function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   name = name || ss.getName() + " (Printable)";
+  autoResize = typeof autoResize != "undefined" ? autoResize : false;
   var newss = SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss);
   // Copy existing sheets
   for (var i = 0; i < srcSheets.length; i++) {
@@ -3005,6 +3020,9 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       newSheet.getRange(2, 1, values.length-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
       if (columnNames.indexOf("Elapsed") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Elapsed") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_TIME);
+      }
+      if (autoResize === true) {
+        autoResizeColumns(newSheet);
       }
     }
   }
