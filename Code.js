@@ -2803,13 +2803,13 @@ function setFormatting() {
     sheets[i].getRange(1, 1, lastRow, sheets[i].getLastColumn()).setFontFamily("Courier New");
     // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
     if (lastRow > 1) {
-      sheets[i].getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_INTEGER);
+      sheets[i].getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
       if (getRaceColumnNumber("Expiry")) {
-        sheets[i].getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_DATE);
+        sheets[i].getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
       }
-      sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_INTEGER);
-      sheets[i].getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_CURRENCY);
-      sheets[i].getRange(2, getRaceColumnNumber("Start"), lastRow-1, 3).setNumberFormat(NUMBER_FORMAT_TIME);
+      sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
+      sheets[i].getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+      sheets[i].getRange(2, getRaceColumnNumber("Time+/-"), lastRow-1, 4).setNumberFormat(NUMBER_FORMAT_TIME);
     }
   }
 }
