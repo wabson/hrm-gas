@@ -2980,12 +2980,14 @@ function autoResizeColumns(sheet) {
 }
 
 function createPrintableEntries() {
-  createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false);
+  var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false);
+  showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Results", "_blank");
 }
 
 function createPrintableResults() {
   // 'autoResizeColumn' is not available yet in the new version of Google Sheets
-  createPrintableSpreadsheet(null, printableResultColumnNames, "Posn", true, false);
+  var ss = createPrintableSpreadsheet(null, printableResultColumnNames, "Posn", true, false);
+  showLinkDialog("Print Results", "Click here to access the results", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Results", "_blank");
 }
 
 function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize) {
@@ -3028,4 +3030,5 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
   }
   // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
   newss.deleteSheet(newss.getSheets()[0]);
+  return newss;
 }
