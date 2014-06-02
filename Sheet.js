@@ -52,93 +52,98 @@ function onEdit(e) {
  */
 function addMenu() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
-  var entries = [{
-    name: "Race Details",
-    functionName: "showEditRaceDetails"
-  },
-  null,
-  {
-    name : "Load Rankings",
-    functionName : "showLoadRankings"
-  },
-  {
-    name : "Load Rankings from File",
-    functionName : "showAddLocalRankings"
-  },
-  {
-    name : "Clear Rankings",
-    functionName : "clearRankings"
-  },
-  null,
-  {
-    name : "Add Entries",
-    functionName : "showAddEntries"
-  },
-  {
-    name : "Add Entries from File",
-    functionName : "showAddLocalEntries"
-  },
-  {
-    name : "Import Entries from CSV",
-    functionName : "showImportEntries"
-  },
-  {
-    name : "Clear Entries",
-    functionName : "showClearEntries"
-  },
-  null,
-  {
-    name: "Modify Crews",
-    functionName: "showModifyCrews"
-  },
-  null,
-  {
-    name: "Set Start Times",
-    functionName: "showSetStartTimes"
-  },
-  {
-    name: "Set Finish Times",
-    functionName: "showSetFinishTimes"
-  },
-  {
-    name: "Calculate Promotions",
-    functionName: "calculatePromotions"
-  },
-  {
-    name: "Calculate Points",
-    functionName: "calculatePoints"
-  },
-  null,
-  {
-    name : "Live Entries",
-    functionName : "showEntriesURL"
-  },
-  {
-    name : "Live Results",
-    functionName : "showResultsURL"
-  },
-  {
-    name : "Publish Results",
-    functionName : "saveResultsHTML"
-  },
-  {
-    name : "Print Entries",
-    functionName : "createPrintableEntries"
-  },
-  {
-    name : "Print Results",
-    functionName : "createPrintableResults"
-  },
-  {
-    name : "Finance Summary",
-    functionName : "showRaceLevies"
-  },
-  null,
-  {
-    name : "New K4 Sheet",
-    functionName : "createK4Sheet"
-  }];
-  sheet.addMenu("HRM", entries);
+  sheet.addMenu("HRM", [
+    {
+      name : "Load Rankings",
+      functionName : "showLoadRankings"
+    },
+    {
+      name : "Load Rankings from File",
+      functionName : "showAddLocalRankings"
+    },
+    {
+      name : "Clear Rankings",
+      functionName : "clearRankings"
+    },
+    null,
+    {
+      name : "New K4 Sheet",
+      functionName : "createK4Sheet"
+    }
+  ]);
+  sheet.addMenu("Entries", [
+    {
+      name: "Race Details",
+      functionName: "showEditRaceDetails"
+    },
+    null,
+    {
+      name : "Add Entries",
+      functionName : "showAddEntries"
+    },
+    {
+      name : "Add Entries from File",
+      functionName : "showAddLocalEntries"
+    },
+    {
+      name : "Import Entries from CSV",
+      functionName : "showImportEntries"
+    },
+    {
+      name : "Clear Entries",
+      functionName : "showClearEntries"
+    },
+    null,
+    {
+      name: "Modify Crews",
+      functionName: "showModifyCrews"
+    },
+    null,
+    {
+      name : "Live Entries",
+      functionName : "showEntriesURL"
+    },
+    {
+      name : "Print Entries",
+      functionName : "createPrintableEntries"
+    },
+    null,
+    {
+      name : "Finance Summary",
+      functionName : "showRaceLevies"
+    }
+  ]);
+  sheet.addMenu("Results", [
+    {
+      name: "Set Start Times",
+      functionName: "showSetStartTimes"
+    },
+    {
+      name: "Set Finish Times",
+      functionName: "showSetFinishTimes"
+    },
+    {
+      name: "Calculate Promotions",
+      functionName: "calculatePromotions"
+    },
+    {
+      name: "Calculate Points",
+      functionName: "calculatePoints"
+    },
+    null,
+    {
+      name : "Live Results",
+      functionName : "showResultsURL"
+    },
+    {
+      name : "Publish Results",
+      functionName : "saveResultsHTML"
+    },
+    {
+      name : "Print Results",
+      functionName : "createPrintableResults"
+    }
+  ]);
 }
 
 /**
