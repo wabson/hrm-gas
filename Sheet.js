@@ -104,6 +104,10 @@ function addMenu() {
       functionName : "showEntriesURL"
     },
     {
+      name : "Publish Entries",
+      functionName : "saveEntriesHTML"
+    },
+    {
       name : "Print Entries",
       functionName : "createPrintableEntries"
     },
@@ -283,10 +287,13 @@ function setAllRaceSheetHeadings() {
   HRM.setAllRaceSheetHeadings();
 }
 /**
- * Menu hook for saving HTML
+ * Menu hooks for saving HTML
  */
 function setRaceSheetHeadings() {
   HRM.setRaceSheetHeadings();
+}
+function saveEntriesHTML() {
+  HRM.saveEntriesHTML();
 }
 /**
  * Menu hook for saving HTML

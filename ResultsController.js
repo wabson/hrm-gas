@@ -26,7 +26,6 @@ function saveResultsHTML() {
   var template = HtmlService.createTemplateFromFile('ResultsStatic');
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var title = ss.getName();
-  template.show = "results";
   template.showNotes = false;
   template.title = title;
   var data = getRaceResultsFromSpreadsheet(ss);
@@ -38,6 +37,27 @@ function saveResultsHTML() {
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
   showLinkDialog('Publish HTML',
     "<p>Race results published to Google Drive:</p>",
+    "https://googledrive.com/host/" + htmlFile.getId()
+  );
+}
+
+/**
+ * Print entries summary
+ */
+function saveEntriesHTML() {
+  var template = HtmlService.createTemplateFromFile('EntriesStatic');
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var title = ss.getName();
+  template.title = title;
+  var data = getRaceEntriesFromSpreadsheet(ss);
+  for (var k in data) {
+    template[k] = data[k];
+  }
+  var outputHtml = template.evaluate().getContent();
+  var htmlFile = DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
+  showLinkDialog('Publish HTML',
+    "<p>Race entries published to Google Drive:</p>",
     "https://googledrive.com/host/" + htmlFile.getId()
   );
 }
@@ -205,8 +225,12 @@ function getRaceEntries(key) {
   if (!key) {
     throw "You must specify a document";
   }
-  var ss = SpreadsheetApp.openById(key), 
-    data = {}, classes = [],
+  var ss = SpreadsheetApp.openById(key);
+  return getRaceEntriesFromSpreadsheet(ss);
+}
+
+function getRaceEntriesFromSpreadsheet(ss) {
+  var data = {}, classes = [],
     sheets = getRaceSheets(ss);
 
   for (var i=0; i<sheets.length; i++) {
@@ -236,8 +260,8 @@ function getRaceEntries(key) {
     }
     classes.push({name: sheets[i].getName(), results: results });
   }
-  data.entries = classes;
-  data.lastUpdated = getLastUpdated(key);
+  data.races = classes;
+  data.lastUpdated = getLastUpdated(ss.getId());
   return data;
 }
 

@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title><?= title ?></title>
+<style type="text/css">
+body {
+         font-size:          small;
+         font-family:        Verdana, Helvetica, Arial, sans-serif;
+    margin: 8px;
+}
+h1 {
+         font-size:          150%;
+}
+table {
+         border:             thin solid black;
+         border-collapse:    collapse;
+         margin-top:         20px;
+         margin-bottom:       20px;
+}
+caption {
+         text-align:         left;
+         font-weight:        bold;
+}
+th,td {
+         text-align:         left;
+         border:             thin solid gray;
+         padding:            5px;
+}
+th {
+         background-color:   #ccff99;
+}
+</style>
+</head>
+<body>
+<h1><?= title ?></h1>
+<? for (var i = 0; i < races.length; ++i) {
+if (races[i].results && races[i].results.length > 0) { ?>
+<table>
+<caption><?= races[i].name ?></caption>
+  <tr>
+     <th>Boat Num</th>
+     <th>Name</th>
+     <th>Club</th>
+     <th>Class</th>
+     <th>Div</th>
+  </tr>
+<? for (var j = 0; j < races[i].results.length; ++j) { ?>
+  <tr>
+     <td><?= races[i].results[j].num ?></td>
+     <td><?!= races[i].results[j].names.join("<br />").toUpperCase() ?></td>
+     <td><?!= races[i].results[j].clubs.join("<br />").toUpperCase() ?></td>
+     <td><?!= races[i].results[j].classes.join("<br />").toUpperCase() ?></td>
+     <td><?!= races[i].results[j].divs.join("<br />") ?></td>
+  </tr>
+  <? } ?>
+</table>
+<? }} ?>
+<p>Last updated: <?=lastUpdated ?></p>
+</body>
+</html>

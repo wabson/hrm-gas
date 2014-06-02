@@ -18,7 +18,7 @@ function isScrollingEnabled() {
 function onDataLoaded(data) {
   $('#messages').hide();
   if (show == 'entries') {
-    showEntries(data.entries);
+    showEntries(data.races);
   } else {
     showData(data);
   }
