@@ -1403,10 +1403,13 @@ function getRaceSheets(spreadsheet) {
 /**
  * Look at the tabs of the workbook and return the named races as an array of Strings
  */
-function getRaceSheetNames(spreadsheet) {
+function getRaceSheetNames(spreadsheet, includeHidden) {
+  includeHidden = typeof includeHidden != "undefined" ? includeHidden : false;
   var sheets = getRaceSheets(spreadsheet), sheetNames = [];
   for (var i=0; i<sheets.length; i++) {
-    sheetNames.push(sheets[i].getName());
+    if (includeHidden === true || !sheets[i].isSheetHidden()) {
+      sheetNames.push(sheets[i].getName());
+    }
   }
   return sheetNames;
 }
