@@ -2790,7 +2790,7 @@ function setSheetFormulas_(sheet) {
   if (lastRow > 1) {
     // Elapsed time
     if (elapsedCol > 0) {
-      sheet.getRange(2, elapsedCol).setFormula('=IFERROR(IF('+startColA1+'2="dns","dns",IF('+finishColA1+'2="rtd", "rtd", IF(AND(NOT(ISTEXT('+finishColA1+'2)), NOT(ISTEXT('+startColA1+'2)), '+finishColA1+'2-'+startColA1+'2 > 0), '+finishColA1+'2-'+startColA1+'2+'+timePlusMinusColA1+'2, ""))))');
+      sheet.getRange(2, elapsedCol).setFormula('=IFERROR(IF('+startColA1+'2="dns","dns",IF('+finishColA1+'2="rtd","rtd",IF('+finishColA1+'2="dsq","dsq",IF(AND(NOT(ISTEXT('+finishColA1+'2)), NOT(ISTEXT('+startColA1+'2)), '+finishColA1+'2-'+startColA1+'2 > 0), '+finishColA1+'2-'+startColA1+'2+'+timePlusMinusColA1+'2, "")))))');
       sheet.getRange(2, elapsedCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, elapsedCol).getFormulaR1C1());
     }
     // Posn
