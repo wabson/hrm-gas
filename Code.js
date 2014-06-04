@@ -41,8 +41,17 @@ var NUMBER_FORMAT_INTEGER = "0";
  */
 var clubs = [];
 
-var RACE_SHEETS_K4 = [['RaceA', 101, 10, 4], ['RaceB', 201, 10, 4], ['RaceC', 301, 10, 4], ['Rocket', 1001, 10, 4]];
-var RACE_SHEETS_HASLER = [['Div1', 101, 50, 1], ['Div2', 201, 50, 1], ['Div3', 301, 50, 1], ['Div4', 401, 50, 1], ['Div5', 501, 50, 1], ['Div6', 601, 50, 1]];
+var RACE_SHEETS_K4 = [['RaceA', [[101, 10]], 4], ['RaceB', [[201, 10]], 4], ['RaceC', [[301, 10]], 4], ['Rocket', [[1001, 10]], 4]];
+var RACE_SHEETS_HASLER = [
+    ['Div1', [[101, 50]], 1], ['Div2', [[201, 50]], 1], ['Div3', [[301, 50]], 1], 
+    ['Div4', [[401, 50]], 1], ['Div5', [[501, 50]], 1], ['Div6', [[601, 50]], 1], 
+    ['Div7', [[701, 50], [1701, 50]], 1], ['Div8', [[801, 50], [1801, 50]], 1], ['Div9', [[901, 50], [1901, 50]], 1],
+    ['U12 M', [[1001, 50]], 1], ['U12 F', [[2001, 50]], 1], ['U10 M', [[3001, 50]], 1], ['U10 F', [[4001, 50]], 1], 
+    ['Div1_1', [[151, 49]], 2, true], ['Div2_2', [[251, 49]], 2, true], ['Div3_3', [[351, 49]], 2, true], ['Div4_4', [[451, 49]], 2, true], 
+    ['Div1_2', [[151, 49]], 2], ['Div3_4', [[351, 49]], 2], ['Div5_5', [[551, 49]], 2], ['Div6_6', [[651, 49]], 2], 
+    ['Div7_7', [[751, 49]], 2], ['Div8_8', [[851, 49]], 2], ['Div9_9', [[951, 49]], 2],
+    ['U12 MiniK2', [[51, 25]], 2], ['U10 MiniK2', [[76, 25]], 2]
+];
 var EXTRA_SHEETS_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
 var EXTRA_SHEETS_NON_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
 
@@ -2725,6 +2734,25 @@ function getTableColumnIndex(colName, sheet) {
 }
 
 /**
+ * Clear out all keys within the table column caches
+ */
+function clearColumnCache_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = ss.getSheets(), cacheKeys = [];
+  for (var i=0; i<sheets.length; i++) {
+    var sheet = sheets[i], sheetName = sheet.getName(), lastRow = sheet.getLastRow(), lastCol = sheet.getLastColumn();
+    if (lastRow > 0) {
+      var headerValues = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      for (var j = 0; j < headerValues.length; j++) {
+        var colName = headerValues[j];
+        cacheKeys.push("col_index__" + sheetName + "__" + colName);
+      }
+    }
+  }
+  Logger.log('Removing cache keys ' + cacheKeys);
+  CacheService.getPrivateCache().removeAll(cacheKeys);
+}
+
+/**
  * Return the number (starting from 1, not zero) of the column with the specified header, or -1 if not found
  */
 function getRaceColumnNumber(colName) {
@@ -2743,22 +2771,29 @@ function getRaceColumnA1(colName) {
  * Set forumalas for all race sheets
  */
 function setFormulas() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets(),
-    timePlusMinusColA1 = getRaceColumnA1("Time+/-"), startColA1 = getRaceColumnA1("Start"), finishColA1 = getRaceColumnA1("Finish"), elapsedColA1 = getRaceColumnA1("Elapsed"), 
-    elapsedCol = getRaceColumnNumber("Elapsed"), posnCol = getRaceColumnNumber("Posn");
+  var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    var lastRow = sheets[i].getLastRow();
-    if (lastRow > 1) {
-      // Elapsed time
-      if (elapsedCol > 0) {
-        sheets[i].getRange(2, elapsedCol).setFormula('=IFERROR(IF('+startColA1+'2="dns","dns",IF('+finishColA1+'2="rtd", "rtd", IF(AND(NOT(ISTEXT('+finishColA1+'2)), NOT(ISTEXT('+startColA1+'2)), '+finishColA1+'2-'+startColA1+'2 > 0), '+finishColA1+'2-'+startColA1+'2+'+timePlusMinusColA1+'2, ""))))');
-        sheets[i].getRange(2, elapsedCol, lastRow-1).setFormulaR1C1(sheets[i].getRange(2, elapsedCol).getFormulaR1C1());
-      }
-      // Posn
-      if (posnCol > 0) {
-        sheets[i].getRange(2, posnCol).setFormula('=IFERROR(RANK('+elapsedColA1+'2,'+elapsedColA1+'$2:'+elapsedColA1+'$' + lastRow + ', 1))');
-        sheets[i].getRange(2, posnCol, lastRow-1).setFormulaR1C1(sheets[i].getRange(2, posnCol).getFormulaR1C1());
-      }
+    setSheetFormulas_(sheets[i]);
+  }
+}
+
+/**
+ * Set forumalas for a single sheet
+ */
+function setSheetFormulas_(sheet) {
+  var timePlusMinusColA1 = getRaceColumnA1("Time+/-"), startColA1 = getRaceColumnA1("Start"), finishColA1 = getRaceColumnA1("Finish"), elapsedColA1 = getRaceColumnA1("Elapsed"), 
+    elapsedCol = getRaceColumnNumber("Elapsed"), posnCol = getRaceColumnNumber("Posn");
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    // Elapsed time
+    if (elapsedCol > 0) {
+      sheet.getRange(2, elapsedCol).setFormula('=IFERROR(IF('+startColA1+'2="dns","dns",IF('+finishColA1+'2="rtd", "rtd", IF(AND(NOT(ISTEXT('+finishColA1+'2)), NOT(ISTEXT('+startColA1+'2)), '+finishColA1+'2-'+startColA1+'2 > 0), '+finishColA1+'2-'+startColA1+'2+'+timePlusMinusColA1+'2, ""))))');
+      sheet.getRange(2, elapsedCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, elapsedCol).getFormulaR1C1());
+    }
+    // Posn
+    if (posnCol > 0) {
+      sheet.getRange(2, posnCol).setFormula('=IFERROR(RANK('+elapsedColA1+'2,'+elapsedColA1+'$2:'+elapsedColA1+'$' + lastRow + ', 1))');
+      sheet.getRange(2, posnCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, posnCol).getFormulaR1C1());
     }
   }
 }
@@ -2767,50 +2802,66 @@ function setFormulas() {
  * Set validation
  */
 function setValidation() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), sheets = getRaceSheets(), clubsSheet = ss.getSheetByName('Clubs'),
-    classRule = SpreadsheetApp.newDataValidation().requireValueInList('S,V,J,F,VF,JF,SC,VC,JC,FC,VFC,JFC'.split(','), true).build(),
-    divRule = SpreadsheetApp.newDataValidation().requireValueInList('1,2,3,4,5,6,7,8,9,U12M,U12F,U10M,U10F'.split(','), true).build(),
-    clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null;
+  var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    var lastRow = sheets[i].getLastRow(), r;
-    if (lastRow > 1) {
-      Logger.log("Setting validation for sheet " + sheets[i].getName());
-      if (clubRule !== null) {
-        r = sheets[i].getRange(2, getRaceColumnNumber("Club"), lastRow-1);
-        if (r)
-          r.clearDataValidations();
-          r.setDataValidation(clubRule);
-      }
-      r = sheets[i].getRange(2, getRaceColumnNumber("Class"), lastRow-1);
-      if (r)
-        r.clearDataValidations();
-        r.setDataValidation(classRule);
-      r = sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1);
-      if (r)
-        r.clearDataValidations();
-        r.setDataValidation(divRule);
-    }
+    setSheetValidation_(sheets[i]);
   }
 }
 
 /**
- * Set formatting
+ * Set validation
+ */
+function setSheetValidation_(sheet) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), clubsSheet = ss.getSheetByName('Clubs'),
+    classRule = SpreadsheetApp.newDataValidation().requireValueInList('S,V,J,F,VF,JF,SC,VC,JC,FC,VFC,JFC'.split(','), true).build(),
+    divRule = SpreadsheetApp.newDataValidation().requireValueInList('1,2,3,4,5,6,7,8,9,U12M,U12F,U10M,U10F'.split(','), true).build(),
+    clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null;
+
+  var lastRow = sheet.getLastRow(), r;
+  if (lastRow > 1) {
+    Logger.log("Setting validation for sheet " + sheet.getName());
+    if (clubRule !== null) {
+      r = sheet.getRange(2, getRaceColumnNumber("Club"), lastRow-1);
+      if (r)
+        r.clearDataValidations();
+        r.setDataValidation(clubRule);
+    }
+    r = sheet.getRange(2, getRaceColumnNumber("Class"), lastRow-1);
+    if (r)
+      r.clearDataValidations();
+      r.setDataValidation(classRule);
+    r = sheet.getRange(2, getRaceColumnNumber("Div"), lastRow-1);
+    if (r)
+      r.clearDataValidations();
+      r.setDataValidation(divRule);
+  }
+}
+
+/**
+ * Set formatting on all sheets
  */
 function setFormatting() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = getRaceSheets();
+  var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    var lastRow = sheets[i].getLastRow();
-    sheets[i].getRange(1, 1, lastRow, sheets[i].getLastColumn()).setFontFamily("Courier New");
-    // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
-    if (lastRow > 1) {
-      sheets[i].getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
-      if (getRaceColumnNumber("Expiry")) {
-        sheets[i].getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
-      }
-      sheets[i].getRange(2, getRaceColumnNumber("Div"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
-      sheets[i].getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
-      sheets[i].getRange(2, getRaceColumnNumber("Time+/-"), lastRow-1, 4).setNumberFormat(NUMBER_FORMAT_TIME);
+    setSheetFormatting_(sheets[i]);
+  }
+}
+
+/**
+ * Set formatting on a sheet
+ */
+function setSheetFormatting_(sheet) {
+  var lastRow = sheet.getLastRow();
+  sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).setFontFamily("Courier New");
+  // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
+  if (lastRow > 1) {
+    sheet.getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
+    if (getRaceColumnNumber("Expiry")) {
+      sheet.getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
     }
+    sheet.getRange(2, getRaceColumnNumber("Div"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
+    sheet.getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+    sheet.getRange(2, getRaceColumnNumber("Time+/-"), lastRow-1, 4).setNumberFormat(NUMBER_FORMAT_TIME);
   }
 }
 
@@ -2846,15 +2897,26 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets) {
   for (var i = 0; i < sheets.length; i++) {
     ss.deleteSheet(sheets[i]);
   };
+  clearColumnCache_();
   // Add new race sheets
   for (var i = 0; i < raceSheets.length; i++) {
-    var sheet = ss.insertSheet(raceSheets[i][0]);
-    var values = [], numRows = raceSheets[i][2] * raceSheets[i][3]; // Number of places * crew size
-    for (var j = 0; j < numRows; j++) {
-      values.push([j % raceSheets[i][3] == 0 ? raceSheets[i][1] + j/raceSheets[i][3] : '']);
-    };
-    sheet.getRange(2, 1, numRows, 1).setValues(values).setFontFamily("Courier New").setFontWeight("bold").setBackground("#ffff99").setBorder(true, false, false, true, false, false);
+    var sheetName = raceSheets[i][0], numRanges = raceSheets[i][1], crewSize = raceSheets[i][2] || 1, isHidden = raceSheets[i][3] === true;
+    var sheet = ss.insertSheet(sheetName), startRow = 2, values = [];
+    for (var j = 0; j < numRanges.length; j++) {
+      var startNum = numRanges[j][0], numPlaces = numRanges[j][1];
+      var numRows = numPlaces * crewSize; // Number of places * crew size
+      for (var k = 0; k < numRows; k++) {
+        values.push([k % crewSize == 0 ? startNum + k/crewSize : '']);
+      }
+    }
+    sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily("Courier New").setFontWeight("bold").setBackground("#ffff99").setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
     setRaceSheetHeadings(sheet);
+    setSheetFormatting_(sheet);
+    setSheetValidation_(sheet);
+    setSheetFormulas_(sheet);
+    if (isHidden) {
+      sheet.hideSheet();
+    }
   }
   for (var i = 0; i < extraSheets.length; i++) {
     sheet = ss.insertSheet(extraSheets[i]);
@@ -2875,6 +2937,18 @@ function createK4Sheet() {
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, RACE_SHEETS_K4, EXTRA_SHEETS_NON_HASLER);
+  }
+}
+
+/**
+ * Create a new spreadsheet to manage a HRM race
+ */
+function createHRMSheet() {
+  var raceName = Browser.inputBox(
+    'Enter file name:',
+    Browser.Buttons.OK_CANCEL);
+  if (raceName) {
+    createRaceSpreadsheet(raceName, RACE_SHEETS_HASLER, EXTRA_SHEETS_HASLER);
   }
 }
 

@@ -67,6 +67,10 @@ function addMenu() {
     },
     null,
     {
+      name : "New HRM Sheet",
+      functionName : "createHRMSheet"
+    },
+    {
       name : "New K4 Sheet",
       functionName : "createK4Sheet"
     }
@@ -312,6 +316,9 @@ function updateEntriesFromRankings() {
  */
 function createK4Sheet() {
   HRM.createK4Sheet();
+}
+function createHRMSheet() {
+  HRM.createHRMSheet();
 }
 function populateFromHtmlResults() {
   HRM.populateFromHtmlResults();
