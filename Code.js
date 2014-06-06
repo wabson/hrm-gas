@@ -225,25 +225,29 @@ function loadRankingsXLS(clubName) {
   // Locate Rankings sheet or create it if it doesn't already exist
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sourceSS = SpreadsheetApp.openById(file.id),
     sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName, ss.getSheets().length), 
-    sourceRange = sourceSS.getActiveSheet().getDataRange(), sourceHeaderRange = sourceSS.getActiveSheet().getRange(1, 1, 1, sourceRange.getWidth());
+    sourceRange = sourceSS.getActiveSheet().getDataRange(), sourceWidth = sourceRange.getWidth(),
+    sourceHeight = sourceRange.getHeight(), sourceHeaderRange = sourceSS.getActiveSheet().getRange(1, 1, 1, sourceWidth);
   
-  if (sourceRange.getHeight() > 0)
+  if (sourceHeight > 0)
   {
-    var destinationRange = sheet.getRange(sheet.getLastRow(), 1, sourceRange.getHeight(), sourceRange.getWidth()),
-      headerRange = sheet.getRange(1, 1, 1, sourceRange.getWidth());
+    var destinationRange = sheet.getRange(sheet.getLastRow(), 1, sourceHeight, sourceWidth),
+      headerRange = sheet.getRange(1, 1, 1, sourceWidth), values = sourceRange.getValues();
     // Copying ranges directly is not supported between spreadsheets
-    destinationRange.setValues(sourceRange.getValues());
+    destinationRange.setValues(values);
     // Set expiration date formats (column F)
-    sheet.getRange(2, 6, sourceRange.getHeight()-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
+    var expiryColPos = values[0].indexOf("Expiry");
+    if (expiryColPos > -1) {
+      sheet.getRange(2, expiryColPos + 1, sourceHeight-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
+    }
     // Set header row format
     headerRange.setBackgrounds(sourceHeaderRange.getBackgrounds());
     headerRange.setHorizontalAlignments(sourceHeaderRange.getHorizontalAlignments());
     var numberFormats = sourceHeaderRange.getNumberFormats();
     // Override date number format as it does not seem to get applied correctly
-    numberFormats[0][7] = NUMBER_FORMAT_DATE;
+    numberFormats[0][sourceWidth-1] = NUMBER_FORMAT_DATE;
     headerRange.setNumberFormats(numberFormats);
 
-    Browser.msgBox("Added " + (sourceRange.getHeight()-1) + " rankings");
+    Browser.msgBox("Added " + (sourceHeight-1) + " rankings");
   }
 
   DriveApp.removeFile(DriveApp.getFileById(file.id));
