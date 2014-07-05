@@ -1583,12 +1583,12 @@ function showRaceLevies(scriptProps) {
   for (var i=0; i<sheets.length; i++) {
     sheet = sheets[i];
     // Iterate through all paddlers' classes (column F)
-    var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 8), values = range.getValues();
+    var values = getTableRows(sheet);
     for (var j=0; j<values.length; j++) {
-      var class = (values[j][5] || "").toUpperCase().trim(), 
+      var class = (values[j]['Class'] || "").toUpperCase().trim(), 
           raceName = sheet.getName().replace(" ", ""),
-          received = parseFloat(values[j][7]) || 0.0;
-      if (values[j][1] != "" || values[j][2] != "" || values[j][3] != "") { // Surname, lastname or BCU number filled out
+          received = parseFloat(values[j]['Paid']) || 0.0;
+      if (values[j]['Surname'] != "" || values[j]['First name'] != "" || values[j]['BCU Number'] != "") { // Surname, lastname or BCU number filled out
         if (/U1[02][MF]/i.exec(raceName) != null || raceName.indexOf("Hody") == 0) {
           totalLightning ++;
         } else {
