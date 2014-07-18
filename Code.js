@@ -1510,8 +1510,9 @@ function combineDivs(div1, div2) {
     var hdiv = Math.max(parseInt(div1), parseInt(div2)),
         ldiv = Math.min(parseInt(div1), parseInt(div2));
     var div = Math.floor((hdiv + ldiv) / 2);
-    if (div > (Math.ceil(ldiv / 3) * 3)) {
-      div = Math.ceil(ldiv / 3) * 3;
+    // Div 1-3 paddlers must race 12 mile course
+    if (ldiv <= 3 && div > 3) {
+      div = 3;
     }
     return div;
   }
