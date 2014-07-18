@@ -52,6 +52,12 @@ var RACE_SHEETS_HASLER = [
     ['Div7_7', [[751, 49]], 2], ['Div8_8', [[851, 49]], 2], ['Div9_9', [[951, 49]], 2],
     ['U12 MiniK2', [[51, 25]], 2], ['U10 MiniK2', [[76, 25]], 2]
 ];
+var RACE_SHEETS_ASS = [
+    ['SMK1', [[101, 49]], 1], ['SLK1', [[201, 49]], 1], ['SL5_6K1', [[301, 49]], 1], ['SMC1', [[401, 49]], 1],
+    ['JMK1', [[501, 49]], 1], ['JLK1', [[601, 49]], 1], ['JMC1', [[701, 49]], 1], 
+    ['SMK2', [[151, 49]], 2], ['SLK2', [[251, 49]], 2], ['SL5_6K2', [[351, 49]], 2], ['SMC2', [[451, 49]], 2], 
+    ['JMK2', [[551, 49]], 2], ['JLK2', [[651, 49]], 2], ['JMC2', [[751, 49]], 2]
+];
 var EXTRA_SHEETS_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
 var EXTRA_SHEETS_NON_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
 
@@ -2956,6 +2962,18 @@ function createHRMSheet() {
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, RACE_SHEETS_HASLER, EXTRA_SHEETS_HASLER);
+  }
+}
+
+/**
+ * Create a new spreadsheet to manage an assessment race
+ */
+function createARMSheet() {
+  var raceName = Browser.inputBox(
+    'Enter file name:',
+    Browser.Buttons.OK_CANCEL);
+  if (raceName) {
+    createRaceSpreadsheet(raceName, RACE_SHEETS_ASS, EXTRA_SHEETS_NON_HASLER);
   }
 }
 
