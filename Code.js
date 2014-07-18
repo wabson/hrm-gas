@@ -36,6 +36,14 @@ var NUMBER_FORMAT_TIME = "[h]:mm:ss";
 var NUMBER_FORMAT_CURRENCY = "£0.00";
 var NUMBER_FORMAT_INTEGER = "0";
 
+var CLASSES_ALL = ["S","V","J","F","VF","JF","SC","VC","JC","FC","VFC","JFC"];
+
+var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
+var DIVS_12_MILE = ["1","2","3","4","5","6","7","8","9"];
+var DIVS_8_MILE = ["4","5","6","7","8","9"];
+var DIVS_4_MILE = ["4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
+var DIVS_LIGHTNING = ["7","8","9","U12M","U12F","U10M","U10F"];
+
 /**
  * List of canoe clubs
  */
@@ -2825,9 +2833,23 @@ function setValidation() {
  * Set validation
  */
 function setSheetValidation_(sheet) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), clubsSheet = ss.getSheetByName('Clubs'),
-    classRule = SpreadsheetApp.newDataValidation().requireValueInList('S,V,J,F,VF,JF,SC,VC,JC,FC,VFC,JFC'.split(','), true).build(),
-    divRule = SpreadsheetApp.newDataValidation().requireValueInList('1,2,3,4,5,6,7,8,9,U12M,U12F,U10M,U10F'.split(','), true).build(),
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), clubsSheet = ss.getSheetByName('Clubs'), sheetName = sheet.getName(), allowedDivs = DIVS_ALL;
+  if (sheetName.indexOf('Div') == 0) {
+    if (sheetName >= 'Div7') {
+      allowedDivs = DIVS_4_MILE;
+    }
+    else if (sheetName >= 'Div4') {
+      allowedDivs = DIVS_8_MILE;
+    }
+    else {
+      allowedDivs = DIVS_12_MILE;
+    }
+  }
+  if (sheetName.indexOf('U10 ') == 0 || sheetName.indexOf('U12 ') == 0) {
+    allowedDivs = DIVS_LIGHTNING;
+  }
+  var classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
+    divRule = allowedDivs !== null ? SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build() : null,
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null;
 
   var lastRow = sheet.getLastRow(), r;
