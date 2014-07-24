@@ -729,7 +729,7 @@ function addLocalEntries(eventInfo) {
       rows = [], numCrews = 0;
       // Iterate through all paddlers
       if (sheet.getLastRow() > 1) {
-        var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 7), values = range.getValues(),
+        var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 8), values = range.getValues(),
             rows = [],
             lastRow = -1; // Last row with some data in. We can drop all rows after this.
         for (var j=0; j<values.length; j++) {
@@ -763,7 +763,7 @@ function addLocalEntries(eventInfo) {
         if (nextRow > 0) {
           Logger.log("Adding new rows at row " + nextRow);
           if (dstsheet.getLastRow()-nextRow+1 >= rows.length) {
-            dstsheet.getRange(nextRow, 2, rows.length, 6).setValues(rows); // TODO Allow numbers to be added, in which case length will be 7 rather than 6
+            dstsheet.getRange(nextRow, 2, rows.length, 7).setValues(rows); // TODO Allow numbers to be added, in which case length will be 8 rather than 7
             results.push("Added " + numCrews + " crews to " + dstsheet.getName());
           } else {
             throw "Too many rows to import into " + dstsheet.getName() + " (" + rows.length + " data rows, " + (dstsheet.getLastRow()-nextRow+1) + " in sheet)";
