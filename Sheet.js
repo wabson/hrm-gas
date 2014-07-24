@@ -342,3 +342,9 @@ function createPrintableEntries() {
 function createPrintableResults() {
   HRM.createPrintableResults();
 }
+/**
+ * Menu hook for creating printable number board inserts
+ */
+function createNumberBoards() {
+  HRM.createNumberBoards();
+}
