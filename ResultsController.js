@@ -12,6 +12,8 @@ function doGet(e) {
       return printResults(e);
     case "entries":
       return printResults(e);
+    case "starters":
+      return printResults(e);
     default:
       throw "Unsupported action " + action;
   }
@@ -229,6 +231,22 @@ function getRaceEntries(key) {
   return getRaceEntriesFromSpreadsheet(ss);
 }
 
+function getRaceStarters(key) {
+  if (!key) {
+    throw "You must specify a document";
+  }
+  var ss = SpreadsheetApp.openById(key);
+  return getRaceStartersFromSpreadsheet(ss);
+}
+
+function getRaceStartersFromSpreadsheet(ss) {
+  var entries = getRaceEntriesFromSpreadsheet(ss);
+  for (var i = 0; i < entries.races.length; i++) {
+    entries.races[i].results = entries.races[i].results.filter(function(val, index, arr) { return val.startTime.toLowerCase() != 'dns' });
+  }
+  return entries;
+}
+
 function getRaceEntriesFromSpreadsheet(ss) {
   var data = {}, classes = [],
     sheets = getRaceSheets(ss);
@@ -246,10 +264,11 @@ function getRaceEntriesFromSpreadsheet(ss) {
         expiry = "" + formatDate(row['Expiry']),
         club = "" + row['Club'],
         class = "" + row['Class'],
-        div = "" + row['Div'];
+        div = "" + row['Div'],
+        startTime = "" + row['Start'];
       if (name.trim() != "") {
         if (row['Number']) {
-          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], clubs: [club], classes: [class], divs: [div] });
+          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], clubs: [club], classes: [class], divs: [div], startTime: startTime });
         } else {
           var last = results.pop();
           last.names.push(name);
