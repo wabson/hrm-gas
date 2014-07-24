@@ -242,16 +242,18 @@ function getRaceEntriesFromSpreadsheet(ss) {
       }
       var name = "" + row['First name'] + " " + row['Surname'],
         num = "" + row['Number'],
+        bcuNum = "" + row['BCU Number'],
         expiry = "" + formatDate(row['Expiry']),
         club = "" + row['Club'],
         class = "" + row['Class'],
         div = "" + row['Div'];
       if (name.trim() != "") {
         if (row['Number']) {
-          results.push({ num: num, names: [name], expiry: [expiry], clubs: [club], classes: [class], divs: [div] });
+          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], clubs: [club], classes: [class], divs: [div] });
         } else {
           var last = results.pop();
           last.names.push(name);
+          last.bcuNum.push(bcuNum);
           last.expiry.push(expiry);
           last.clubs.push(club);
           last.classes.push(class);

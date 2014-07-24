@@ -238,6 +238,8 @@ function showEntries(entries) {
       html += '  <tbody><tr>';
       html += '     <th>Boat Num</th>';
       html += '     <th>Name</th>';
+      html += '     <th>BCU Number</th>';
+      html += '     <th>Expiry</th>';
       html += '     <th>Club</th>';
       html += '     <th>Class</th>';
       html += '     <th>Div</th>';
@@ -248,6 +250,8 @@ function showEntries(entries) {
         html += '  <tr>';
         html += '     <td>' + entries[i].results[j].num + '</td>';
         html += '     <td>' + entries[i].results[j].names.join("<br />").toUpperCase() + '</td>';
+        html += '     <td>' + entries[i].results[j].bcuNum.join("<br />").toUpperCase() + '</td>';
+        html += '     <td>' + entries[i].results[j].expiry.join("<br />").toUpperCase() + '</td>';
         html += '     <td>' + entries[i].results[j].clubs.join("<br />").toUpperCase() + '</td>';
         html += '     <td>' + entries[i].results[j].classes.join("<br />").toUpperCase() + '</td>';
         html += '     <td>' + entries[i].results[j].divs.join("<br />") + '</td>';

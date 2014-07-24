@@ -42,7 +42,8 @@ if (races[i].results && races[i].results.length > 0) { ?>
   <tr>
      <th>Boat Num</th>
      <th>Name</th>
-     <th>BCU Expiry</th>
+     <th>BCU Number</th>
+     <th>Expiry</th>
      <th>Club</th>
      <th>Class</th>
      <th>Div</th>
@@ -51,6 +52,7 @@ if (races[i].results && races[i].results.length > 0) { ?>
   <tr>
      <td><?= races[i].results[j].num ?></td>
      <td><?!= races[i].results[j].names.join("<br />").toUpperCase() ?></td>
+     <td><?!= races[i].results[j].bcuNum.join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].expiry.join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].clubs.join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].classes.join("<br />").toUpperCase() ?></td>
