@@ -1065,12 +1065,12 @@ function add(eventInfo) {
       }
     }
     var selectedClass = eventInfo.parameter.className,
-        sheetName = ("Auto" == selectedClass) ? getTabName(items1, items2) : selectedClass;
+        sheetName = ("Auto" == selectedClass) ? getTabName(items1, k2button == "true" ? items2 : []) : selectedClass;
     
     var row1 = [items1[rankingsSheetColumnNames.indexOf("Surname")], items1[rankingsSheetColumnNames.indexOf("First name")], items1[rankingsSheetColumnNames.indexOf("BCU Number")], 
         items1[rankingsSheetColumnNames.indexOf("Expiry")], items1[rankingsSheetColumnNames.indexOf("Club")], items1[rankingsSheetColumnNames.indexOf("Class")], 
         items1[rankingsSheetColumnNames.indexOf("Division")]],
-      row2 = (items2.length > 0 ? [items2[rankingsSheetColumnNames.indexOf("Surname")], items2[rankingsSheetColumnNames.indexOf("First name")], items2[rankingsSheetColumnNames.indexOf("BCU Number")], 
+      row2 = (k2button == "true" && items2.length > 0 ? [items2[rankingsSheetColumnNames.indexOf("Surname")], items2[rankingsSheetColumnNames.indexOf("First name")], items2[rankingsSheetColumnNames.indexOf("BCU Number")], 
         items2[rankingsSheetColumnNames.indexOf("Expiry")], items2[rankingsSheetColumnNames.indexOf("Club")], items2[rankingsSheetColumnNames.indexOf("Class")], 
         items2[rankingsSheetColumnNames.indexOf("Division")]] : null),
       result;
