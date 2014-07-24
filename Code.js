@@ -2823,17 +2823,17 @@ function setSheetFormulas_(sheet) {
 /**
  * Set validation
  */
-function setValidation() {
+function setValidation(scriptProps) {
   var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    setSheetValidation_(sheets[i]);
+    setSheetValidation_(sheets[i], scriptProps);
   }
 }
 
 /**
  * Set validation
  */
-function setSheetValidation_(sheet) {
+function setSheetValidation_(sheet, scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), clubsSheet = ss.getSheetByName('Clubs'), sheetName = sheet.getName(), allowedDivs = DIVS_ALL;
   if (sheetName.indexOf('Div') == 0) {
     if (sheetName >= 'Div7') {
@@ -2851,25 +2851,34 @@ function setSheetValidation_(sheet) {
   }
   var classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
     divRule = allowedDivs !== null ? SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build() : null,
-    clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null;
+    clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
+    expiryRule = scriptProps && scriptProps.raceDate ? SpreadsheetApp.newDataValidation().requireDateOnOrAfter(parseDate(scriptProps.raceDate)).build() : null;
 
   var lastRow = sheet.getLastRow(), r;
   if (lastRow > 1) {
     Logger.log("Setting validation for sheet " + sheet.getName());
     if (clubRule !== null) {
       r = sheet.getRange(2, getRaceColumnNumber("Club"), lastRow-1);
-      if (r)
+      if (r) {
         r.clearDataValidations();
         r.setDataValidation(clubRule);
+      }
     }
     r = sheet.getRange(2, getRaceColumnNumber("Class"), lastRow-1);
-    if (r)
+    if (r) {
       r.clearDataValidations();
       r.setDataValidation(classRule);
+    }
     r = sheet.getRange(2, getRaceColumnNumber("Div"), lastRow-1);
-    if (r)
+    if (r) {
       r.clearDataValidations();
       r.setDataValidation(divRule);
+    }
+    r = sheet.getRange(2, getRaceColumnNumber("Expiry"), lastRow-1);
+    if (r) {
+      r.clearDataValidations();
+      r.setDataValidation(expiryRule);
+    }
   }
 }
 

@@ -280,7 +280,7 @@ function setFormulas() {
  * Menu hook for setting validation
  */
 function setValidation() {
-  HRM.setValidation();
+  HRM.setValidation(ScriptProperties.getProperties());
 }
 /**
  * Menu hook for setting formatting
