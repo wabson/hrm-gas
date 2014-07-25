@@ -1899,7 +1899,8 @@ function moveEntryRows(srcRange, dstSheet) {
         entryRange = srcRange.getSheet().getRange(entries[i].rowNumber, 2, entries[i].values.length, entries[i].values[0].length);
     Logger.log("Copying " + entryRange.getSheet().getName() + "!" + entryRange.getA1Notation() + " to " + dstRange.getSheet().getName() + "!" + dstRange.getA1Notation());
     // Retrive the smaller range for this entry only and copy this to the destination
-    entryRange.moveTo(dstRange);
+    dstRange.setValues(entryRange.getValues());
+    entryRange.clearContent();
   }
 }
 
