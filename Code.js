@@ -3175,9 +3175,8 @@ function createNumberBoards() {
 }
 
 function createNumberBoards_(name, truncateEmpty) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), srcSheets = getRaceSheets(ss);
-  name = name || ss.getName() + " (Number Boards)";
-  var doc = DocumentApp.create(name), docId = doc.getId(), body;
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), srcSheets = getRaceSheets(ss), sheetName;
+  var docname, doc, body;
   var style = {};
   style[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.CENTER;
   style[DocumentApp.Attribute.FONT_FAMILY] = DocumentApp.FontFamily.ARIAL;
@@ -3185,7 +3184,6 @@ function createNumberBoards_(name, truncateEmpty) {
   style[DocumentApp.Attribute.BOLD] = true;
   var lastbn;
   function appendNumber(body, num) {
-
     if (("" + num).length > 3) {
       style[DocumentApp.Attribute.FONT_SIZE] = 200;
     } else {
@@ -3193,14 +3191,15 @@ function createNumberBoards_(name, truncateEmpty) {
     }
     body.appendParagraph(num).setAttributes(style);
     body.appendParagraph(num).setAttributes(style);
-    //body.appendPageBreak();
   }
   // Copy existing sheets
   for (var i = 0; i < srcSheets.length; i++) {
-    if (srcSheets[i].isSheetHidden()) {
+    if (srcSheets[i].isSheetHidden() || srcSheets[i].getSheetProtection().isProtected()) {
       continue;
     }
-    doc = DocumentApp.openById(docId);
+    sheetName = srcSheets[i].getName();
+    docname = (name || ss.getName()) + " (Number Boards " + sheetName + ")";
+    doc = DocumentApp.create(docname);
     body = doc.getBody();
     var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[i]) - 1 : srcSheets[i].getLastRow();
     if (lastRow > 1) {
@@ -3211,7 +3210,8 @@ function createNumberBoards_(name, truncateEmpty) {
         appendNumber(body, a.boatNumber);
         lastbn = a.boatNumber;
       });
-      // Add 10 more onto the end
+      // Add 10 more onto the end (or 5 for K2s)
+      var numToAdd = sheetName.match(/Div\d_\d/) ? 5 : 10;
       for (var j = lastbn + 1; j <= lastbn + 10; j++) {
         appendNumber(body, j);
       };
