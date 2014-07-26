@@ -2287,7 +2287,7 @@ function getTimesAndPD(sheet) {
 function setPD(sheet, values) {
   var colValues = [];
   for (var i=0; i<values.length; i++) {
-    colValues.push([values[i][13]]);
+    colValues.push([values[i][getTableColumnIndex("P/D")]]);
   }
   if (colValues.length > 0) {
     var startRow = 2, range = sheet.getRange(startRow, getTableColumnIndex("P/D") + 1, colValues.length, 1);
@@ -2349,7 +2349,7 @@ function overallZero(divZeroes) {
 }
 
 function pdStatus(values, pFactors, dFactors, raceDiv) {
-  var status = "", classDivIndex = 6, classColIndex = 5, timeColIndex = getTableColumnIndex("Elapsed"), time = timeInMillis(values[timeColIndex]);
+  var status = "", classDivIndex = getTableColumnIndex("Div"), classColIndex = getTableColumnIndex("Class"), timeColIndex = getTableColumnIndex("Elapsed"), time = timeInMillis(values[timeColIndex]);
   // Rule 32(h) and 33(g) Paddlers transferred from another division are not eligible for promotion/demotion
   if ((""+values[0]).indexOf(""+raceDiv) != 0) {
     Logger.log("Transferred from another division, skipping");
@@ -2469,8 +2469,10 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
       if (numEntries(values) >= 5) {
         // Look through the times and set each P/D value
         Logger.log("Setting P/D times for " + sheetName);
+        var noElapsedValueCount = 0;
         for (var j=0; j<values.length; j++) {
-          if (values[j][timeColIndex] && values[j][timeColIndex] instanceof Date) {
+          var elapsed = values[j][timeColIndex];
+          if (elapsed && elapsed instanceof Date) {
             var status = pdStatus(values[j], pFactors, dFactors, applyToDivs[i]);
             if (status != "")
               Logger.log("Got P/D status " + status + " for boat " + values[j][0]);
@@ -2478,7 +2480,18 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
               pdDivRows.push(values[j].slice(1, 7).concat(status));
             values[j][pdColIndex] = status.replace(/^D\d$/, "D?");
           }
+          // Make sure that all boats have a time or dns/rtd etc.
+          if (values[j][0] && (values[j][1] || values[j][2]) && elapsed == "") {
+            Logger.log("No time for boat " + values[j][0]);
+            noElapsedValueCount ++;
+          }
         }
+        // Bail out before setting times, if there are still unfinished crews
+        if (noElapsedValueCount > 0) {
+          Logger.log("Skipping P/D for Div" + applyToDivs[i]);
+          continue;
+        }
+        // Set the P/D values
         setPD(sheets[applyToDivs[i]], sheetValues[applyToDivs[i]]);
         if (pdDivRows.length > 0) {
           pdRows = pdRows.concat([["Div"+applyToDivs[i], "", "", "", "", "", ""], ["Surname", "First name", "BCU number", "Club", "Class", "Division", "P/D"]], pdDivRows);
@@ -2642,7 +2655,7 @@ function calculatePoints(scriptProps) {
     entries.sort( function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);} ); // Sort by position, ascending then blanks (non-finishers)
     boundary = calculatePointsBoundary(entries, divStr);
     // Allocate points to clubs within the region
-    var count = 20, pointsByBoatNum = new Array(99);
+    var count = 20, noElapsedValueCount = 0, pointsByBoatNum = new Array(99);
     var boatNum, pd, time, minPoints = (divStr[0] == "9" ? 2 : 1);
     for (var j=0; j<entries.length; j++) {
       boatNum = entries[j].boatNumber, pd = entries[j].values[0][pdColIndex], time = entries[j].values[0][timeColIndex], 
@@ -2660,6 +2673,10 @@ function calculatePoints(scriptProps) {
       } else {
           pointsByBoatNum[entries[j].boatNumber] = "";
       }
+      if (time == "") { // Unfinished crew, should either be a time or dns/rtd etc.
+        noElapsedValueCount ++;
+        Logger.log("No time for boat " + boatNum);
+      }
       // Check clubs are in the main list
       if (club1 != "" && allClubs.indexOf(club1) == -1) {
         unfoundClubs.push([club1, entries[j].boatNumber]);
@@ -2668,30 +2685,44 @@ function calculatePoints(scriptProps) {
         unfoundClubs.push([club2, entries[j].boatNumber]);
       }
     }
-    // Set the values into the sheet
-    var bn = 0, clubIndex, points;
+    if (noElapsedValueCount > 0) { // Check if any crews unfinished
+      Logger.log(noElapsedValueCount);
+      continue;
+    }
+    // Set the values ready to go into the sheet and add to totals by club
+    var bn = 0, clubIndex, points, clubCode;
     for (var j=0; j<sheetValues.length; j++) {
       bn = sheetValues[j][0] || bn; // Use last boat number encountered, to cover second person in a K2
-      clubIndex = clubsInRegion.indexOf(sheetValues[j][4])
-      // Check clubs again, as only one of the K2 partners may be entitled to points
-      if (clubIndex >= 0) {
-        points = pointsByBoatNum[bn]
-        colValues[j] = [points || ""];
-        if (points) {
-          if (isHaslerRace) {
-            haslerPoints[clubIndex].push(points);
-          } else if (isLightningRace) {
-            Logger.log("Adding " + allClubs.indexOf(sheetValues[j][4]) + " lightning points");
-            lightningPoints[allClubs.indexOf(sheetValues[j][4])].push(points);
+      clubCode = sheetValues[j][clubColIndex]
+      clubIndex = clubsInRegion.indexOf(clubCode)
+      if (clubCode != '') {
+        // Check clubs again, as only one of the K2 partners may be entitled to points
+        if (clubIndex >= 0) {
+          points = pointsByBoatNum[bn]
+          colValues[j] = [points || ""];
+          if (points) {
+            if (isHaslerRace) {
+              haslerPoints[clubIndex].push(points);
+            } else if (isLightningRace) {
+              Logger.log("Adding " + allClubs.indexOf(clubCode) + " lightning points");
+              lightningPoints[allClubs.indexOf(clubCode)].push(points);
+            }
           }
+        } else {
+          Logger.log("Club " + clubCode + " not in region list " + clubsInRegion.join(','));
+          colValues[j] = [""];
         }
       } else {
         colValues[j] = [""];
       }
     }
     
+    var pointsCol = getTableColumnIndex("Points");
+    if (pointsCol < 0) {
+      throw "Could not find Points column";
+    }
     // We cannot set the same range we used to read the data, since this replaces formulae in other columns with the raw cell value :-(
-    sheets[i].getRange(2, 15, sheetValues.length, 1).setValues(colValues);
+    sheets[i].getRange(2, pointsCol + 1, sheetValues.length, 1).setValues(colValues);
   }
   
   if (haslerPoints.length > 0) {
