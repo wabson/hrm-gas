@@ -2930,7 +2930,7 @@ function setFormatting() {
  */
 function setSheetFormatting_(sheet) {
   var lastRow = sheet.getLastRow();
-  sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).setFontFamily("Courier New");
+  sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).setFontFamily("Courier New").setFontSize(10);
   // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
   if (lastRow > 1) {
     sheet.getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
