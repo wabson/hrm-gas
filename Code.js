@@ -2390,18 +2390,18 @@ function pdStatus(values, pFactors, dFactors, raceDiv) {
  * Get the next free row in the given column in a sheet
  */
 function getNextColumnRow(sheet, column) {
-  var startRow = 2;
+  var startRow = 2, lastRow = sheet.getLastRow();
   Logger.log("Looking for next available row in sheet " + sheet.getName());
-  if (sheet.getLastRow() > startRow) {
-    Logger.log("Looking through rows " + startRow + " to " + sheet.getLastRow());
-    var range = sheet.getRange(startRow, column, sheet.getLastRow()-startRow-1, 1), values = range.getValues();
+  if (lastRow >= startRow) {
+    Logger.log("Looking through rows " + startRow + " to " + lastRow);
+    var range = sheet.getRange(startRow, column, lastRow-startRow+1, 1), values = range.getValues();
     for (var i=0; i<values.length; i++) {
       if (values[i][0] == "") {
         return startRow + i;
       }
     }
   }
-  return Math.max(sheet.getLastRow(), startRow);
+  return Math.max(lastRow, startRow) + 1;
 }
 
 function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFactors, dFactors) {
@@ -2451,7 +2451,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   }
   
   // Apply promotions
-  var pdRows = [], pdDivRows;
+  var pdRows = [], pdRowColours = [], pdRowWeights = [], pdDivRows;
   // TODO Keep track of all promotions and demotions and associated paddler details so they can be added to the PD sheet
   for (var i=0; i<applyToDivs.length; i++) {
     sheetName = "Div" + applyToDivs[i]
@@ -2493,8 +2493,18 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
         }
         // Set the P/D values
         setPD(sheets[applyToDivs[i]], sheetValues[applyToDivs[i]]);
-        if (pdDivRows.length > 0) {
-          pdRows = pdRows.concat([["Div"+applyToDivs[i], "", "", "", "", "", ""], ["Surname", "First name", "BCU number", "Club", "Class", "Division", "P/D"]], pdDivRows);
+        // Add on rows for the P/D sheet
+        if (pdDivRows.length > 0 && applyToDivs[i] > 3) {
+          pdRows.push(["Div"+applyToDivs[i], "", "", "", "", "", ""], ["Surname", "First name", "BCU number", "Club", "Class", "Division", "P/D"]);
+          pdRowColours.push(["black", "black", "black", "black", "black", "black", "black"], ["blue", "blue", "blue", "blue", "blue", "blue", "blue"]);
+          pdRowWeights.push(["bold", "bold", "bold", "bold", "bold", "bold", "bold"], ["normal", "normal", "normal", "normal", "normal", "normal", "normal"]);
+          for (var j = 0; j < pdDivRows.length; j++) {
+            if (pdDivRows[j][6].indexOf("P") == 0) {
+              pdRows.push(pdDivRows[j]);
+              pdRowColours.push(["black", "black", "black", "black", "black", "black", "black"]);
+              pdRowWeights.push(["normal", "normal", "normal", "normal", "normal", "normal", "normal"]);
+            }
+          }
         }
       } else {
         Logger.log("Fewer than 5 starters in " + sheetName + ", no automatic promotions/demotions");
@@ -2506,7 +2516,8 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   var pdSheet = ss.getSheetByName("PandD");
   if (pdSheet != null) {
     if (pdRows.length > 0) {
-      pdSheet.getRange(getNextColumnRow(pdSheet, 1), 1, pdRows.length, 7).setValues(pdRows);
+      var startRow = getNextColumnRow(pdSheet, 1);
+      pdSheet.getRange(startRow, 1, pdRows.length, 7).setValues(pdRows).setFontColors(pdRowColours).setFontWeights(pdRowWeights);
     }
     if (pdTimeRows.length > 0) {
       pdSheet.getRange(getNextColumnRow(pdSheet, 12), 12, pdTimeRows.length, 2).setValues(pdTimeRows);
@@ -2524,6 +2535,8 @@ function calculatePromotions() {
     if (pdSheet.getLastRow() > 1) {
       pdSheet.getRange(2, 1, pdSheet.getLastRow()-1, pdSheet.getLastColumn()).clear();
     }
+    pdSheet.getRange(1, 1).setValue("Version 5.0");
+    pdSheet.getRange(1, 12).setValue("P/D");
     setCoursePromotions([1, 2, 3], [1, 2, 3], [1.033, 1.117, 1.2], [], [[2, 1.083], [3, 1.167], [4, 1.25]]); // No automatic promotions, only demotions
     setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]]);
     setCoursePromotions([7, 8], [7, 8, 9], [1.533, 1.617], [[5, 1.4], [6, 1.483], [7, 1.567], [8, 1.65]], [[8, 1.583], [9, 1.667]]);
