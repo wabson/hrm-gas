@@ -2617,7 +2617,11 @@ function calculatePointsBoundary(entries, raceName) {
       continue;
     }
     Logger.log("Using boat " + boatNum + " for points cutoff boundary");
-    return timeInMillis(time) * 1.1;
+    /*
+     * Andy Rawson confirmed by email that 120% cutoff is used for combined K2 classes 1/2 and 3/4
+     */
+    var k2match = /^(\d)_(\d)$/.exec(raceName), cutoffFactor = k2match && k2match[0] != k2match[1] ? 1.2 : 1.1;
+    return timeInMillis(time) * cutoffFactor;
   }
   return null;
 }
