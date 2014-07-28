@@ -2609,7 +2609,7 @@ function calculatePoints(scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
       clubsSheet = ss.getSheetByName("Clubs"), clubRows = [], clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, lightningPoints, unfoundClubs = [],
       clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"), 
-      pdColIndex = getTableColumnIndex("P/D"), numHeaders = raceSheetColumnNames.length;
+      pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length;
   if (clubsSheet != null) {
     // Clear existing calculated values
     if (clubsSheet.getLastRow() > 1 && clubsSheet.getLastColumn() > 4) {
@@ -2660,8 +2660,9 @@ function calculatePoints(scriptProps) {
     for (var j=0; j<entries.length; j++) {
       boatNum = entries[j].boatNumber, pd = entries[j].values[0][pdColIndex], time = entries[j].values[0][timeColIndex], 
         club1 = entries[j].values[0][clubColIndex], club2 = entries[j].values[1] ? entries[j].values[1][clubColIndex] : "",
-        posn = parseInt(entries[j].values[0][posnColIndex]) || 0;
-      if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0)) {
+        posn = parseInt(entries[j].values[0][posnColIndex]) || 0, notes1 = entries[j].values[0][notesColIndex], 
+        notes2 = entries[j].values[1] ? entries[j].values[1][notesColIndex] : null;
+      if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0) && notes1 != "ill" && notes2 != "ill") {
         if (isHaslerRace && boundary && time instanceof Date && boundary < timeInMillis(time)) {
           pointsByBoatNum[entries[j].boatNumber] = minPoints;
         } else {
