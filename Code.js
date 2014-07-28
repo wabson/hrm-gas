@@ -33,6 +33,7 @@ var PROJECT_ID = "AKfycbzymqCQ6rUDYiNeG63i9vYeXaSE1YtiHDEgRHFQ0TdXaBSwkLs";
 
 var NUMBER_FORMAT_DATE = "dd/MM/yyyy";
 var NUMBER_FORMAT_TIME = "[h]:mm:ss";
+var NUMBER_FORMAT_TIME_MS = "[h]:mm:ss.S"
 var NUMBER_FORMAT_CURRENCY = "£0.00";
 var NUMBER_FORMAT_INTEGER = "0";
 
@@ -2401,7 +2402,55 @@ function getNextColumnRow(sheet, column) {
       }
     }
   }
-  return Math.max(lastRow, startRow) + 1;
+  return Math.max(lastRow + 1, startRow);
+}
+
+function pdTimeLabel_(fromDivs, raceType, type, toDiv) {
+  return fromDivs.join("") + raceType + type + " to Div " + toDiv;
+}
+
+/**
+ * Convert a time period into a formatted string with millsecond precision
+ */
+function timeToStringMs_(d) {
+  function pad(p) { return (p < 10 ? "0" : "") + p; }
+  return ""+pad(d.getUTCHours())+":"+pad(d.getUTCMinutes())+":"+pad(d.getUTCSeconds())+"."+d.getUTCMilliseconds();
+}
+
+/**
+ * Convert a time period into a formatted string with decisecond precision
+ */
+function timeToStringDs_(d) {
+  function pad(p) { return (p < 10 ? "0" : "") + p; }
+  return ""+pad(d.getUTCHours())+":"+pad(d.getUTCMinutes())+":"+pad(d.getUTCSeconds())+"."+pad(Math.round(d.getUTCMilliseconds()/10));
+}
+
+function addPDTimes_(pdSheet, rows) {
+  if (rows.length > 0) {
+    var alignments = new Array(rows.length);
+    for (var i = 0; i < rows.length; i++) {
+      alignments[i] = ["left", "right"];
+    }
+    pdSheet.getRange(getNextColumnRow(pdSheet, 12), 12, rows.length, 2).setNumberFormat('@STRING@').setValues(rows).setHorizontalAlignments(alignments);
+  }
+}
+
+function addPDSummary_(pdSheet, div, rows) {
+  var pdRows = [], pdRowColours = [], pdRowWeights = [];
+
+  // Add on rows for the P/D sheet
+  if (rows.length) {
+    pdRows.push(["Div"+div, "", "", "", "", "", ""], ["Surname", "First name", "BCU number", "Club", "Class", "Division", "P/D"]);
+    pdRowColours.push(["black", "black", "black", "black", "black", "black", "black"], ["blue", "blue", "blue", "blue", "blue", "blue", "blue"]);
+    pdRowWeights.push(["bold", "bold", "bold", "bold", "bold", "bold", "bold"], ["normal", "normal", "normal", "normal", "normal", "normal", "normal"]);
+    for (var j = 0; j < rows.length; j++) {
+      pdRows.push(rows[j]);
+      pdRowColours.push(["black", "black", "black", "black", "black", "black", "black"]);
+      pdRowWeights.push(["normal", "normal", "normal", "normal", "normal", "normal", "normal"]);
+    }
+    var startRow = getNextColumnRow(pdSheet, 1);
+    pdSheet.getRange(startRow, 1, pdRows.length, 7).setValues(pdRows).setFontColors(pdRowColours).setFontWeights(pdRowWeights);
+  }
 }
 
 function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFactors, dFactors) {
@@ -2409,6 +2458,11 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
       sheetName, sheetValues = new Array(10), sheets = new Array(10), sheet, zeroTimes = [], 
       timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D"), pdTimeRows = [],
       min;
+  var pdSheet = ss.getSheetByName("PandD");
+  if (pdSheet == null) {
+    throw "Cannot find PandD sheet";
+  }
+  Logger.log(pdSheet.getRange(13, 2).getNumberFormats());
   if (sourceFactors.length != calculateFromDivs.length) {
     throw "Number of source factors must be the same as the number of source sheets";
   }
@@ -2424,35 +2478,42 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
       }
       var median = medianTime(sheetValues[calculateFromDivs[i]]);
       zeroTimes.push(median / sourceFactors[i]);
-      Logger.log("Adding median value " + median);
+      Logger.log("Adding " + sheetName + " median value " + timeToStringMs_(new Date(median)));
     } else {
       throw "Source sheet " + sheetName + " not found";
     }
   }
   var zeroTime = overallZero(zeroTimes);
-  Logger.log("Calculated handicapped zero as " + new Date(zeroTime).toUTCString());
+  Logger.log("Calculated handicapped zero as " + timeToStringMs_(new Date(zeroTime)));
   
   // Calculate P/D times
-  var pTimes = new Array(pFactors.length), d;
+  var pTimes = [], dTimes = [], boundary, t, label;
   for (var i=0; i<pFactors.length; i++) {
-    pTimes[i] = zeroTime * pFactors[i][1];
-    pFactors[i].push(pTimes[i]);
-    d = new Date(pTimes[i]), t = ""+d.getUTCHours()+":"+d.getUTCMinutes()+":"+d.getUTCSeconds()+"."+d.getUTCMilliseconds();
-    pdTimeRows.push([""+applyToDivs.join("")+"K1P to Div " + pFactors[i][0], t]);
-    Logger.log(""+applyToDivs.join("")+"K1P to Div " + pFactors[i][0] + ": " + d.getUTCHours()+":"+d.getUTCMinutes()+":"+d.getUTCSeconds()+"."+d.getUTCMilliseconds());
+    boundary = zeroTime * pFactors[i][1];
+    if (pFactors[i][2] !== false) {
+      pTimes.push([pFactors[i][0], pFactors[i][1], boundary]);
+    }
+    t = timeToStringDs_(new Date(boundary));
+    label = pdTimeLabel_(applyToDivs, "K1", "P", pFactors[i][0]);
+    pdTimeRows.push([label, t]);
+    Logger.log(label + ": " + t);
   }
-  var dTimes = new Array(dFactors.length);
   for (var i=0; i<dFactors.length; i++) {
-    dTimes[i] = zeroTime * dFactors[i][1];
-    dFactors[i].push(dTimes[i]);
-    d = new Date(dTimes[i]), t = ""+d.getUTCHours()+":"+d.getUTCMinutes()+":"+d.getUTCSeconds()+"."+d.getUTCMilliseconds();
-    pdTimeRows.push([""+applyToDivs.join("")+"K1D to Div " + dFactors[i][0], t]);
-    Logger.log(""+applyToDivs.join("")+"K1D to Div " + dFactors[i][0] + ": " + d.getUTCHours()+":"+d.getUTCMinutes()+":"+d.getUTCSeconds()+"."+d.getUTCMilliseconds());
+    boundary = zeroTime * dFactors[i][1];
+    if (dFactors[i][2] !== false) {
+      dTimes.push([dFactors[i][0], dFactors[i][1], boundary]);
+    }
+    t = timeToStringDs_(new Date(boundary));
+    label = pdTimeLabel_(applyToDivs, "K1", "D", dFactors[i][0]);
+    pdTimeRows.push([label, t]);
+    Logger.log(label + ": " + t);
   }
+
+  // Write the times into the sheet
+  addPDTimes_(pdSheet, pdTimeRows);
   
   // Apply promotions
-  var pdRows = [], pdRowColours = [], pdRowWeights = [], pdDivRows;
-  // TODO Keep track of all promotions and demotions and associated paddler details so they can be added to the PD sheet
+  var pdDivRows;
   for (var i=0; i<applyToDivs.length; i++) {
     sheetName = "Div" + applyToDivs[i]
     sheet = ss.getSheetByName(sheetName);
@@ -2473,11 +2534,13 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
         for (var j=0; j<values.length; j++) {
           var elapsed = values[j][timeColIndex];
           if (elapsed && elapsed instanceof Date) {
-            var status = pdStatus(values[j], pFactors, dFactors, applyToDivs[i]);
-            if (status != "")
+            var status = pdStatus(values[j], pTimes, dTimes, applyToDivs[i]);
+            if (status != "") {
               Logger.log("Got P/D status " + status + " for boat " + values[j][0]);
-            if (status)
+            }
+            if (status && status.indexOf("P") == 0) { // Only promotions seem to be displayed
               pdDivRows.push(values[j].slice(1, 7).concat(status));
+            }
             values[j][pdColIndex] = status.replace(/^D\d$/, "D?");
           }
           // Make sure that all boats have a time or dns/rtd etc.
@@ -2493,37 +2556,14 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
         }
         // Set the P/D values
         setPD(sheets[applyToDivs[i]], sheetValues[applyToDivs[i]]);
-        // Add on rows for the P/D sheet
-        if (pdDivRows.length > 0 && applyToDivs[i] > 3) {
-          pdRows.push(["Div"+applyToDivs[i], "", "", "", "", "", ""], ["Surname", "First name", "BCU number", "Club", "Class", "Division", "P/D"]);
-          pdRowColours.push(["black", "black", "black", "black", "black", "black", "black"], ["blue", "blue", "blue", "blue", "blue", "blue", "blue"]);
-          pdRowWeights.push(["bold", "bold", "bold", "bold", "bold", "bold", "bold"], ["normal", "normal", "normal", "normal", "normal", "normal", "normal"]);
-          for (var j = 0; j < pdDivRows.length; j++) {
-            if (pdDivRows[j][6].indexOf("P") == 0) {
-              pdRows.push(pdDivRows[j]);
-              pdRowColours.push(["black", "black", "black", "black", "black", "black", "black"]);
-              pdRowWeights.push(["normal", "normal", "normal", "normal", "normal", "normal", "normal"]);
-            }
-          }
-        }
+        // Then put in the summary rows
+        addPDSummary_(pdSheet, applyToDivs[i], pdDivRows);
       } else {
         Logger.log("Fewer than 5 starters in " + sheetName + ", no automatic promotions/demotions");
       }
     } else {
       throw "Destination sheet " + sheetName + " not found";
     }
-  }
-  var pdSheet = ss.getSheetByName("PandD");
-  if (pdSheet != null) {
-    if (pdRows.length > 0) {
-      var startRow = getNextColumnRow(pdSheet, 1);
-      pdSheet.getRange(startRow, 1, pdRows.length, 7).setValues(pdRows).setFontColors(pdRowColours).setFontWeights(pdRowWeights);
-    }
-    if (pdTimeRows.length > 0) {
-      pdSheet.getRange(getNextColumnRow(pdSheet, 12), 12, pdTimeRows.length, 2).setValues(pdTimeRows);
-    }
-  } else {
-    throw "Cannot find PandD sheet";
   }
 }
 
@@ -2537,9 +2577,19 @@ function calculatePromotions() {
     }
     pdSheet.getRange(1, 1).setValue("Version 5.0");
     pdSheet.getRange(1, 12).setValue("P/D");
-    setCoursePromotions([1, 2, 3], [1, 2, 3], [1.033, 1.117, 1.2], [], [[2, 1.083], [3, 1.167], [4, 1.25]]); // No automatic promotions, only demotions
-    setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]]);
+    setCoursePromotions([1, 2, 3], [1, 2, 3], [1.033, 1.117, 1.2], [[1, 1.067, false], [2, 1.15, false]], [[2, 1.083], [3, 1.167], [4, 1.25]]); // No automatic promotions, only demotions
+    setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15], [3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]]);
     setCoursePromotions([7, 8], [7, 8, 9], [1.533, 1.617], [[5, 1.4], [6, 1.483], [7, 1.567], [8, 1.65]], [[8, 1.583], [9, 1.667]]);
+    // These extra rows appear at the end with no times - presumably for manual promotions
+    addPDTimes_(pdSheet, [
+      [pdTimeLabel_([5, 6], "K2", "P", 3), ""],
+      [pdTimeLabel_([5, 6], "K2", "P", 4), ""],
+      [pdTimeLabel_([5, 6], "K2", "P", 5), ""],
+      [pdTimeLabel_([7, 8, 9], "K2", "P", 5), ""],
+      [pdTimeLabel_([7, 8, 9], "K2", "P", 6), ""],
+      [pdTimeLabel_([7, 8, 9], "K2", "P", 7), ""],
+      [pdTimeLabel_([7, 8, 9], "K2", "P", 8), ""]
+    ]);
   } else {
     throw "Cannot find PandD sheet";
   }
