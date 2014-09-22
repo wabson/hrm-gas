@@ -2723,7 +2723,7 @@ function calculatePoints(scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
       clubsSheet = ss.getSheetByName("Clubs"), clubRows = [], clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, lightningPoints, unfoundClubs = [],
       clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"), 
-      pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length;
+      pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
   if (clubsSheet != null) {
     // Clear existing calculated values
     if (clubsSheet.getLastRow() > 1 && clubsSheet.getLastColumn() > 4) {
@@ -2737,8 +2737,8 @@ function calculatePoints(scriptProps) {
   allClubs = getClubCodes(clubsRange);
   Logger.log("All clubs: " + allClubs);
   allClubNames = getClubNames(clubsRange);
-  clubsInRegion = (raceRegion == "HF") ? allClubs : getClubCodes(clubsRange, raceRegion);
-  clubNames = (raceRegion == "HF") ? allClubNames : getClubNames(clubsRange, raceRegion);
+  clubsInRegion = isHaslerFinal ? allClubs : getClubCodes(clubsRange, raceRegion);
+  clubNames = isHaslerFinal ? allClubNames : getClubNames(clubsRange, raceRegion);
   if (clubsInRegion.length == 0) {
     throw "No clubs found in region " + raceRegion;
   } else {
@@ -2771,7 +2771,7 @@ function calculatePoints(scriptProps) {
     entries.sort( function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);} ); // Sort by position, ascending then blanks (non-finishers)
     boundary = calculatePointsBoundary(entries, divStr);
     // Allocate points to clubs within the region
-    var count = 20, noElapsedValueCount = 0, pointsByBoatNum = new Array(99);
+    var count = (isHaslerFinal && isLightningRace) ? 40 : 20, noElapsedValueCount = 0, pointsByBoatNum = new Array(99);
     var boatNum, pd, time, minPoints = (divStr[0] == "9" ? 2 : 1);
     for (var j=0; j<entries.length; j++) {
       boatNum = entries[j].boatNumber, pd = entries[j].values[0][pdColIndex], time = entries[j].values[0][timeColIndex], 
