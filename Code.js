@@ -2661,12 +2661,14 @@ function calculatePointsBoundary(entries, raceName) {
     if (!(time instanceof Date)) {
       continue;
     }
-    Logger.log("Using boat " + boatNum + " for points cutoff boundary");
+    Logger.log("Using boat " + boatNum + " for " + raceName + " points cutoff boundary");
     /*
      * Andy Rawson confirmed by email that 120% cutoff is used for combined K2 classes 1/2 and 3/4
      */
-    var k2match = /^(\d)_(\d)$/.exec(raceName), cutoffFactor = k2match && k2match[0] != k2match[1] ? 1.2 : 1.1;
-    return timeInMillis(time) * cutoffFactor;
+    var k2match = /^(\d)_(\d)$/.exec(raceName), cutoffFactor = k2match && k2match[1] != k2match[2] ? 1.2 : 1.1;
+    var boundary = timeInMillis(time) * cutoffFactor;
+    Logger.log("Cutoff factor " + raceName + ": " + cutoffFactor + ", boundary " + new Date(boundary));
+    return boundary;
   }
   return null;
 }
