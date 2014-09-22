@@ -301,9 +301,6 @@ function setAllRaceSheetHeadings() {
 /**
  * Menu hooks for saving HTML
  */
-function setRaceSheetHeadings() {
-  HRM.setRaceSheetHeadings();
-}
 function saveEntriesHTML() {
   HRM.saveEntriesHTML();
 }

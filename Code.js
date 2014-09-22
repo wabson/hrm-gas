@@ -3101,7 +3101,7 @@ function setSheetFormatting_(sheet) {
 /**
  * Re-set the column names on a specific race sheet, including contents and formats
  */
-function setRaceSheetHeadings(sheet, columnNames, columnAlignments) {
+function setRaceSheetHeadings_(sheet, columnNames, columnAlignments) {
   columnNames = columnNames || raceSheetColumnNames;
   columnAlignments = columnAlignments || raceSheetColumnAlignments;
   var headersRange = sheet.getRange(1, 1, 1, columnNames.length);
@@ -3119,7 +3119,7 @@ function setRaceSheetHeadings(sheet, columnNames, columnAlignments) {
 function setAllRaceSheetHeadings(columnNames, columnAlignments) {
   var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    setRaceSheetHeadings(sheets[i], columnNames, columnAlignments);
+    setRaceSheetHeadings_(sheets[i], columnNames, columnAlignments);
   }
 }
 
@@ -3145,7 +3145,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
       }
     }
     sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
-    setRaceSheetHeadings(sheet, columnNames, columnAlignments);
+    setRaceSheetHeadings_(sheet, columnNames, columnAlignments);
     setSheetFormatting_(sheet);
     setSheetValidation_(sheet);
     setSheetFormulas_(sheet);
