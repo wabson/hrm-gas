@@ -762,57 +762,44 @@ function addLocalEntries(eventInfo) {
   if (ssId)
   {
     var ss = SpreadsheetApp.openById(ssId),
-        sheets = getRaceSheets(ss), sheet, rows, results = [], numCrews;
+        sheets = getRaceSheets(ss), sheet, sheetName, rows, results = [], numCrews, lastNonEmpty;
 
     for (var i=0; i<sheets.length; i++) {
-      sheet = sheets[i];
-      rows = [], numCrews = 0;
-      // Iterate through all paddlers
-      if (sheet.getLastRow() > 1) {
-        var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 8), values = range.getValues(),
-            rows = [],
-            lastRow = -1; // Last row with some data in. We can drop all rows after this.
-        for (var j=0; j<values.length; j++) {
-          rows.push(values[j].slice(1));
-          if (values[j][1].trim() != "" || values[j][2].trim() != "" || values[j][3].trim() != "") { // First name surname or BCU number filled out
-            if ((""+values[j][0]).trim() != "") {
-              numCrews ++;
-            }
-            lastRow = j;
+      sheet = sheets[i],
+        sheetName = sheet.getName(),
+        srcRows = getTableRows(sheet),
+        rows = [], numCrews = 0;
+      srcRows.forEach(function(row, i) {
+        if (row["Surname"] || row["First name"]) {
+          lastNonEmpty = i;
+          if (row["Number"]) {
+            numCrews ++;
           }
         }
-        if (lastRow > -1) {
-          rows = rows.slice(0, lastRow+1);
-        } else {
-          rows = [];
-        }
-      }
-      
-      if (rows.length == 0) {
-        Logger.log("No rows for sheet " + sheet.getName());
+      });
+      Logger.log("" + numCrews + " crews for sheet " + sheetName);
+      if (numCrews == 0) {
         continue;
-      } else {
-        Logger.log("" + rows.length + " rows for sheet " + sheet.getName());
       }
+      srcRows = srcRows.slice(0, lastNonEmpty+1);
       
-      var dstsheet = findMatchingRaceSheet(sheet.getName());
-      
+      var dstsheet = findMatchingRaceSheet(sheetName);
       if (dstsheet != null) {
         // Find the latest row with a number but without a name in the sheet
         var nextRow = getNextEntryRow(dstsheet);
         if (nextRow > 0) {
           Logger.log("Adding new rows at row " + nextRow);
-          if (dstsheet.getLastRow()-nextRow+1 >= rows.length) {
-            dstsheet.getRange(nextRow, 2, rows.length, 7).setValues(rows); // TODO Allow numbers to be added, in which case length will be 8 rather than 7
+          if (dstsheet.getLastRow()-nextRow+1 >= srcRows.length) {
+            setTableRowValues(dstsheet, srcRows, "Surname", "Paid", nextRow); // TODO Allow numbers to be added
             results.push("Added " + numCrews + " crews to " + dstsheet.getName());
           } else {
-            throw "Too many rows to import into " + dstsheet.getName() + " (" + rows.length + " data rows, " + (dstsheet.getLastRow()-nextRow+1) + " in sheet)";
+            throw "Too many rows to import into " + dstsheet.getName() + " (" + srcRows.length + " data rows, " + (dstsheet.getLastRow()-nextRow+1) + " in sheet)";
           }
         } else {
-          throw("No space left in sheet " + sheet.getName());
+          throw("No space left in sheet " + sheetName);
         }
       } else {
-        throw("Destination sheet " + sheet.getName() + " not found");
+        throw("Destination for sheet " + sheetName + " not found");
       }
     }
   } else {
@@ -1192,10 +1179,11 @@ function updateEntriesFromRankings() {
   }
 }
 
-function setTableRowValues(sheet, values, startColumnName, endColumnName) {
+function setTableRowValues(sheet, values, startColumnName, endColumnName, startRow) {
   if (values.length == 0) {
     return;
   }
+  var startRow = startRow || 2;
   var headers = getTableHeaders(sheet);
   var valueList = new Array(values.length);
   for (var i = 0; i < values.length; i++) {
@@ -1205,7 +1193,7 @@ function setTableRowValues(sheet, values, startColumnName, endColumnName) {
     }
     valueList[i] = row;
   }
-  sheet.getRange(2, (startColumnName ? headers.indexOf(startColumnName) + 1 : 1), valueList.length, valueList[0].length).setValues(valueList);
+  sheet.getRange(startRow, (startColumnName ? headers.indexOf(startColumnName) + 1 : 1), valueList.length, valueList[0].length).setValues(valueList);
 }
 
 /**
