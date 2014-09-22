@@ -2261,6 +2261,7 @@ function setFinishTimes(eventInfo) {
       ]
     });
     finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 2).setValues(finishValues);
+    finishesSheet.getDataRange().setFontFamily(SHEET_FONT_FAMILY);
   }
   // Fetch all of the entries
   var allEntries = [], sheets = getRaceSheets(), finishColNum = getTableColumnIndex("Finish") + 1;
@@ -2876,6 +2877,7 @@ function calculatePoints(scriptProps) {
         headings: [{name: 'Club', color: COLOR_YELLOW}, {name: 'Code', color: COLOR_YELLOW}, {name: 'Lightning Points'}]
       });
       clubsSheet.getRange(2, 8, clubPointsRows.length, 4).setValues(clubPointsRows);
+      clubsSheet.getDataRange().setFontFamily(SHEET_FONT_FAMILY);
     }
   }
   
