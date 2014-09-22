@@ -2721,7 +2721,7 @@ function calculatePoints(scriptProps) {
   }
   
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
-      clubsSheet = ss.getSheetByName("Clubs"), clubRows = [], clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, lightningPoints, unfoundClubs = [],
+      clubsSheet = ss.getSheetByName("Clubs"), clubRows = [], clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
       clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"), 
       pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
   if (clubsSheet != null) {
@@ -2745,8 +2745,12 @@ function calculatePoints(scriptProps) {
     Logger.log("Regional clubs: " + clubsInRegion);
   }
   haslerPoints = new Array(clubsInRegion.length), lightningPoints = new Array(allClubs.length);
+  doublesPoints = isHaslerFinal ? new Array(clubsInRegion.length) : null;
   for (var i=0; i<clubsInRegion.length; i++) {
     haslerPoints[i] = [];
+    if (doublesPoints) { 
+      doublesPoints[i] = [];
+    }
   }
   for (var i=0; i<allClubs.length; i++) {
     lightningPoints[i] = [];
@@ -2755,14 +2759,15 @@ function calculatePoints(scriptProps) {
   // TODO Check that promotions have first been calculated...
   
   // For each race...
-  var entries = [], sheets = getRaceSheets(), divStr, boundary, colValues, isHaslerRace, isLightningRace;
+  var entries = [], sheets = getRaceSheets(), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace;
   for (var i=0; i<sheets.length; i++) {
     // Fetch all of the entries
     if (sheets[i].getLastRow() < 2) {
       continue;
     }
-    divStr = sheets[i].getName().replace("Div", "");
-    isHaslerRace = sheets[i].getName().indexOf("Div") == 0, isLightningRace = sheets[i].getName().match(/U\d+/) != null;
+    sheetName = sheets[i].getName();
+    divStr = sheetName.replace("Div", "");
+    isHaslerRace = sheetName.indexOf("Div") == 0, isLightningRace = sheetName.match(/U\d+/) != null, isDoublesRace = sheetName.indexOf("_") > -1;
     var sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, numHeaders), sheetValues = sheetRange.getValues();
     colValues = Array(sheetRange.getNumRows());
     entries = getEntryRowData(sheetRange);
@@ -2819,7 +2824,11 @@ function calculatePoints(scriptProps) {
           colValues[j] = [points || ""];
           if (points) {
             if (isHaslerRace) {
-              haslerPoints[clubIndex].push(points);
+              if (isHaslerFinal && isDoublesRace) {
+                doublesPoints[clubIndex].push(points);
+              } else {
+                haslerPoints[clubIndex].push(points);
+              }
             } else if (isLightningRace) {
               Logger.log("Adding " + allClubs.indexOf(clubCode) + " lightning points");
               lightningPoints[allClubs.indexOf(clubCode)].push(points);
@@ -2845,9 +2854,7 @@ function calculatePoints(scriptProps) {
   if (haslerPoints.length > 0) {
     var clubPointsRows = [], lastPoints = 9999;
     for (var j=0; j<clubsInRegion.length; j++) {
-      if (haslerPoints[j].length > 0) {
-        clubPointsRows.push([clubNames[j], clubsInRegion[j], sumPoints(haslerPoints[j], 12)]);
-      }
+      clubPointsRows.push([clubNames[j], clubsInRegion[j], !isHaslerFinal ? sumPoints(haslerPoints[j], 12) : sumPoints(haslerPoints[j], 6) + sumPoints(doublesPoints[j], 6)]);
     }
     if (clubPointsRows.length > 0) {
       clubPointsRows.sort(function(a, b) { return b[2] - a[2] }); // Sort by number of points
