@@ -3227,7 +3227,7 @@ function populateFromHtmlResults() {
     'Enter results URL:',
     Browser.Buttons.OK_CANCEL
   );
-  var html = UrlFetchApp.fetch(raceUrl), pageSrc = html.getContentText().replace('"-//W3C//DTD XHTML 1.0 Strict//EN""', '"-//W3C//DTD XHTML 1.0 Strict//EN" "').replace(/& /g, '&amp; ').replace('</body></html><html><body>', ''),
+  var html = UrlFetchApp.fetch(raceUrl), pageSrc = html.getContentText().replace('"-//W3C//DTD XHTML 1.0 Strict//EN""', '"-//W3C//DTD XHTML 1.0 Strict//EN" "').replace(/& /g, '&amp; ').replace('</body></html><html><body>', '').replace('<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">', '').replace(/<br>/g, '<br />'),
       xmldoc = XmlService.parse(pageSrc), root = xmldoc.getRootElement(), tableEls = getElementsByTagName(root, 'table');
   for (var i = 0; i < tableEls.length; i++) {
     var sheetName = getElementsByTagName(tableEls[i], 'caption')[0].getText(), rows = getElementsByTagName(tableEls[i], 'tr'), values = [];
