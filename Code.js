@@ -2777,7 +2777,7 @@ function calculatePoints(scriptProps) {
     boundary = calculatePointsBoundary(entries, divStr);
     // Allocate points to clubs within the region
     var count = (isHaslerFinal && isLightningRace) ? 40 : 20, noElapsedValueCount = 0, pointsByBoatNum = new Array(99);
-    var boatNum, pd, time, minPoints = (divStr[0] == "9" ? 2 : 1);
+    var boatNum, pd, time, minPoints = (divStr[0] == "9" ? 2 : 1), lastTime = 0, lastPoints = 0;
     for (var j=0; j<entries.length; j++) {
       boatNum = entries[j].boatNumber, pd = entries[j].values[0][pdColIndex], time = entries[j].values[0][timeColIndex], 
         club1 = entries[j].values[0][clubColIndex], club2 = entries[j].values[1] ? entries[j].values[1][clubColIndex] : "",
@@ -2785,12 +2785,19 @@ function calculatePoints(scriptProps) {
         notes2 = entries[j].values[1] ? entries[j].values[1][notesColIndex] : null;
       if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0) && notes1 != "ill" && notes2 != "ill") {
         if (isHaslerRace && boundary && time instanceof Date && boundary < timeInMillis(time)) {
-          pointsByBoatNum[entries[j].boatNumber] = minPoints;
+          pointsAwarded = minPoints;
         } else {
-          pointsByBoatNum[entries[j].boatNumber] = Math.max(minPoints, count);
+          // If two or more crews cross the line together then the counter gets decremented for each but they all get the same score as each other
+          if (timeInMillis(time) != lastTime) {
+            pointsAwarded = Math.max(minPoints, count);
+          } else {
+            pointsAwarded = lastPoints;
+          }
         }
-        Logger.log("Allocate " + pointsByBoatNum[entries[j].boatNumber] + " to boat " + boatNum + " (pos " + posn + ") - club in region: " + club1);
-        // TODO Should we decrement this all the time? What if two crews cross the line together?
+        Logger.log("Allocate " + pointsAwarded + " to boat " + boatNum + " (pos " + posn + ") - club in region: " + club1);
+        pointsByBoatNum[entries[j].boatNumber] = pointsAwarded;
+        lastTime = timeInMillis(time);
+        lastPoints = pointsAwarded;
         count --;
       } else {
           pointsByBoatNum[entries[j].boatNumber] = "";
