@@ -2778,6 +2778,7 @@ function calculatePoints(scriptProps) {
     // Allocate points to clubs within the region
     var count = (isHaslerFinal && isLightningRace) ? 40 : 20, noElapsedValueCount = 0, pointsByBoatNum = new Array(99);
     var boatNum, pd, time, minPoints = (divStr[0] == "9" ? 2 : 1), lastTime = 0, lastPoints = 0;
+    var mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
     for (var j=0; j<entries.length; j++) {
       boatNum = entries[j].boatNumber, pd = entries[j].values[0][pdColIndex], time = entries[j].values[0][timeColIndex], 
         club1 = entries[j].values[0][clubColIndex], club2 = entries[j].values[1] ? entries[j].values[1][clubColIndex] : "",
@@ -2813,6 +2814,9 @@ function calculatePoints(scriptProps) {
       if (club2 != "" && allClubs.indexOf(club2) == -1) {
         unfoundClubs.push([club2, entries[j].boatNumber]);
       }
+      if (club2 && (club1 != club2) && isHaslerFinal) {
+        mixedClubDoubles.push(boatNum);
+      }
     }
     if (noElapsedValueCount > 0) { // Check if any crews unfinished
       Logger.log(noElapsedValueCount);
@@ -2832,7 +2836,9 @@ function calculatePoints(scriptProps) {
           if (points) {
             if (isHaslerRace) {
               if (isHaslerFinal && isDoublesRace) {
-                doublesPoints[clubIndex].push(points);
+                if (mixedClubDoubles.indexOf(bn) == -1) { // Only 'pure' K2s score HF points (rule 39 (d))
+                  doublesPoints[clubIndex].push(points);
+                }
               } else {
                 haslerPoints[clubIndex].push(points);
               }
