@@ -48,6 +48,8 @@ var DIVS_LIGHTNING = ["7","8","9","U12M","U12F","U10M","U10F"];
 var COLOR_YELLOW = "#ffff99"; // Key columns
 var COLOR_BLUE = "#ccffff"; // Value columns
 
+var SHEET_FONT_FAMILY = "Courier New";
+
 /**
  * List of canoe clubs
  */
@@ -3076,7 +3078,7 @@ function setFormatting() {
  */
 function setSheetFormatting_(sheet) {
   var lastRow = sheet.getLastRow();
-  sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).setFontFamily("Courier New").setFontSize(10);
+  sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).setFontFamily(SHEET_FONT_FAMILY).setFontSize(10);
   // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
   if (lastRow > 1) {
     sheet.getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
@@ -3099,7 +3101,7 @@ function setRaceSheetHeadings(sheet, columnNames, columnAlignments) {
   // Clear existing header
   sheet.getRange(1, 1, 1, sheet.getLastColumn()).clear().setBorder(false, false, false, false, false, false);
   // Set the new values and format
-  headersRange.setValues([columnNames]).setHorizontalAlignments([columnAlignments]).setFontFamily("Courier New").setFontWeight("bold").setBackground(COLOR_BLUE).setBorder(true, true, true, true, true, true);
+  headersRange.setValues([columnNames]).setHorizontalAlignments([columnAlignments]).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_BLUE).setBorder(true, true, true, true, true, true);
   // Set the last column header (Notes) to be italicised
   sheet.getRange(1, columnNames.length).setFontStyle("italic");
 }
@@ -3135,7 +3137,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
         values.push([k % crewSize == 0 ? (prefix + (startNum + k/crewSize) + suffix) : '']);
       }
     }
-    sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily("Courier New").setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
+    sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
     setRaceSheetHeadings(sheet, columnNames, columnAlignments);
     setSheetFormatting_(sheet);
     setSheetValidation_(sheet);
@@ -3341,7 +3343,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       });
       var targetRange = newSheet.getRange(1, 1, values.length, values[0].length);
       targetRange.setValues(values);
-      targetRange.setFontFamily("Courier New");
+      targetRange.setFontFamily(SHEET_FONT_FAMILY);
       newSheet.getRange(1, 1, 1, values[0].length).setBorder(true, true, true, true, true, true).setFontWeight("bold").setBackground("#ccffff"); // 1st row
       newSheet.getRange(2, 1, values.length-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
       if (columnNames.indexOf("Elapsed") > -1) {
