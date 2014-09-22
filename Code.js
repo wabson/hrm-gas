@@ -3046,30 +3046,32 @@ function setSheetFormatting_(sheet) {
 /**
  * Re-set the column names on a specific race sheet, including contents and formats
  */
-function setRaceSheetHeadings(sheet) {
-  var headersRange = sheet.getRange(1, 1, 1, raceSheetColumnNames.length);
+function setRaceSheetHeadings(sheet, columnNames, columnAlignments) {
+  columnNames = columnNames || raceSheetColumnNames;
+  columnAlignments = columnAlignments || raceSheetColumnAlignments;
+  var headersRange = sheet.getRange(1, 1, 1, columnNames.length);
   // Clear existing header
   sheet.getRange(1, 1, 1, sheet.getLastColumn()).clear().setBorder(false, false, false, false, false, false);
   // Set the new values and format
-  headersRange.setValues([raceSheetColumnNames]).setHorizontalAlignments([raceSheetColumnAlignments]).setFontFamily("Courier New").setFontWeight("bold").setBackground("#ccffff").setBorder(true, true, true, true, true, true);
+  headersRange.setValues([columnNames]).setHorizontalAlignments([columnAlignments]).setFontFamily("Courier New").setFontWeight("bold").setBackground(COLOR_BLUE).setBorder(true, true, true, true, true, true);
   // Set the last column header (Notes) to be italicised
-  sheet.getRange(1, raceSheetColumnNames.length).setFontStyle("italic");
+  sheet.getRange(1, columnNames.length).setFontStyle("italic");
 }
 
 /**
  * Re-set the column names on all race sheets, including contents and formats
  */
-function setAllRaceSheetHeadings() {
+function setAllRaceSheetHeadings(columnNames, columnAlignments) {
   var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    setRaceSheetHeadings(sheets[i]);
+    setRaceSheetHeadings(sheets[i], columnNames, columnAlignments);
   }
 }
 
 /**
  * Create a new spreadsheet to manage a race
  */
-function createRaceSpreadsheet(name, raceSheets, extraSheets) {
+function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, columnAlignments) {
   var ss = SpreadsheetApp.getActiveSpreadsheet().copy(name), sheets = ss.getSheets(), tempSheet = ss.insertSheet("Temp");
   // Delete preexisting sheets
   for (var i = 0; i < sheets.length; i++) {
@@ -3087,8 +3089,8 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets) {
         values.push([k % crewSize == 0 ? startNum + k/crewSize : '']);
       }
     }
-    sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily("Courier New").setFontWeight("bold").setBackground("#ffff99").setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
-    setRaceSheetHeadings(sheet);
+    sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily("Courier New").setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
+    setRaceSheetHeadings(sheet, columnNames, columnAlignments);
     setSheetFormatting_(sheet);
     setSheetValidation_(sheet);
     setSheetFormulas_(sheet);
