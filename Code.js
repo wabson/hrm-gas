@@ -349,7 +349,7 @@ function clearRankings() {
 /**
  * Clear all entries in the specified sheet
  */
-function clearEntriesSheet(sheet) {
+function clearEntriesSheet_(sheet) {
   if (!sheet) {
     throw "Could not find entries sheet " + sheetName;
   }
@@ -361,7 +361,8 @@ function clearEntriesSheet(sheet) {
 function clearAllEntries() {
   var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    clearEntriesSheet(sheets[i]);
+    clearEntriesSheet_(sheets[i]);
+    setSheetFormatting_(sheets[i]);
   }
   setValidation();
   setFormulas();
