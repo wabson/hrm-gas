@@ -2722,7 +2722,9 @@ function sumPoints(values, count) {
 }
 
 function calculatePoints(scriptProps) {
-  if (!scriptProps.haslerRegion) {
+  if (scriptProps.haslerRegion) {
+    var raceRegion = scriptProps.haslerRegion;
+  } else {
     throw "No Hasler region is defined";
   }
   
@@ -2740,13 +2742,15 @@ function calculatePoints(scriptProps) {
   }
   
   clubsRange = getClubRows(clubsSheet);
-  clubsInRegion = getClubCodes(clubsRange, scriptProps.haslerRegion);
-  clubNames = getClubNames(clubsRange, scriptProps.haslerRegion);
   allClubs = getClubCodes(clubsRange);
   Logger.log("All clubs: " + allClubs);
   allClubNames = getClubNames(clubsRange);
+  clubsInRegion = (raceRegion == "HF") ? allClubs : getClubCodes(clubsRange, raceRegion);
+  clubNames = (raceRegion == "HF") ? allClubNames : getClubNames(clubsRange, raceRegion);
   if (clubsInRegion.length == 0) {
-    throw "No clubs found in region " + scriptProps.haslerRegion;
+    throw "No clubs found in region " + raceRegion;
+  } else {
+    Logger.log("Regional clubs: " + clubsInRegion);
   }
   haslerPoints = new Array(clubsInRegion.length), lightningPoints = new Array(allClubs.length);
   for (var i=0; i<clubsInRegion.length; i++) {
