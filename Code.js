@@ -45,6 +45,9 @@ var DIVS_8_MILE = ["4","5","6","7","8","9"];
 var DIVS_4_MILE = ["4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_LIGHTNING = ["7","8","9","U12M","U12F","U10M","U10F"];
 
+var COLOR_YELLOW = "#ffff99"; // Key columns
+var COLOR_BLUE = "#ccffff"; // Value columns
+
 /**
  * List of canoe clubs
  */
@@ -2241,6 +2244,20 @@ function setFinishTimes(eventInfo) {
   // Write to the Finishes sheet
   var finishesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Finishes");
   if (finishesSheet) {
+    drawTable_(finishesSheet, {
+      column: 2, 
+      headings: [
+        {name: 'Finish Number', color: COLOR_YELLOW},
+        {name: 'Finish Time'},
+        {name: 'Notes', color: 'white', weight: 'normal', fontStyle: 'italic'},
+        {name: 'Strange Number', color: COLOR_YELLOW}, 
+        {name: 'Time'},
+        {name: 'Duplicate Number', color: COLOR_YELLOW},
+        {name: 'Time'},
+        {name: 'No Finish Time', color: COLOR_YELLOW},
+        {name: 'No Start Time'}, {name: 'No Division', color: COLOR_YELLOW}
+      ]
+    });
     finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 2).setValues(finishValues);
   }
   // Fetch all of the entries
@@ -2844,6 +2861,18 @@ function calculatePoints(scriptProps) {
         lastpos = pos
         lastPoints = clubPointsRows[j][2]
       }
+      drawTable_(clubsSheet, {
+        column: 5, 
+        headings: [{name: 'Unfound club', color: COLOR_YELLOW}, {name: 'Race number'}]
+      });
+      drawTable_(clubsSheet, {
+        column: 8, 
+        headings: [{name: 'Club', color: COLOR_YELLOW}, {name: 'Code', color: COLOR_YELLOW}, {name: 'Points'}, {name: 'Hasler Points'}]
+      });
+      drawTable_(clubsSheet, {
+        column: 13, 
+        headings: [{name: 'Club', color: COLOR_YELLOW}, {name: 'Code', color: COLOR_YELLOW}, {name: 'Lightning Points'}]
+      });
       clubsSheet.getRange(2, 8, clubPointsRows.length, 4).setValues(clubPointsRows);
     }
   }
@@ -2865,6 +2894,23 @@ function calculatePoints(scriptProps) {
   if (unfoundClubs.length > 0) {
     clubsSheet.getRange(2, 5, unfoundClubs.length, 2).setValues(unfoundClubs);
   }
+}
+
+function drawTable_(sheet, config) {
+  var row = config.row || 1, col = config.column || 1;
+  var headings = config.headings;
+  if (!headings) {
+    throw "You must supply some headings";
+  }
+  // Set headers
+  var hdrValues = new Array(headings.length), hdrColors = new Array(headings.length), hdrWeights = new Array(headings.length), hdrStyles = new Array(headings.length);
+  for (var i = 0; i < headings.length; i++) {
+    hdrValues[i] = headings[i].name || "";
+    hdrColors[i] = headings[i].color || COLOR_BLUE;
+    hdrWeights[i] = headings[i].weight || 'bold';
+    hdrStyles[i] = headings[i].fontStyle || 'normal';
+  }
+  sheet.getRange(row, col, 1, headings.length).setValues([hdrValues]).setBackgrounds([hdrColors]).setFontWeights([hdrWeights]).setFontStyles([hdrStyles]).setBorder(true, true, true, true, true, true);
 }
 
 /**
