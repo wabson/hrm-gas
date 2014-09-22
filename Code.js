@@ -67,8 +67,41 @@ var RACE_SHEETS_ASS = [
     ['SMK2', [[151, 49]], 2], ['SLK2', [[251, 49]], 2], ['SL5_6K2', [[351, 49]], 2], ['SMC2', [[451, 49]], 2], 
     ['JMK2', [[551, 49]], 2], ['JLK2', [[651, 49]], 2], ['JMC2', [[751, 49]], 2]
 ];
+var RACE_SHEETS_NATIONALS = [
+    ['Div7', [[700, 50]], 1], ['Div8', [[800, 50]], 1], ['Div9', [[900, 50]], 1],
+    ['U12 M', [[650, 50]], 1], ['U12 F', [[750, 50]], 1], ['U10 M', [[850, 50]], 1], ['U10 F', [[950, 50]], 1],
+    ['SMK1', [[1, 46]], 1], ['SLK1', [[50, 50]], 1], ['SMC1', [[47, 3]], 1],
+    ['U23_SMK1', [[100, 50]], 1], ['U23_SLK1', [[150, 50]], 1],
+    ['U18_JMK1', [[200, 47]], 1], ['U18_JLK1', [[250, 50]], 1], ['U18_JMC1', [[247, 3]], 1],
+    ['U16_JMK1', [[300, 50]], 1], ['U16_JLK1', [[350, 50]], 1],
+    ['U14_JMK1', [[400, 50]], 1], ['U14_JLK1', [[450, 50]], 1],
+    ['U12_JMK1', [[500, 50]], 1], ['U12_JLK1', [[550, 50]], 1],
+    ['O34_VMK1', [[850, 40, '', 'Y']], 1], ['O34_VLK1', [[890, 10, '', 'Y']], 1],
+    ['O39_VMK1', [[950, 40, '', 'Y']], 1], ['O39_VLK1', [[990, 10, '', 'Y']], 1],
+    ['O44_VMK1', [[1, 39, 'M', 'Y']], 1], ['O44_VLK1', [[40, 10, 'M', 'Y']], 1],
+    ['O49_VMK1', [[50, 40, 'M', 'Y']], 1], ['O49_VLK1', [[90, 10, 'M', 'Y']], 1],
+    ['O54_VMK1', [[1, 39, 'V', 'Y']], 1], ['O54_VLK1', [[40, 10, 'V', 'Y']], 1],
+    ['O59_VMK1', [[50, 40, 'V', 'Y']], 1], ['O59_VLK1', [[90, 10, 'V', 'Y']], 1],
+    ['O64_VMK1', [[600, 40, '', 'Y']], 1], ['O64_VLK1', [[640, 10, '', 'Y']], 1],
+    ['Div7_7', [[700, 50, '', 'Y']], 2], ['Div8_8', [[800, 50, '', 'Y']], 2], ['Div9_9', [[900, 50, '', 'Y']], 2],
+    ['U12 MiniK2', [[650, 50, '', 'Y']], 2], ['U10 MiniK2', [[750, 50, '', 'Y']], 2],
+    ['SMK2', [[1, 46]], 2], ['SLK2', [[50, 50]], 2], ['SMC2', [[47, 3]], 2],
+    ['U23_SMK2', [[100, 50, '', 'Y']], 2], ['U23_SLK2', [[150, 50, '', 'Y']], 2],
+    ['U18_JMK2', [[200, 50, '', 'Y']], 2], ['U18_JLK2', [[250, 50, '', 'Y']], 2],
+    ['U16_JMK2', [[300, 50, '', 'Y']], 2], ['U16_JLK2', [[350, 50, '', 'Y']], 2],
+    ['U14_JMK2', [[400, 50, '', 'Y']], 2], ['U14_JLK2', [[450, 50, '', 'Y']], 2],
+    ['U12_JMK2', [[500, 50, '', 'Y']], 2], ['U12_JLK2', [[550, 50, '', 'Y']], 2],
+    ['O34_VMK2', [[1, 39, 'M', '']], 2], ['O34_VLK2', [[40, 10, 'M', '']], 2],
+    ['O44_VMK2', [[50, 40, 'M', '']], 2], ['O44_VLK2', [[90, 10, 'M', '']], 2],
+    ['O54_VMK2', [[1, 39, 'V', '']], 2], ['O54_VLK2', [[40, 10, 'V', '']], 2],
+    ['O64_VMK2', [[50, 40, 'V', '']], 2], ['O59_VLK2', [[90, 10, 'V', '']], 2],
+    ['Mixed', [[600, 50, '', '']], 2]
+];
 var EXTRA_SHEETS_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
 var EXTRA_SHEETS_NON_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
+var EXTRA_SHEETS_NATIONALS = ['Finishes', 'Rankings', 'Clubs', 'Divisional Results', 'Singles Results', 'Doubles Results', 'Summary'];
+var COLUMNS_NATIONALS = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Pos", "Points", "Notes"];
+var COLUMN_ALIGNMENTS_NATIONALS = ["left", "left", "left", "left", "center", "left", "center", "center", "right", "right", "center", "center", "center", "center", "center", "center"];
 
 var hrmTypes = [];
 
@@ -3106,6 +3139,18 @@ function createARMSheet() {
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, RACE_SHEETS_ASS, EXTRA_SHEETS_NON_HASLER);
+  }
+}
+
+/**
+ * Create a new spreadsheet to manage a National Marathon Champs race
+ */
+function createNRMSheet() {
+  var raceName = Browser.inputBox(
+    'Enter file name:',
+    Browser.Buttons.OK_CANCEL);
+  if (raceName) {
+    createRaceSpreadsheet(raceName, RACE_SHEETS_NATIONALS, EXTRA_SHEETS_NATIONALS, COLUMNS_NATIONALS, COLUMN_ALIGNMENTS_NATIONALS);
   }
 }
 
