@@ -3083,10 +3083,10 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     var sheetName = raceSheets[i][0], numRanges = raceSheets[i][1], crewSize = raceSheets[i][2] || 1, isHidden = raceSheets[i][3] === true;
     var sheet = ss.insertSheet(sheetName), startRow = 2, values = [];
     for (var j = 0; j < numRanges.length; j++) {
-      var startNum = numRanges[j][0], numPlaces = numRanges[j][1];
+      var startNum = numRanges[j][0], numPlaces = numRanges[j][1], prefix = numRanges[j][2] || '', suffix = numRanges[j][3] || '';
       var numRows = numPlaces * crewSize; // Number of places * crew size
       for (var k = 0; k < numRows; k++) {
-        values.push([k % crewSize == 0 ? startNum + k/crewSize : '']);
+        values.push([k % crewSize == 0 ? (prefix + (startNum + k/crewSize) + suffix) : '']);
       }
     }
     sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily("Courier New").setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
