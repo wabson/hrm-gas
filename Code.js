@@ -2789,7 +2789,7 @@ function calculatePoints(scriptProps) {
         } else {
           // If two or more crews cross the line together then the counter gets decremented for each but they all get the same score as each other
           if (timeInMillis(time) != lastTime) {
-            pointsAwarded = Math.max(minPoints, count);
+            pointsAwarded = Math.max(2, count); // Rule 30 (e) (iii)
           } else {
             pointsAwarded = lastPoints;
           }
