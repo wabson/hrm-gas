@@ -3244,9 +3244,9 @@ function populateFromHtmlResults() {
         newvalues.push(cellparts);
       }
       if (newvalues.length == 8) {
-        values.push([newvalues[1][0], '', '', newvalues[2][0].replace('SM', 'S').replace('VM', 'V').replace('JM', 'J'), newvalues[3][0], newvalues[4][0], '', '', '', '', newvalues[5][0], newvalues[0][0]||'', newvalues[7][0]||'', newvalues[6][0]||'']);
+        values.push([newvalues[1][0], '', '', '', newvalues[2][0], newvalues[3][0].replace('SM', 'S').replace('VM', 'V').replace('JM', 'J'), newvalues[4][0], '', '', '', '', newvalues[5][0], newvalues[0][0]||'', newvalues[7][0]||'', newvalues[6][0]||'']);
         if (newvalues[1].length == 2) { // are there 2 names?
-          values.push([newvalues[1][1], '', '', (newvalues[2][1]||'').replace('SM', 'S').replace('VM', 'V').replace('JM', 'J'), newvalues[3][1]||'', newvalues[4][1]||'', '', '', '', '', '', '', (newvalues[7][1]||'').replace("&nbsp", ""), newvalues[6][1]||'']);
+          values.push([newvalues[1][1], '', '', '', newvalues[2][1]||'', (newvalues[3][1]||'').replace('SM', 'S').replace('VM', 'V').replace('JM', 'J'), newvalues[4][1]||'', '', '', '', '', '', '', (newvalues[7][1]||'').replace("&nbsp", ""), newvalues[6][1]||'']);
         }
       }
     }
@@ -3255,7 +3255,7 @@ function populateFromHtmlResults() {
       if (!sheet) {
         throw "Sheet " + sheetName + " not found!";
       }
-      sheet.getRange(2, 2, values.length, 14).setValues(values);
+      sheet.getRange(2, 2, values.length, 15).setValues(values);
     }
   }
   /*
