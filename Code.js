@@ -762,18 +762,21 @@ function addLocalEntries(eventInfo) {
   if (ssId)
   {
     var ss = SpreadsheetApp.openById(ssId),
-        sheets = getRaceSheets(ss), sheet, sheetName, rows, results = [], numCrews, lastNonEmpty;
+        sheets = getRaceSheets(ss), sheet, sheetName, rows, results = [], numCrews, totalPaid, lastNonEmpty;
 
     for (var i=0; i<sheets.length; i++) {
       sheet = sheets[i],
         sheetName = sheet.getName(),
         srcRows = getTableRows(sheet),
-        rows = [], numCrews = 0;
+        rows = [], numCrews = 0, totalPaid = 0;
       srcRows.forEach(function(row, i) {
         if (row["Surname"] || row["First name"]) {
           lastNonEmpty = i;
           if (row["Number"]) {
             numCrews ++;
+          }
+          if (row["Paid"]) {
+            totalPaid += +row["Paid"];
           }
         }
       });
@@ -791,7 +794,7 @@ function addLocalEntries(eventInfo) {
           Logger.log("Adding new rows at row " + nextRow);
           if (dstsheet.getLastRow()-nextRow+1 >= srcRows.length) {
             setTableRowValues(dstsheet, srcRows, "Surname", "Paid", nextRow); // TODO Allow numbers to be added
-            results.push("Added " + numCrews + " crews to " + dstsheet.getName());
+            results.push("Added " + numCrews + " crews to " + dstsheet.getName() + (totalPaid > 0 ? (", Paid £" + totalPaid) : ""));
           } else {
             throw "Too many rows to import into " + dstsheet.getName() + " (" + srcRows.length + " data rows, " + (dstsheet.getLastRow()-nextRow+1) + " in sheet)";
           }
