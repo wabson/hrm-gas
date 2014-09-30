@@ -62,16 +62,28 @@ function showEditRaceDetails() {
   // Create a vertical panel called mypanel and add it to myapp
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
   
+  var scriptProps = ScriptProperties.getProperties();
+
   // Drop-down to select Hasler region
-  var rlb = app.createListBox(false).setId('regionlb').setName('regionlb');
+  var regions = {
+        "LSE": "London and South East",
+        "EA": "East Anglia",
+        "SO": "Southern",
+        "SC": "Scotland",
+        "WA": "Wales",
+        "MID": "Midlands",
+        "FIN": "Hasler Final"
+      },
+    rlb = app.createListBox(false).setId('regionlb').setName('haslerRegion');
   rlb.setVisibleItemCount(1);
-  rlb.addItem("London and South East", "LSE");
-  rlb.addItem("East Anglia", "EA");
-  rlb.addItem("Southern", "SO");
-  rlb.addItem("Scotland", "SC");
-  rlb.addItem("Wales", "WA");
-  rlb.addItem("Midlands", "MID");
-  rlb.addItem("Hasler Final", "FIN");
+  var i = 0;
+  for (var r in regions) {
+    rlb.addItem(r, regions[r]);
+    if (r == scriptProps.haslerRegion) {
+      rlb.setItemSelected(i, true);
+    }
+    i ++;
+  }
   mypanel.add(rlb);
   
   var grid = app.createGrid(7, 2);
@@ -111,8 +123,10 @@ function showEditRaceDetails() {
   ss.show(app);
 }
 
-function saveRaceDetails() {
-  // Do something!
+function saveRaceDetails(e) {
+  // Set script properties
+  var scriptProps = ScriptProperties.getProperties();
+  scriptProps.haslerRegion = e.parameter.haslerRegion;
   var app = UiApp.getActiveApplication();
   app.close();
   // The following line is REQUIRED for the widget to actually close.
