@@ -48,6 +48,90 @@ function onEdit(e) {
 };
 
 /**
+ * Display the edit race details dialog
+ */
+function showEditRaceDetails() {
+  // Dialog height in pixels
+  var dialogHeight = 300;
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // Create the UiInstance object myapp and set the title text
+  var app = UiApp.createApplication().setTitle('Edit Race Details').setHeight(dialogHeight);
+  
+  // Create a vertical panel called mypanel and add it to myapp
+  var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
+  
+  // Drop-down to select Hasler region
+  var rlb = app.createListBox(false).setId('regionlb').setName('regionlb');
+  rlb.setVisibleItemCount(1);
+  rlb.addItem("London and South East", "LSE");
+  rlb.addItem("East Anglia", "EA");
+  rlb.addItem("Southern", "SO");
+  rlb.addItem("Scotland", "SC");
+  rlb.addItem("Wales", "WA");
+  rlb.addItem("Midlands", "MID");
+  rlb.addItem("Hasler Final", "FIN");
+  mypanel.add(rlb);
+  
+  var grid = app.createGrid(7, 2);
+  grid.setWidget(0, 0, app.createLabel("Race Name"));
+  grid.setWidget(0, 1, app.createTextBox().setName("raceName").setId("raceName"));
+  grid.setWidget(1, 0, app.createLabel("Race Date"));
+  grid.setWidget(1, 1, app.createDateBox().setId("aEntryDeadlinePicker"));
+  grid.setWidget(2, 0, app.createLabel("Hasler Region"));
+  grid.setWidget(2, 1, rlb);
+  grid.setWidget(3, 0, app.createLabel("Senior Entry (£)"));
+  grid.setWidget(3, 1, app.createTextBox().setName("snrEntry").setId("snrEntry"));
+  grid.setWidget(4, 0, app.createLabel("Junior Entry (£)"));
+  grid.setWidget(4, 1, app.createTextBox().setName("jnrEntry").setId("jnrEntry"));
+  grid.setWidget(5, 0, app.createLabel("Late Entry Surcharge (£)"));
+  grid.setWidget(5, 1, app.createTextBox().setName("lateEntry").setId("lateEntry"));
+  grid.setWidget(6, 0, app.createLabel("Advance Entry Deadline"));
+  grid.setWidget(6, 1, app.createDateBox().setId("aEntryDeadlinePicker"));
+  mypanel.add(grid);
+  
+  var bnpanel = app.createHorizontalPanel();
+  
+  // Button handler for saving details
+  var savehandler = app.createServerHandler("saveRaceDetails").addCallbackElement(rlb);
+  bnpanel.add(app.createButton("Save", savehandler).setId("saveBn"));
+  
+  // For the close button, we create a server click handler closeHandler and pass closeHandler to the close button as a click handler.
+  // The function close is called when the close button is clicked.
+  var closeButton = app.createButton('Cancel');
+  closeButton.addClickHandler(app.createServerClickHandler('close'));
+  bnpanel.add(closeButton);
+  
+  mypanel.add(bnpanel);
+  
+  // Add my panel to myapp
+  app.add(mypanel);
+  
+  ss.show(app);
+}
+
+function saveRaceDetails() {
+  // Do something!
+  var app = UiApp.getActiveApplication();
+  app.close();
+  // The following line is REQUIRED for the widget to actually close.
+  return app;
+}
+
+/**
+ * Handler function for closing a dialog
+ 
+ * @return {AppInstance} Active application instance
+ */
+function close() {
+  var app = UiApp.getActiveApplication();
+  app.close();
+  // The following line is REQUIRED for the widget to actually close.
+  return app;
+}
+
+/**
  * Add 'HRM' menu to the active sheet
  */
 function addMenu() {
@@ -265,13 +349,6 @@ function showEntriesURL() {
  */
 function showRaceLevies() {
   HRM.showRaceLevies(ScriptProperties.getProperties());
-}
-
-/**
- * Menu hook for editing race details
- */
-function showEditRaceDetails() {
-  HRM.showEditRaceDetails();
 }
 
 /**
