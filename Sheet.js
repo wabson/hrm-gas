@@ -92,11 +92,13 @@ function showEditRaceDetails() {
   }
   mypanel.add(rlb);
   
+  var raceDateBox = app.createDateBox().setName('raceDate').setValue(new Date(scriptProps.raceDate ? HRM.parseDate(scriptProps.raceDate) : Date.now()));
+
   var grid = app.createGrid(7, 2);
   grid.setWidget(0, 0, app.createLabel("Race Name"));
   grid.setWidget(0, 1, app.createTextBox().setName("raceName").setId("raceName"));
   grid.setWidget(1, 0, app.createLabel("Race Date"));
-  grid.setWidget(1, 1, app.createDateBox().setId("aEntryDeadlinePicker"));
+  grid.setWidget(1, 1, raceDateBox);
   grid.setWidget(2, 0, app.createLabel("Hasler Region"));
   grid.setWidget(2, 1, rlb);
   grid.setWidget(3, 0, app.createLabel("Senior Entry (£)"));
@@ -112,7 +114,7 @@ function showEditRaceDetails() {
   var bnpanel = app.createHorizontalPanel();
   
   // Button handler for saving details
-  var savehandler = app.createServerHandler("saveRaceDetails").addCallbackElement(rlb);
+  var savehandler = app.createServerHandler("saveRaceDetails").addCallbackElement(rlb).addCallbackElement(raceDateBox);
   bnpanel.add(app.createButton("Save", savehandler).setId("saveBn"));
   
   // For the close button, we create a server click handler closeHandler and pass closeHandler to the close button as a click handler.
@@ -131,9 +133,17 @@ function showEditRaceDetails() {
 
 function saveRaceDetails(e) {
   // Set script properties
-  var keys = ['haslerRegion'], props = {};
+  var keys = ['raceDate', 'haslerRegion'], props = {};
   keys.forEach(function(p) {
-    props[p] = e.parameter[p];
+    Logger.log(p + ': ' + e.parameter[p]);
+    if (e.parameter[p] instanceof Date) {
+      var gmtDate = new Date(Date.UTC(e.parameter[p].getYear(), e.parameter[p].getMonth(), e.parameter[p].getDate())); // Utilities.formatDate() returns the GMT date which may be different if we don't force it
+      Logger.log('GMT date: ' + gmtDate);
+      props[p] = Utilities.formatDate(gmtDate, "GMT", "yyyy-MM-dd");
+      Logger.log(p + ' is date: ' + props[p]);
+    } else {
+      props[p] = e.parameter[p];
+    }
   });
   ScriptProperties.setProperties(props);
   var app = UiApp.getActiveApplication();
