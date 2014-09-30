@@ -84,7 +84,7 @@ function showEditRaceDetails() {
   rlb.setVisibleItemCount(1);
   var i = 0;
   for (var r in regions) {
-    rlb.addItem(r, regions[r]);
+    rlb.addItem(regions[r], r);
     if (r == scriptProps.haslerRegion) {
       rlb.setItemSelected(i, true);
     }
