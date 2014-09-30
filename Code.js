@@ -1142,10 +1142,17 @@ function rankingToEntryData(ranking) {
   return entry;
 }
 
-function lookupInTable(rows, key, matchValue) {
-  var matches = [];
+function lookupInTable(rows, matchValues) {
+  var matches = [], match;
   for (var i = 0; i < rows.length; i++) {
-    if (rows[i][key] === matchValue) {
+    match = true;
+    for (var p in matchValues) {
+      if (rows[i][p] !== matchValues[p] && (''+rows[i][p]).trim() !== (''+matchValues[p]).trim()) {
+        match = false;
+        continue;
+      }
+    }
+    if (match) {
       matches.push(rows[i]);
     }
   }
@@ -1166,7 +1173,7 @@ function updateEntriesFromRankings() {
         var bcuNum = raceData[j]['BCU Number'];
         if (bcuNum) {
           Logger.log("BCU Number: " + bcuNum);
-          var matches = lookupInTable(rankingData, 'BCU Number', bcuNum);
+          var matches = lookupInTable(rankingData, {'BCU Number': bcuNum});
           if (matches.length == 1) {
             Logger.log("Found match: " + matches[0]);
             var update = rankingToEntryData(matches[0]);
@@ -1180,6 +1187,52 @@ function updateEntriesFromRankings() {
       setTableRowValues(sheet, raceData, "Surname", "Div");
     }
   }
+}
+
+/**
+ * Look through all the current entries and flag any where data is not consistent with the rankings sheet
+ */
+function checkEntriesFromRankings_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = getRaceSheets(ss), warnings = [];
+  var rankingData = getTableRows(rankingsSheet), sheet;
+  var buildIdentity = function(row) {
+    return '' + row['Surname'] + ', ' + row['First name'] + ' (' + row['Club'] + ')';
+  };
+  for (var i = 0; i < sheets.length; i++) {
+    sheet = sheets[i];
+    var raceData = getTableRows(sheet);
+    if (raceData.length > 0) {
+      for (var j = 0; j < raceData.length; j++) {
+        if (raceData[j]['Surname'] || raceData[j]['First name']) {
+          var columns = ['Div', 'BCU Number'];
+          var boatNum = raceData[j]['Number'] || raceData[j-1]['Number'], bcuNum = raceData[j]['BCU Number'];
+          if (bcuNum) {
+            var matches = lookupInTable(rankingData, {'Surname': raceData[j]['Surname'], 'First name': raceData[j]['First name'], 'Club': raceData[j]['Club'], 'Class': raceData[j]['Class']});
+            if (matches.length == 0) { // Try again based on BCU number
+              matches = lookupInTable(rankingData, {'BCU Number': raceData[j]['BCU Number']});
+              columns = ['Div', 'Club', 'Surname', 'First name', 'Class'];
+            }
+            if (matches.length == 1) {
+              Logger.log("Found match: " + matches[0]);
+              var update = rankingToEntryData(matches[0]);
+              for (var p in update) {
+                if (columns.indexOf(p) > -1 && raceData[j][p] != update[p] && (""+raceData[j][p]).trim() != (""+update[p]).trim()) {
+                  warnings.push(boatNum + ' ' + buildIdentity(raceData[j]) + ': Expected ' + p + " '" + update[p] + "', found '" + raceData[j][p] + "'");
+                }
+              }
+            } else if (matches.length == 0) {
+              warnings.push(boatNum + ' ' + buildIdentity(raceData[j]) + ": not found!");
+            } else {
+              warnings.push(boatNum + ' ' + buildIdentity(raceData[j]) + ": found multiple matches");
+            }
+          } else {
+            warnings.push(boatNum + ' ' + buildIdentity(raceData[j]) + ": No BCU Number");
+          }
+        }
+      }
+    }
+  }
+  showDialog('Check Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No problems found</p>');
 }
 
 function setTableRowValues(sheet, values, startColumnName, endColumnName, startRow) {
@@ -1609,6 +1662,33 @@ function showLinkDialog(title, text, linkHref, linkText, linkTarget, dialogHeigh
   
   mypanel.add(app.createHTML(text));
   mypanel.add(app.createAnchor(linkText||linkHref, linkHref).setTarget(linkTarget||"_blank"));
+  
+  var closeButton = app.createButton('OK');
+  var closeHandler = app.createServerClickHandler('close');
+  closeButton.addClickHandler(closeHandler);
+  mypanel.add(closeButton);
+  
+  app.add(mypanel);
+  
+  ss.show(app);
+}
+
+/**
+ * Display a dialog, which the user can close with an OK button
+ */
+function showDialog(title, text, dialogHeight) {
+  // Dialog height in pixels
+  dialogHeight = dialogHeight||125;
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Create the UiInstance object myapp and set the title text
+  var app = UiApp.createApplication().setTitle(title).setHeight(dialogHeight),
+      mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
+  
+  var scroll = app.createScrollPanel().setWidth('100%').setHeight('100px');
+  scroll.add(app.createHTML(text));
+  mypanel.add(scroll);
   
   var closeButton = app.createButton('OK');
   var closeHandler = app.createServerClickHandler('close');
@@ -3434,4 +3514,35 @@ function createNumberBoards_(name, truncateEmpty) {
     doc.saveAndClose();
   }
   return doc;
+}
+
+/**
+ * Look through all the current entries and flag duplicates
+ */
+function checkEntryDuplicates() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = getRaceSheets(ss), boatNumsByPaddler = {}, warnings = [];
+  for (var i = 0; i < sheets.length; i++) {
+    sheet = sheets[i];
+    var raceData = getTableRows(sheet);
+    if (raceData.length > 0) {
+      for (var j = 0; j < raceData.length; j++) {
+        var boatNum = raceData[j]['Number'] || raceData[j-1]['Number'];
+        var key = [raceData[j]['Surname'], raceData[j]['First name'], raceData[j]['Club']].join('|');
+        if (key.length > 3) {
+          boatNumsByPaddler[key] = boatNumsByPaddler[key] || [];
+          boatNumsByPaddler[key].push(boatNum);
+        }
+      }
+    }
+  }
+  for (var k in boatNumsByPaddler) {
+    if (boatNumsByPaddler[k].length > 1) {
+      warnings.push(k.replace(/\|/g, ', ') + ' found in crews ' + boatNumsByPaddler[k].join(', '));
+    }
+  }
+  showDialog('Duplicate Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>');
+}
+
+function checkEntriesFromRankings() {
+  checkEntriesFromRankings_();
 }

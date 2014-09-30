@@ -352,3 +352,15 @@ function createPrintableResults() {
 function createNumberBoards() {
   HRM.createNumberBoards();
 }
+/**
+ * Menu hook for checking for duplicates
+ */
+function checkEntryDuplicates() {
+  HRM.checkEntryDuplicates();
+}
+/**
+ * Menu hook for checking for inconsistencies between the entries and ranking data
+ */
+function checkEntriesFromRankings() {
+  HRM.checkEntriesFromRankings();
+}
