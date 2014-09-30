@@ -78,7 +78,7 @@ function showEditRaceDetails() {
         "SCOE": "Scotland East",
         "SCOW": "Scotland West",
         "CS": "Combined Services",
-        "FIN": "Hasler Final"
+        "HF": "Hasler Final"
       },
     rlb = app.createListBox(false).setId('regionlb').setName('haslerRegion');
   rlb.setVisibleItemCount(1);
