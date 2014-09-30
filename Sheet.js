@@ -66,12 +66,18 @@ function showEditRaceDetails() {
 
   // Drop-down to select Hasler region
   var regions = {
-        "LSE": "London and South East",
         "EA": "East Anglia",
+        "LS": "London and South East",
         "SO": "Southern",
-        "SC": "Scotland",
+        "SW": "South West",
         "WA": "Wales",
         "MID": "Midlands",
+        "NO": "North",
+        "NW": "North West",
+        "YH": "Yorkshire",
+        "SCOE": "Scotland East",
+        "SCOW": "Scotland West",
+        "CS": "Combined Services",
         "FIN": "Hasler Final"
       },
     rlb = app.createListBox(false).setId('regionlb').setName('haslerRegion');
