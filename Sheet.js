@@ -131,8 +131,11 @@ function showEditRaceDetails() {
 
 function saveRaceDetails(e) {
   // Set script properties
-  var scriptProps = ScriptProperties.getProperties();
-  scriptProps.haslerRegion = e.parameter.haslerRegion;
+  var keys = ['haslerRegion'], props = {};
+  keys.forEach(function(p) {
+    props[p] = e.parameter[p];
+  });
+  ScriptProperties.setProperties(props);
   var app = UiApp.getActiveApplication();
   app.close();
   // The following line is REQUIRED for the widget to actually close.
