@@ -37,7 +37,7 @@ var NUMBER_FORMAT_TIME_MS = "[h]:mm:ss.S"
 var NUMBER_FORMAT_CURRENCY = "£0.00";
 var NUMBER_FORMAT_INTEGER = "0";
 
-var CLASSES_ALL = ["S","V","J","F","VF","JF","SC","VC","JC","FC","VFC","JFC"];
+var CLASSES_ALL = ["S","V","J","F","VF","JF","C","VC","JC","FC","VFC","JFC"];
 
 var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_12_MILE = ["1","2","3","4","5","6","7","8","9"];
