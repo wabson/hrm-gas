@@ -31,6 +31,9 @@ th,td {
 th {
          background-color:   #ccff99;
 }
+td.expired {
+         background-color:   #ffcccc;
+}
 </style>
 </head>
 <body>
@@ -53,7 +56,7 @@ if (races[i].results && races[i].results.length > 0) { ?>
      <td><?= races[i].results[j].num ?></td>
      <td><?!= races[i].results[j].names.join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].bcuNum.join("<br />").toUpperCase() ?></td>
-     <td><?!= races[i].results[j].expiry.join("<br />").toUpperCase() ?></td>
+     <td<? if (races[i].results[j].expired) { ?> class="expired"<? } ?>><?!= races[i].results[j].expiry.join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].clubs.join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].classes.join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].divs.join("<br />") ?></td>

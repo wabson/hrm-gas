@@ -55,7 +55,7 @@ function saveEntriesHTML(scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var title = ss.getName();
   template.title = title;
-  var data = getRaceEntriesFromSpreadsheet(ss);
+  var data = getRaceEntriesFromSpreadsheet(ss, scriptProps.raceDate);
   for (var k in data) {
     template[k] = data[k];
   }
@@ -255,12 +255,13 @@ function getRaceStartersFromSpreadsheet(ss) {
   return entries;
 }
 
-function getRaceEntriesFromSpreadsheet(ss) {
+function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
   var data = {}, classes = [],
     sheets = getRaceSheets(ss);
 
   for (var i=0; i<sheets.length; i++) {
     var results = [], rows = getTableRows(sheets[i]);
+    var raceDate = raceDateStr ? parseDate(raceDateStr) : new Date();
     for (var j=0; j<rows.length; j++) {
       var row = rows[j];
       if (parseInt(row['Number']) && row['Surname'] == "") {
@@ -270,18 +271,20 @@ function getRaceEntriesFromSpreadsheet(ss) {
         num = "" + row['Number'],
         bcuNum = "" + row['BCU Number'],
         expiry = "" + formatDate(row['Expiry']),
+        expired = row['Expiry'] < raceDate,
         club = "" + row['Club'],
         class = "" + row['Class'],
         div = "" + row['Div'],
         startTime = "" + row['Start'];
       if (name.trim() != "") {
         if (row['Number']) {
-          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], clubs: [club], classes: [class], divs: [div], startTime: startTime });
+          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [class], divs: [div], startTime: startTime });
         } else {
           var last = results.pop();
           last.names.push(name);
           last.bcuNum.push(bcuNum);
           last.expiry.push(expiry);
+          last.expired = last.expired || expired;
           last.clubs.push(club);
           last.classes.push(class);
           last.divs.push(div);
