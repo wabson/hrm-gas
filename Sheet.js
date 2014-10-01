@@ -92,29 +92,37 @@ function showEditRaceDetails() {
   }
   mypanel.add(rlb);
   
-  var raceDateBox = app.createDateBox().setName('raceDate').setValue(new Date(scriptProps.raceDate ? HRM.parseDate(scriptProps.raceDate) : Date.now()));
+  var raceName = app.createTextBox().setName("raceName").setValue(scriptProps.raceName||""),
+    raceDateBox = app.createDateBox().setName('raceDate').setValue(new Date(scriptProps.raceDate ? HRM.parseDate(scriptProps.raceDate) : Date.now())),
+    entrySenior = app.createTextBox().setName("entrySenior").setValue(scriptProps.entrySenior||0), 
+    entryJunior = app.createTextBox().setName("entryJunior").setValue(scriptProps.entryJunior||0), 
+    entryLightning = app.createTextBox().setName("entryLightning").setValue(scriptProps.entryLightning||0), 
+    lateEntrySurcharge = app.createTextBox().setName("lateEntrySurcharge").setValue(scriptProps.lateEntrySurcharge||0), 
+    aEntryDeadline = app.createDateBox().setName("aEntryDeadline").setValue(new Date(scriptProps.aEntryDeadline ? HRM.parseDate(scriptProps.aEntryDeadline) : Date.now()));
 
-  var grid = app.createGrid(7, 2);
+  var grid = app.createGrid(8, 2);
   grid.setWidget(0, 0, app.createLabel("Race Name"));
-  grid.setWidget(0, 1, app.createTextBox().setName("raceName").setId("raceName"));
+  grid.setWidget(0, 1, raceName);
   grid.setWidget(1, 0, app.createLabel("Race Date"));
   grid.setWidget(1, 1, raceDateBox);
   grid.setWidget(2, 0, app.createLabel("Hasler Region"));
   grid.setWidget(2, 1, rlb);
   grid.setWidget(3, 0, app.createLabel("Senior Entry (£)"));
-  grid.setWidget(3, 1, app.createTextBox().setName("snrEntry").setId("snrEntry"));
+  grid.setWidget(3, 1, entrySenior);
   grid.setWidget(4, 0, app.createLabel("Junior Entry (£)"));
-  grid.setWidget(4, 1, app.createTextBox().setName("jnrEntry").setId("jnrEntry"));
-  grid.setWidget(5, 0, app.createLabel("Late Entry Surcharge (£)"));
-  grid.setWidget(5, 1, app.createTextBox().setName("lateEntry").setId("lateEntry"));
-  grid.setWidget(6, 0, app.createLabel("Advance Entry Deadline"));
-  grid.setWidget(6, 1, app.createDateBox().setId("aEntryDeadlinePicker"));
+  grid.setWidget(4, 1, entryJunior);
+  grid.setWidget(5, 0, app.createLabel("Lightning Entry (£)"));
+  grid.setWidget(5, 1, entryLightning);
+  grid.setWidget(6, 0, app.createLabel("Late Entry Surcharge (£)"));
+  grid.setWidget(6, 1, lateEntrySurcharge);
+  grid.setWidget(7, 0, app.createLabel("Advance Entry Deadline"));
+  grid.setWidget(7, 1, aEntryDeadline);
   mypanel.add(grid);
   
   var bnpanel = app.createHorizontalPanel();
   
   // Button handler for saving details
-  var savehandler = app.createServerHandler("saveRaceDetails").addCallbackElement(rlb).addCallbackElement(raceDateBox);
+  var savehandler = app.createServerHandler("saveRaceDetails").addCallbackElement(raceName).addCallbackElement(rlb).addCallbackElement(entrySenior).addCallbackElement(entryJunior).addCallbackElement(entryLightning).addCallbackElement(lateEntrySurcharge).addCallbackElement(aEntryDeadline).addCallbackElement(rlb).addCallbackElement(raceDateBox);
   bnpanel.add(app.createButton("Save", savehandler).setId("saveBn"));
   
   // For the close button, we create a server click handler closeHandler and pass closeHandler to the close button as a click handler.
@@ -133,16 +141,18 @@ function showEditRaceDetails() {
 
 function saveRaceDetails(e) {
   // Set script properties
-  var keys = ['raceDate', 'haslerRegion'], props = {};
+  var keys = ['raceName', 'raceDate', 'haslerRegion', 'entrySenior', 'entryJunior', 'entryLightning', 'lateEntrySurcharge', 'aEntryDeadline'], props = {};
   keys.forEach(function(p) {
     Logger.log(p + ': ' + e.parameter[p]);
-    if (e.parameter[p] instanceof Date) {
-      var gmtDate = new Date(Date.UTC(e.parameter[p].getYear(), e.parameter[p].getMonth(), e.parameter[p].getDate())); // Utilities.formatDate() returns the GMT date which may be different if we don't force it
-      Logger.log('GMT date: ' + gmtDate);
-      props[p] = Utilities.formatDate(gmtDate, "GMT", "yyyy-MM-dd");
-      Logger.log(p + ' is date: ' + props[p]);
-    } else {
-      props[p] = e.parameter[p];
+    if (e.parameter[p]) {
+      if (e.parameter[p] instanceof Date) {
+        var gmtDate = new Date(Date.UTC(e.parameter[p].getYear(), e.parameter[p].getMonth(), e.parameter[p].getDate())); // Utilities.formatDate() returns the GMT date which may be different if we don't force it
+        Logger.log('GMT date: ' + gmtDate);
+        props[p] = Utilities.formatDate(gmtDate, "GMT", "yyyy-MM-dd");
+        Logger.log(p + ' is date: ' + props[p]);
+      } else {
+        props[p] = ''+e.parameter[p];
+      }
     }
   });
   ScriptProperties.setProperties(props);
