@@ -422,13 +422,19 @@ function setAllRaceSheetHeadings() {
  * Menu hooks for saving HTML
  */
 function saveEntriesHTML() {
-  HRM.saveEntriesHTML();
+  var result = HRM.saveEntriesHTML(ScriptProperties.getProperties());
+  if (result.fileId) {
+    ScriptProperties.setProperty('publishedEntriesId', result.fileId);
+  }
 }
 /**
  * Menu hook for saving HTML
  */
 function saveResultsHTML() {
-  HRM.saveResultsHTML();
+  var result = HRM.saveResultsHTML(ScriptProperties.getProperties());
+  if (result.fileId) {
+    ScriptProperties.setProperty('publishedResultsId', result.fileId);
+  }
 }
 /**
  * Menu hook for updating entries from ranking data

@@ -24,7 +24,7 @@ function doGet(e) {
  *
  * @param {object} e Event information
  */
-function saveResultsHTML() {
+function saveResultsHTML(scriptProps) {
   var template = HtmlService.createTemplateFromFile('ResultsStatic');
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var title = ss.getName();
@@ -35,18 +35,22 @@ function saveResultsHTML() {
     template[k] = data[k];
   }
   var outputHtml = template.evaluate().getContent();
-  var htmlFile = DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  var htmlFile = scriptProps.publishedResultsId ? DriveApp.getFileById(scriptProps.publishedResultsId) : DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  if (scriptProps.publishedResultsId) {
+    htmlFile.setContent(outputHtml);
+  }
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
   showLinkDialog('Publish HTML',
     "<p>Race results published to Google Drive:</p>",
     "https://googledrive.com/host/" + htmlFile.getId()
   );
+  return {fileId: htmlFile.getId()}
 }
 
 /**
  * Print entries summary
  */
-function saveEntriesHTML() {
+function saveEntriesHTML(scriptProps) {
   var template = HtmlService.createTemplateFromFile('EntriesStatic');
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var title = ss.getName();
@@ -56,12 +60,16 @@ function saveEntriesHTML() {
     template[k] = data[k];
   }
   var outputHtml = template.evaluate().getContent();
-  var htmlFile = DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  var htmlFile = scriptProps.publishedEntriesId ? DriveApp.getFileById(scriptProps.publishedEntriesId) : DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  if (scriptProps.publishedEntriesId) {
+    htmlFile.setContent(outputHtml);
+  }
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
   showLinkDialog('Publish HTML',
     "<p>Race entries published to Google Drive:</p>",
     "https://googledrive.com/host/" + htmlFile.getId()
   );
+  return {fileId: htmlFile.getId()}
 }
 
 /**
