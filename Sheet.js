@@ -141,8 +141,8 @@ function showEditRaceDetails() {
 
 function saveRaceDetails(e) {
   // Set script properties
-  var keys = ['raceName', 'raceDate', 'haslerRegion', 'entrySenior', 'entryJunior', 'entryLightning', 'lateEntrySurcharge', 'aEntryDeadline'], props = {};
-  keys.forEach(function(p) {
+  var props = {};
+  for (p in e.parameter) {
     Logger.log(p + ': ' + e.parameter[p]);
     if (e.parameter[p]) {
       if (e.parameter[p] instanceof Date) {
@@ -154,7 +154,7 @@ function saveRaceDetails(e) {
         props[p] = ''+e.parameter[p];
       }
     }
-  });
+  }
   ScriptProperties.setProperties(props);
   var app = UiApp.getActiveApplication();
   app.close();
