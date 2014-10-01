@@ -181,6 +181,11 @@ function addMenu() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
   sheet.addMenu("HRM", [
     {
+      name: "Race Details",
+      functionName: "showEditRaceDetails"
+    },
+    null,
+    {
       name : "Load Rankings",
       functionName : "showLoadRankings"
     },
@@ -211,11 +216,6 @@ function addMenu() {
     }
   ]);
   sheet.addMenu("Entries", [
-    {
-      name: "Race Details",
-      functionName: "showEditRaceDetails"
-    },
-    null,
     {
       name : "Add Entries",
       functionName : "showAddEntries"
