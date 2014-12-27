@@ -3339,22 +3339,33 @@ function autoResizeColumns(sheet) {
   };
 }
 
-function createPrintableEntries() {
-  var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false);
+function createPrintableEntries(fileId) {
+  var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, fileId);
   showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Entries", "_blank");
+  return ss;
 }
 
-function createPrintableResults() {
+function createPrintableResults(fileId) {
   // 'autoResizeColumn' is not available yet in the new version of Google Sheets
-  var ss = createPrintableSpreadsheet(null, printableResultColumnNames, "Posn", true, false);
+  var ss = createPrintableSpreadsheet(null, printableResultColumnNames, "Posn", true, false, fileId);
   showLinkDialog("Print Results", "Click here to access the results", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Results", "_blank");
+  return ss;
 }
 
-function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize) {
+function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize, fileId) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   name = name || ss.getName() + " (Printable)";
   autoResize = typeof autoResize != "undefined" ? autoResize : false;
-  var newss = SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss);
+  var newss = fileId ? SpreadsheetApp.openById(fileId) : SpreadsheetApp.create(name), 
+    srcSheets = getRaceSheets(ss);
+  if (fileId) {
+    tempSheet = newss.insertSheet("Temp", 0);
+    // Delete preexisting sheets
+    var oldSheets = newss.getSheets();
+    for (var i = 1; i < oldSheets.length; i++) {
+      newss.deleteSheet(oldSheets[i]);
+    }
+  }
   // Copy existing sheets
   for (var i = 0; i < srcSheets.length; i++) {
     if (srcSheets[i].isSheetHidden()) {

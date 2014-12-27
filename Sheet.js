@@ -464,13 +464,19 @@ function populateFromHtmlResults() {
  * Menu hook for creating printable entries sheets
  */
 function createPrintableEntries() {
-  HRM.createPrintableEntries();
+  var result = HRM.createPrintableEntries(ScriptProperties.getProperty('printableEntriesId'));
+  if (result) {
+    ScriptProperties.setProperty('printableEntriesId', result.getId());
+  }
 }
 /**
  * Menu hook for creating printable results sheets
  */
 function createPrintableResults() {
-  HRM.createPrintableResults();
+  var result = HRM.createPrintableResults(ScriptProperties.getProperty('printableResultsId'));
+  if (result) {
+    ScriptProperties.setProperty('printableResultsId', result.getId());
+  }
 }
 /**
  * Menu hook for creating printable number board inserts
