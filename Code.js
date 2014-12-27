@@ -2883,7 +2883,9 @@ function calculatePoints(scriptProps) {
   if (haslerPoints.length > 0) {
     var clubPointsRows = [], lastPoints = 9999;
     for (var j=0; j<clubsInRegion.length; j++) {
-      clubPointsRows.push([clubNames[j], clubsInRegion[j], !isHaslerFinal ? sumPoints(haslerPoints[j], 12) : sumPoints(haslerPoints[j], 6) + sumPoints(doublesPoints[j], 6)]);
+      if (haslerPoints[j] && haslerPoints[j].length > 0) {
+        clubPointsRows.push([clubNames[j], clubsInRegion[j], !isHaslerFinal ? sumPoints(haslerPoints[j], 12) : sumPoints(haslerPoints[j], 6) + sumPoints(doublesPoints[j], 6)]);
+      }
     }
     if (clubPointsRows.length > 0) {
       clubPointsRows.sort(function(a, b) { return b[2] - a[2] }); // Sort by number of points
