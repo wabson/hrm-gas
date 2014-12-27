@@ -3341,7 +3341,7 @@ function autoResizeColumns(sheet) {
 
 function createPrintableEntries() {
   var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false);
-  showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Results", "_blank");
+  showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Entries", "_blank");
 }
 
 function createPrintableResults() {
