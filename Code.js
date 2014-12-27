@@ -2653,7 +2653,7 @@ function calculatePromotions() {
   }
 }
 
-function calculatePointsBoundary(entries, raceName) {
+function calculatePointsBoundary(entries, raceName, isHaslerFinal) {
   var boatNum, pd, time, timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D");
   // No cut-off for Div9
   if (raceName[0] == "9") {
@@ -2662,7 +2662,8 @@ function calculatePointsBoundary(entries, raceName) {
   for (var i=0; i<entries.length; i++) {
     boatNum = entries[i].boatNumber, pd = entries[i].values[0][pdColIndex], time = entries[i].values[0][timeColIndex];
     // Skip boats transferred from another division (i.e. strange numbers)
-    if (raceName && raceName[0] != (""+boatNum)[0]) {
+    // However strange numbers are to be expected in the Hasler Final (e.g. 17xx numbers for Div7s)
+    if (!isHaslerFinal && raceName && raceName[0] != (""+boatNum)[0]) {
       continue;
     }
     // Skip promoted boats
@@ -2789,7 +2790,7 @@ function calculatePoints(scriptProps) {
     // Calculate 110% boundary - time of fastest crew NOT promoted for K1 or 110% of winning boat for K2
     // Boats must not have been transferred from another division
     entries.sort( function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);} ); // Sort by position, ascending then blanks (non-finishers)
-    boundary = calculatePointsBoundary(entries, divStr);
+    boundary = calculatePointsBoundary(entries, divStr, isHaslerFinal);
     // Allocate points to clubs within the region
     var count = (isHaslerFinal && isLightningRace) ? 40 : 20, noElapsedValueCount = 0, pointsByBoatNum = new Array(99);
     var boatNum, pd, time, minPoints = (divStr[0] == "9" ? 2 : 1), lastTime = 0, lastPoints = 0;
