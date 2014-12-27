@@ -250,6 +250,10 @@ function addMenu() {
       name : "Print Entries",
       functionName : "createPrintableEntries"
     },
+    {
+      name : "Club Entries",
+      functionName : "createClubEntries"
+    },
     null,
     {
       name : "Finance Summary",
@@ -467,6 +471,15 @@ function createPrintableEntries() {
   var result = HRM.createPrintableEntries(ScriptProperties.getProperty('printableEntriesId'));
   if (result) {
     ScriptProperties.setProperty('printableEntriesId', result.getId());
+  }
+}
+/**
+ * Menu hook for creating club entries sheets
+ */
+function createClubEntries() {
+  var result = HRM.createClubEntries(ScriptProperties.getProperties());
+  if (result) {
+    ScriptProperties.setProperty('clubEntriesId', result.getId());
   }
 }
 /**
