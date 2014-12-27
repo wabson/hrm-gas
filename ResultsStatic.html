@@ -93,13 +93,13 @@ if (races[i].results && races[i].results.length > 0) { ?>
   <tbody><tr>
      <th>Club</th>
      <th>Points</th>
-     <th>Overall</th>
+     <? if (!isHaslerFinal) { ?><th>Overall</th><? } ?>
   </tr>
 <? for (var i = 0; i < clubPoints.length; ++i) { ?>
   <tr>
      <td><?= clubPoints[i].name ?></td>
      <td><?= clubPoints[i].totalPoints ?></td>
-     <td><?= clubPoints[i].haslerPoints ?></td>
+     <? if (!isHaslerFinal) { ?> <td><?= clubPoints[i].haslerPoints ?></td><? } ?>
   </tr>
 <? } ?>
 </tbody></table>

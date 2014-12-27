@@ -33,6 +33,7 @@ function saveResultsHTML(scriptProps) {
   var data = getRaceResultsFromSpreadsheet(ss);
   for (var k in data) {
     template[k] = data[k];
+    template.isHaslerFinal = scriptProps.haslerRegion == "HF";
   }
   var outputHtml = template.evaluate().getContent();
   var htmlFile = scriptProps.publishedResultsId ? DriveApp.getFileById(scriptProps.publishedResultsId) : DriveApp.createFile(title, outputHtml, MimeType.HTML);
