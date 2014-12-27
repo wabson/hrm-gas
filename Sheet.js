@@ -367,7 +367,7 @@ function showSetFinishTimes() {
  * Menu hook for calculating promotions and demotions
  */
 function calculatePromotions() {
-  HRM.calculatePromotions();
+  HRM.calculatePromotions(ScriptProperties.getProperties());
 }
 
 /**
