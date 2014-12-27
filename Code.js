@@ -3397,6 +3397,9 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       if (columnNames.indexOf("Paid") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Paid") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
       }
+      if (columnNames.indexOf("Expiry") > -1) {
+        newSheet.getRange(1, columnNames.indexOf("Expiry") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_DATE);
+      }
       if (autoResize === true) {
         autoResizeColumns(newSheet);
       }
