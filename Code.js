@@ -1742,6 +1742,7 @@ function showRaceLevies(scriptProps) {
   }
   
   var totalLevies = totalSnr * 2 + totalJnr * 1 + totalUnknown * 2;
+  var grandTotal = totalSnr + totalJnr + totalLightning + totalUnknown;
   
   // Dialog height in pixels
   var dialogHeight = 245;
@@ -1753,7 +1754,7 @@ function showRaceLevies(scriptProps) {
       mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
   
   mypanel.add(app.createHTML("<p>Total Received: £" + totalReceived + "</p>"));
-  mypanel.add(app.createHTML("<p>Total Seniors: " + totalSnr + "<br />Total Juniors: " + totalJnr + "<br />Total Lightnings: " + totalLightning + "<br />Total Unknown: " + totalUnknown + "</p>"));
+  mypanel.add(app.createHTML("<p>Total Seniors: " + totalSnr + "<br />Total Juniors: " + totalJnr + "<br />Total Lightnings: " + totalLightning + "<br />Total Unknown: " + totalUnknown + "<br />Grand Total: " + grandTotal + "</p>"));
   if (scriptProps && scriptProps.entrySenior && scriptProps.entryJunior && scriptProps.entryLightning) {
     var totalPaid = parseFloat(scriptProps.entrySenior) * totalSnr + parseFloat(scriptProps.entryJunior) * totalJnr + parseFloat(scriptProps.entryLightning) * totalLightning;
     mypanel.add(app.createHTML("<p>Total Due: £" + totalPaid + "</p>"));
