@@ -1700,6 +1700,10 @@ function showDialog(title, text, dialogHeight) {
   ss.show(app);
 }
 
+function isLightningRaceName_(raceName) {
+  return /U1[02] ?[MF]/i.exec(raceName) != null || raceName.indexOf("Hody") == 0;
+}
+
 /**
  * Display the total sum owed in race levies (£2 per senior, £1 per junior)
  */
@@ -1715,7 +1719,7 @@ function showRaceLevies(scriptProps) {
           raceName = sheet.getName().replace(" ", ""),
           received = parseFloat(values[j]['Paid']) || 0.0;
       if (values[j]['Surname'] != "" || values[j]['First name'] != "" || values[j]['BCU Number'] != "") { // Surname, lastname or BCU number filled out
-        if (/U1[02][MF]/i.exec(raceName) != null || raceName.indexOf("Hody") == 0) {
+        if (isLightningRaceName_(raceName)) {
           totalLightning ++;
         } else {
           if (class != "") {
@@ -2777,7 +2781,7 @@ function calculatePoints(scriptProps) {
     }
     sheetName = sheets[i].getName();
     divStr = sheetName.replace("Div", "");
-    isHaslerRace = sheetName.indexOf("Div") == 0, isLightningRace = sheetName.match(/U\d+/) != null, isDoublesRace = sheetName.indexOf("_") > -1;
+    isHaslerRace = sheetName.indexOf("Div") == 0, isLightningRace = isLightningRaceName_(sheetName), isDoublesRace = sheetName.indexOf("_") > -1;
     var sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, numHeaders), sheetValues = sheetRange.getValues();
     colValues = Array(sheetRange.getNumRows());
     entries = getEntryRowData(sheetRange);
