@@ -2407,10 +2407,10 @@ function overallZero(divZeroes) {
   return meanValue(divZeroes);
 }
 
-function pdStatus(values, pFactors, dFactors, raceDiv) {
+function pdStatus(values, pFactors, dFactors, raceDiv, isFinal) {
   var status = "", classDivIndex = getTableColumnIndex("Div"), classColIndex = getTableColumnIndex("Class"), timeColIndex = getTableColumnIndex("Elapsed"), time = timeInMillis(values[timeColIndex]);
   // Rule 32(h) and 33(g) Paddlers transferred from another division are not eligible for promotion/demotion
-  if ((""+values[0]).indexOf(""+raceDiv) != 0) {
+  if (!isFinal && (""+values[0]).indexOf(""+raceDiv) != 0) {
     Logger.log("Transferred from another division, skipping");
     return "";
   }
@@ -2511,7 +2511,8 @@ function addPDSummary_(pdSheet, div, rows) {
   }
 }
 
-function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFactors, dFactors) {
+function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFactors, dFactors, isHaslerFinal) {
+  var skipNonComplete = true;
   var ss = SpreadsheetApp.getActiveSpreadsheet(), 
       sheetName, sheetValues = new Array(10), sheets = new Array(10), sheet, zeroTimes = [], 
       timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D"), pdTimeRows = [],
@@ -2592,7 +2593,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
         for (var j=0; j<values.length; j++) {
           var elapsed = values[j][timeColIndex];
           if (elapsed && elapsed instanceof Date) {
-            var status = pdStatus(values[j], pTimes, dTimes, applyToDivs[i]);
+            var status = pdStatus(values[j], pTimes, dTimes, applyToDivs[i], isHaslerFinal);
             if (status != "") {
               Logger.log("Got P/D status " + status + " for boat " + values[j][0]);
             }
@@ -2608,7 +2609,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
           }
         }
         // Bail out before setting times, if there are still unfinished crews
-        if (noElapsedValueCount > 0) {
+        if (skipNonComplete && noElapsedValueCount > 0) {
           Logger.log("Skipping P/D for Div" + applyToDivs[i]);
           continue;
         }
@@ -2625,9 +2626,10 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   }
 }
 
-function calculatePromotions() {
+function calculatePromotions(scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
       pdSheet = ss.getSheetByName("PandD");
+  var raceRegion = scriptProps.haslerRegion, isHaslerFinal = raceRegion == "HF";
   if (pdSheet != null) {
     // Clear existing values
     if (pdSheet.getLastRow() > 1) {
@@ -2635,9 +2637,9 @@ function calculatePromotions() {
     }
     pdSheet.getRange(1, 1).setValue("Version 5.0");
     pdSheet.getRange(1, 12).setValue("P/D");
-    setCoursePromotions([1, 2, 3], [1, 2, 3], [1.033, 1.117, 1.2], [[1, 1.067, false], [2, 1.15, false]], [[2, 1.083], [3, 1.167], [4, 1.25]]); // No automatic promotions, only demotions
-    setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15], [3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]]);
-    setCoursePromotions([7, 8], [7, 8, 9], [1.533, 1.617], [[5, 1.4], [6, 1.483], [7, 1.567], [8, 1.65]], [[8, 1.583], [9, 1.667]]);
+    setCoursePromotions([1, 2, 3], [1, 2, 3], [1.033, 1.117, 1.2], [[1, 1.067, false], [2, 1.15, false]], [[2, 1.083], [3, 1.167], [4, 1.25]], isHaslerFinal); // No automatic promotions, only demotions
+    setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15], [3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]], isHaslerFinal);
+    setCoursePromotions([7, 8], [7, 8, 9], [1.533, 1.617], [[5, 1.4], [6, 1.483], [7, 1.567], [8, 1.65]], [[8, 1.583], [9, 1.667]], isHaslerFinal);
     // These extra rows appear at the end with no times - presumably for manual promotions
     addPDTimes_(pdSheet, [
       [pdTimeLabel_([5, 6], "K2", "P", 3), ""],
@@ -2730,6 +2732,7 @@ function sumPoints(values, count) {
 }
 
 function calculatePoints(scriptProps) {
+  var skipNonComplete = true;
   if (scriptProps.haslerRegion) {
     var raceRegion = scriptProps.haslerRegion;
   } else {
@@ -2834,7 +2837,7 @@ function calculatePoints(scriptProps) {
         mixedClubDoubles.push(boatNum);
       }
     }
-    if (noElapsedValueCount > 0) { // Check if any crews unfinished
+    if (skipNonComplete && noElapsedValueCount > 0) { // Check if any crews unfinished
       Logger.log(noElapsedValueCount);
       continue;
     }
@@ -2883,7 +2886,9 @@ function calculatePoints(scriptProps) {
   if (haslerPoints.length > 0) {
     var clubPointsRows = [], lastPoints = 9999;
     for (var j=0; j<clubsInRegion.length; j++) {
-      clubPointsRows.push([clubNames[j], clubsInRegion[j], !isHaslerFinal ? sumPoints(haslerPoints[j], 12) : sumPoints(haslerPoints[j], 6) + sumPoints(doublesPoints[j], 6)]);
+      if (haslerPoints[j] && haslerPoints[j].length > 0) {
+        clubPointsRows.push([clubNames[j], clubsInRegion[j], !isHaslerFinal ? sumPoints(haslerPoints[j], 12) : sumPoints(haslerPoints[j], 6) + sumPoints(doublesPoints[j], 6)]);
+      }
     }
     if (clubPointsRows.length > 0) {
       clubPointsRows.sort(function(a, b) { return b[2] - a[2] }); // Sort by number of points
