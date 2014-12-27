@@ -2512,6 +2512,7 @@ function addPDSummary_(pdSheet, div, rows) {
 }
 
 function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFactors, dFactors) {
+  var skipNonComplete = true;
   var ss = SpreadsheetApp.getActiveSpreadsheet(), 
       sheetName, sheetValues = new Array(10), sheets = new Array(10), sheet, zeroTimes = [], 
       timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D"), pdTimeRows = [],
@@ -2608,7 +2609,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
           }
         }
         // Bail out before setting times, if there are still unfinished crews
-        if (noElapsedValueCount > 0) {
+        if (skipNonComplete && noElapsedValueCount > 0) {
           Logger.log("Skipping P/D for Div" + applyToDivs[i]);
           continue;
         }
@@ -2730,6 +2731,7 @@ function sumPoints(values, count) {
 }
 
 function calculatePoints(scriptProps) {
+  var skipNonComplete = true;
   if (scriptProps.haslerRegion) {
     var raceRegion = scriptProps.haslerRegion;
   } else {
@@ -2834,7 +2836,7 @@ function calculatePoints(scriptProps) {
         mixedClubDoubles.push(boatNum);
       }
     }
-    if (noElapsedValueCount > 0) { // Check if any crews unfinished
+    if (skipNonComplete && noElapsedValueCount > 0) { // Check if any crews unfinished
       Logger.log(noElapsedValueCount);
       continue;
     }
