@@ -56,6 +56,7 @@ var SHEET_FONT_FAMILY = "Courier New";
 var clubs = [];
 
 var RACE_SHEETS_K4 = [['RaceA', [[101, 10]], 4], ['RaceB', [[201, 10]], 4], ['RaceC', [[301, 10]], 4], ['Rocket', [[1001, 10]], 4]];
+var RACE_SHEETS_K2 = [['SMA', [[101, 20]], 2], ['SMB', [[201, 20]], 2], ['SMC', [[301, 20]], 2], ['JMU18', [[401, 20]], 2], ['JMU16', [[501, 20]], 2], ['C2', [[601, 20]], 2], ['SL', [[701, 20]], 2], ['JLU18', [[801, 20]], 2], ['JLU16', [[901, 20]], 2], ['Vet', [[1001, 20]], 2], ['Mix', [[2001, 20]], 2]];
 var RACE_SHEETS_HASLER = [
     ['Div1', [[101, 50]], 1], ['Div2', [[201, 50]], 1], ['Div3', [[301, 50]], 1], 
     ['Div4', [[401, 50]], 1], ['Div5', [[501, 50]], 1], ['Div6', [[601, 50]], 1], 
@@ -3204,6 +3205,18 @@ function createK4Sheet() {
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, RACE_SHEETS_K4, EXTRA_SHEETS_NON_HASLER);
+  }
+}
+
+/**
+ * Create a new spreadsheet to manage a K2 race, i.e. Luzmore
+ */
+function createK2Sheet() {
+  var raceName = Browser.inputBox(
+    'Enter file name:',
+    Browser.Buttons.OK_CANCEL);
+  if (raceName) {
+    createRaceSpreadsheet(raceName, RACE_SHEETS_K2, EXTRA_SHEETS_NON_HASLER);
   }
 }
 

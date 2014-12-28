@@ -211,6 +211,10 @@ function addMenu() {
       functionName : "createNRMSheet"
     },
     {
+      name : "New K2 Sheet",
+      functionName : "createK2Sheet"
+    },
+    {
       name : "New K4 Sheet",
       functionName : "createK4Sheet"
     }
@@ -460,6 +464,9 @@ function createARMSheet() {
 }
 function createNRMSheet() {
   HRM.createNRMSheet();
+}
+function createK2Sheet() {
+  HRM.createK2Sheet();
 }
 function populateFromHtmlResults() {
   HRM.populateFromHtmlResults();
