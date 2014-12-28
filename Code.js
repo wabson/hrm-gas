@@ -363,7 +363,7 @@ function clearAllEntries() {
   var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     clearEntriesSheet_(sheets[i]);
-    setSheetFormatting_(sheets[i]);
+    setRaceSheetFormatting_(sheets[i]);
   }
   setValidation();
   setFormulas();
@@ -642,6 +642,21 @@ function importEntries(eventInfo) {
   app.getElementById("importEntriesCloseBn").setVisible(true);
 
   return app;
+}
+
+function importClubsCsv() {
+  var csvData = UrlFetchApp.fetch("http://wabson.org/hrm/clubs.csv").getContentText();
+  var parsedCsv = Utilities.parseCsv(csvData);
+  if (parsedCsv && parsedCsv.length > 0) {
+    var clubsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Clubs");
+    if (clubsSheet) {
+      clubsSheet.clear();
+      clubsSheet.getRange(1, 1, parsedCsv.length, parsedCsv[0].length).setValues(parsedCsv);
+      setSheetFormatting_(clubsSheet);
+    } else {
+      throw "Could not find Clubs sheet";
+    }
+  }
 }
 
 /* From http://stackoverflow.com/questions/1293147/javascript-code-to-parse-csv-data */
@@ -3109,16 +3124,23 @@ function setSheetValidation_(sheet, scriptProps) {
 function setFormatting() {
   var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    setSheetFormatting_(sheets[i]);
+    setRaceSheetFormatting_(sheets[i]);
   }
 }
 
 /**
  * Set formatting on a sheet
  */
-function setSheetFormatting_(sheet) {
+function setSheetFormatting_(sheet, numRows, numColumns) {
+  sheet.getRange(1, 1, numRows || sheet.getLastRow(), numColumns || sheet.getLastColumn()).setFontFamily(SHEET_FONT_FAMILY).setFontSize(10);
+}
+
+/**
+ * Set formatting on a race sheet
+ */
+function setRaceSheetFormatting_(sheet) {
   var lastRow = sheet.getLastRow();
-  sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).setFontFamily(SHEET_FONT_FAMILY).setFontSize(10);
+  setSheetFormatting_(sheet, null, lastRow);
   // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
   if (lastRow > 1) {
     sheet.getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
@@ -3179,7 +3201,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     }
     sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
     setRaceSheetHeadings_(sheet, columnNames, columnAlignments);
-    setSheetFormatting_(sheet);
+    setRaceSheetFormatting_(sheet);
     setSheetValidation_(sheet);
     setSheetFormulas_(sheet);
     if (isHidden) {

@@ -516,3 +516,9 @@ function checkEntryDuplicates() {
 function checkEntriesFromRankings() {
   HRM.checkEntriesFromRankings();
 }
+/**
+ * Menu hook for loading club list from CSV data
+ */
+function loadClubsCsv() {
+  HRM.importClubsCsv();
+}
