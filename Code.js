@@ -301,7 +301,12 @@ function loadRankingsXLS(clubName) {
     numberFormats[0][sourceWidth-1] = NUMBER_FORMAT_DATE;
     headerRange.setNumberFormats(numberFormats);
 
-    Browser.msgBox("Added " + (sourceHeight-1) + " rankings");
+    lastUpdated = headerRange.getValues()[0][sourceWidth-1];
+    if (lastUpdated && lastUpdated instanceof Date) {
+      Browser.msgBox("Rankings updated as of " + Utilities.formatDate(lastUpdated, "GMT", "dd-MM-yyyy") + "");
+    } else {
+      Browser.msgBox("Rankings updated");
+    }
   }
 
   DriveApp.removeFile(DriveApp.getFileById(file.id));
