@@ -120,15 +120,13 @@ var hrmTypes = [];
 function loadRankings(eventInfo) {
   var app = UiApp.getActiveApplication(),
     clubId = eventInfo.parameter.club, 
-    clear = eventInfo.parameter.clear, 
-    current = eventInfo.parameter.current;
-  Logger.log("Current checkbox: " + (current == 'true'));
+    clear = eventInfo.parameter.clear;
   Logger.log("Clear checkbox: " + (clear == 'true'));
   if (clear == 'true') {
     Logger.log("Clearing existing rankings");
-    clearRankings();
+    clearRankings(false);
   }
-  loadRankingsXLS(clubId, current == 'true');
+  loadRankingsXLS(clubId);
   app.close();
   return app;
 }
@@ -155,28 +153,19 @@ function showLoadRankings() {
   lb.addItem("All Clubs", "");
 
   // add items to ListBox
-  try
-  {
-    var clubs = getClubList();
-    for (var i=0; i<clubs.length; i++) {
-      lb.addItem(clubs[i].name, clubs[i].code);
-    }
-  }
-  catch (e)
-  {
-    // Do nothing
+  var clubs = getClubRows();
+  for (var i=0; i<clubs.length; i++) {
+    lb.addItem(clubs[i][0], clubs[i][1]);
   }
   mypanel.add(lb);
-  var cb = app.createCheckBox("Clear existing records first").setValue(true).setId('clear').setName('clear'), 
-      currentCb = app.createCheckBox("Current rankings only").setValue(true).setId('current').setName('current');
+  var cb = app.createCheckBox("Clear existing records first").setValue(true).setId('clear').setName('clear');
   mypanel.add(cb);
-  mypanel.add(currentCb);
   
   var clientHandler =
     app.createClientHandler().forEventSource().setEnabled(false);
 
   var closeButton = app.createButton('Load');
-  var closeHandler = app.createServerClickHandler('loadRankings').addCallbackElement(lb).addCallbackElement(cb).addCallbackElement(currentCb);
+  var closeHandler = app.createServerClickHandler('loadRankings').addCallbackElement(lb).addCallbackElement(cb);
   closeButton.addClickHandler(closeHandler).addClickHandler(clientHandler);
   mypanel.add(closeButton);
 
@@ -184,67 +173,6 @@ function showLoadRankings() {
   app.add(mypanel);
   
   ss.show(app);
-}
-
-/**
- * Fetch a list of all canoe clubs, retrieved from ScraperWiki
- *
- * @return {Array} List of clubs as object literals with properties 'name', 'code' and 'region_code'
- */
-function getClubList() {
-  if (clubs.length == 0) {
-    swQuery("hasler_marathon_club_list", "`swdata`.* from `swdata` order by name", function appendClubs(data) {
-      clubs = clubs.concat(data);
-    });
-  }
-  return clubs;
-}
-
-/**
- * Load current Hasler Rankings from the ScraperWiki datastore, and place these into the Rankings sheet in the spreadsheet
- * If the Rankings sheet does not currently exist it will be created. If the sheet contains data it will be removed, before
- * the new data is loaded.
- *
- * @param {string} clubName Code of the club which should be loaded, if null then rankings from all clubs will be loaded
- * @param {boolean} onlyLatest True if only current rankings should be loaded. Old rankings are also available from the scraper.
- */
-function loadRankingsData(clubName, onlyLatest) {
-  var sheetName = "Rankings";
-  // Locate Rankings sheet or create it if it doesn't already exist
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName, ss.getSheets().length);
-  
-  var baseQuery = "`swdata`.* from `swdata`",
-      whereClauses = [];
-  if (clubName) {
-    whereClauses.push("club='" + clubName + "'");
-  }
-  if (onlyLatest == true) {
-    baseQuery += ", `swvariables`"
-    whereClauses.push("`swvariables`.name='last_updated' and updated=`swvariables`.value_blob");
-  }
-  if (whereClauses.length > 0) {
-    baseQuery += " where " + whereClauses.join(" and ");
-  }
-  swQuery("hasler_marathon_ranking_list", baseQuery, function appendRankings(data) {
-    if (data.length > 0)
-    {
-      var destinationRange = sheet.getRange(1 + sheet.getLastRow(), 1, data.length, rankingsSheetColumnNames.length);
-      var dataRows = [];
-      for (var j=0; j < data.length; j++)
-      {
-        dataRows.push([data[j]['surname'], data[j]['first_name'], data[j]['club'], data[j]['class'], data[j]['bcu_number'], data[j]['division']]);
-      }
-      destinationRange.setValues(dataRows);
-    }
-  });
-  // Add the last update date to the sheet
-  swQuery("hasler_marathon_ranking_list", "* from swvariables", function appendRankings(data) {
-    if (data.length > 0) {
-      sheet.getRange(1, 7).setValues([[data[0]['value_blob']]]);
-    } else {
-      throw "Last update date not found";
-    }
-  });
 }
 
 /**
@@ -258,14 +186,10 @@ function loadRankingsXLS(clubName) {
   if (!reMatch) {
     throw("Ranking list URL not found");
   }
-  var rankingListUrl = reMatch[1], response = UrlFetchApp.fetch(rankingListUrl);
+  var rankingListUrl = reMatch[1], fileName = rankingListUrl.substr(rankingListUrl.lastIndexOf("/") + 1), response = UrlFetchApp.fetch(rankingListUrl);
   if (response.getResponseCode() == 200) {
-    //DocsList.createFile(response.getBlob());
-    // Need to convert to Google Sheets native format
-    // Blocked by http://code.google.com/p/google-apps-script-issues/issues/detail?id=1019
-    //throw("Not yet implemented!");
     var file = {
-      title: 'RankingList.xls'
+      title: fileName
     };
     file = Drive.Files.insert(file, response.getBlob(), {
       convert: true
@@ -273,83 +197,63 @@ function loadRankingsXLS(clubName) {
   } else {
     throw "An error was encountered loading the rankings spreadsheet (code: " + response.getResponseCode() + ")";
   }
-  
-  // TODO refactor the following code into a common method, shared between loadRankingsXLS() and loadRankingsData()
-  var sheetName = "Rankings";
-  // Locate Rankings sheet or create it if it doesn't already exist
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sourceSS = SpreadsheetApp.openById(file.id),
-    sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName, ss.getSheets().length), 
-    sourceRange = sourceSS.getActiveSheet().getDataRange(), sourceWidth = sourceRange.getWidth(),
-    sourceHeight = sourceRange.getHeight(), sourceHeaderRange = sourceSS.getActiveSheet().getRange(1, 1, 1, sourceWidth);
-  
-  if (sourceHeight > 0)
-  {
-    var destinationRange = sheet.getRange(sheet.getLastRow(), 1, sourceHeight, sourceWidth),
-      headerRange = sheet.getRange(1, 1, 1, sourceWidth), values = sourceRange.getValues();
-    // Copying ranges directly is not supported between spreadsheets
-    destinationRange.setValues(values);
-    // Set expiration date formats (column F)
-    var expiryColPos = values[0].indexOf("Expiry");
-    if (expiryColPos > -1) {
-      sheet.getRange(2, expiryColPos + 1, sourceHeight-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
-    }
-    // Set header row format
-    headerRange.setBackgrounds(sourceHeaderRange.getBackgrounds());
-    headerRange.setHorizontalAlignments(sourceHeaderRange.getHorizontalAlignments());
-    var numberFormats = sourceHeaderRange.getNumberFormats();
-    // Override date number format as it does not seem to get applied correctly
-    numberFormats[0][sourceWidth-1] = NUMBER_FORMAT_DATE;
-    headerRange.setNumberFormats(numberFormats);
-
-    lastUpdated = headerRange.getValues()[0][sourceWidth-1];
-    if (lastUpdated && lastUpdated instanceof Date) {
-      Browser.msgBox("Rankings updated as of " + Utilities.formatDate(lastUpdated, "GMT", "dd-MM-yyyy") + "");
-    } else {
-      Browser.msgBox("Rankings updated");
-    }
-  }
-
+  loadRankingsSheet_(file.id);
   DriveApp.removeFile(DriveApp.getFileById(file.id));
 }
 
-/**
- * Query the ScraperWiki datastore and perform some action against the returned items
- *
- * @param {string} scraper Name of the scraper to query
- * @param {string} baseQuery Items to include in the SELECT statement (do not include SELECT prefix itself)
- * @param {function} dataFn Function to execute against each data item in turn
- */
-function swQuery(scraper, baseQuery, dataFn) {
-  var batchSize = 100, batchNum = 0, data;
-  while (typeof data == "undefined" || data.length > 0)
+function loadRankingsSheet_(spreadsheetId, clubName) {
+  // Locate Rankings sheet or create it if it doesn't already exist
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sourceSS = SpreadsheetApp.openById(spreadsheetId),
+    sheet = ss.getSheetByName(rankingsSheetName) || ss.insertSheet(rankingsSheetName, ss.getSheets().length), 
+    sourceSheet = sourceSS.getSheetByName(rankingsSheetName) || sourceSS.getActiveSheet(),
+    sourceRange = sourceSheet.getDataRange(), sourceWidth = sourceRange.getWidth(),
+    sourceHeight = sourceRange.getHeight(), sourceHeaderRange = sourceSheet.getRange(1, 1, 1, sourceWidth);
+  
+  if (sourceHeight > 0)
   {
-    var query = "select " + baseQuery + " limit " + (batchSize * batchNum) + ", " + batchSize;
-    var url = "https://api.scraperwiki.com/api/1.0/datastore/sqlite?format=jsondict" +
-        "&name=" + encodeURIComponent(scraper) + 
-        "&query=" + encodeURIComponent(query);
-    Logger.log("Fetching data from " + url);
-    var response = UrlFetchApp.fetch(url);
-    var json = response.getContentText();
-    data = JSON.parse(json);
-    if (data.length > 0) {
-      dataFn.call(this, data);
+    var headerRange = sheet.getRange(1, 1, 1, sourceWidth), headers = getTableHeaders(sheet);
+    if (!(headers && headers.length > 0)) {
+      // Copy header names from the source sheet
+      headers = sourceHeaderRange.getValues();
+      headerRange.setValues(headers);
+      // Set header row format
+      headerRange.setBackgrounds(sourceHeaderRange.getBackgrounds());
+      headerRange.setHorizontalAlignments(sourceHeaderRange.getHorizontalAlignments());
+      var numberFormats = sourceHeaderRange.getNumberFormats();
+      // Override date number format as it does not seem to get applied correctly
+      numberFormats[0][sourceWidth-1] = NUMBER_FORMAT_DATE;
+      headerRange.setNumberFormats(numberFormats);
     }
-    batchNum ++;
+    var srcRows = getTableRows(sourceSheet);
+    Logger.log(Utilities.formatString("Found %d total rankings", srcRows.length));
+    if (clubName) {
+      Logger.log(Utilities.formatString("Filtering by club name '%s'", clubName));
+      srcRows = srcRows.filter(function(val) { return val["Club"] == clubName });
+    }
+    appendTableRowValues(sheet, srcRows);
+    // Set expiration date formats (column F)
+    var expiryColPos = headers.indexOf("Expiry");
+    if (expiryColPos > -1) {
+      sheet.getRange(2, expiryColPos + 1, sourceHeight-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
+    }
+    Browser.msgBox("Added " + srcRows.length + " rankings");
   }
 }
 
 /**
  * Clear all Hasler rankings in the current spreadsheet
  */
-function clearRankings() {
-  var sheetName = "Rankings";
+function clearRankings(p_addColumns) {
+  var addColumns = (p_addColumns !== undefined) ? p_addColumns : true;
   // Locate Rankings sheet or create it if it doesn't already exist
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(rankingsSheetName);
   if (!sheet) {
     throw "Could not find Rankings sheet";
   }
   sheet.clear();
-  sheet.appendRow(rankingsSheetColumnNames);
+  if (addColumns === true) {
+    sheet.appendRow(rankingsSheetColumnNames);
+  }
 }
 
 /**
@@ -372,21 +276,6 @@ function clearAllEntries() {
   }
   setValidation();
   setFormulas();
-}
-
-/**
- * Add the specified Hasler rankings to the current spreadsheet
- *
- * @param {array} items List of items as object literals. Must include the properties 'surname', 'first_name', 'club', 'class', 'bcu_number' and 'division'
- */
-function addRankings(items) {
-  var destinationRange = sheet.getRange(2 + (batchSize * batchNum), 1, items.length, rankingsSheetColumnNames.length);
-  var dataRows = [];
-  for (var j=0; j < data.length; j++)
-  {
-    dataRows.push([data[j]['surname'], data[j]['first_name'], data[j]['club'], data[j]['class'], data[j]['bcu_number'], data[j]['division']]);
-  }
-  destinationRange.setValues(dataRows);
 }
 
 /**
@@ -433,30 +322,10 @@ function showAddLocalRankings() {
  */
 function addLocalRankings(eventInfo) {
   var app = UiApp.getActiveApplication();
-  // Because the list box was named "spreadsheetId" and added as a callback element to the
-  // button's click event, we have its value available in eventInfo.parameter.spreadsheetId.
   var ssId = eventInfo.parameter.spreadsheetId;
   if (ssId)
   {
-    var ss = SpreadsheetApp.openById(ssId),
-        sheet = ss.getSheetByName("Rankings") || ss.getActiveSheet(); // Take the sheet named 'Rankings' or just the first one otherwise
-    
-    var ass = SpreadsheetApp.getActiveSpreadsheet(),
-        rsheet = ass.getSheetByName("Rankings");
-    
-    if (!rsheet) {
-      throw "Current spreadsheet has no Rankings sheet";
-    }
-    
-    var range = sheet.getRange(2, 1, sheet.getLastRow()-1, sheet.getLastColumn()), values = range.getValues();
-    //throw "hello" + values.length;
-    if (values.length > 0) {
-      var destinationRange = rsheet.getRange(rsheet.getLastRow() + 1, 1, values.length, values[0].length);
-    }
-    
-    destinationRange.setValues(values);
-    // Expiration date must be formatted as a date or getValues() returns it as an integer
-    sheet.getRange(destinationRange.getRow(), 6, destinationRange.getHeight(), 1).setNumberFormat(NUMBER_FORMAT_DATE);
+    loadRankingsSheet_(ssId);
   } else {
     throw "Could not locate source spreadsheet";
   }
@@ -1273,18 +1142,25 @@ function setTableRowValues(sheet, values, startColumnName, endColumnName, startR
   sheet.getRange(startRow, (startColumnName ? headers.indexOf(startColumnName) + 1 : 1), valueList.length, valueList[0].length).setValues(valueList);
 }
 
+function appendTableRowValues(sheet, values) {
+  setTableRowValues(sheet, values, null, null, sheet.getLastRow()+1);
+}
+
 /**
  * Return an array containing the list of table heading cells taken from row 1 in the given sheet
  *
  * Return {array} Array containing the heading cell values, which may be empty if there were no values in row 1
  */
 function getTableHeaders(sheet) {
-  var range = sheet.getRange(1, 1, 1, sheet.getLastColumn()), values = range.getValues();
-  var headers =  values.length > 0 ? values[0] : [];
-  while (headers.length > 0 && headers[headers.length - 1] === "") {
-    headers.pop();
+  var lastCol = sheet.getLastColumn();
+  if (lastCol > 0) {
+    var range = sheet.getRange(1, 1, 1, lastCol), values = range.getValues();
+    var headers =  values.length > 0 ? values[0] : [];
+    while (headers.length > 0 && (headers[headers.length - 1] === "" || typeof headers[headers.length - 1] != "string")) {
+      headers.pop();
+    }
+    return headers;
   }
-  return headers;
 }
 
 /**
@@ -2711,6 +2587,7 @@ function calculatePointsBoundary(entries, raceName, isHaslerFinal) {
 }
 
 function getClubRows(sheet) {
+  sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Clubs");
   if (sheet.getLastRow() > 0) {
     return sheet.getRange(1, 1, sheet.getLastRow(), 3).getValues();
   } else {
