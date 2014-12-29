@@ -2911,18 +2911,18 @@ function getRaceColumnA1(colName) {
  * Set forumalas for all race sheets
  */
 function setFormulas() {
-  var sheets = getRaceSheets();
+  var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") != null;
   for (var i=0; i<sheets.length; i++) {
-    setSheetFormulas_(sheets[i]);
+    setSheetFormulas_(sheets[i], useVLookup);
   }
 }
 
 /**
  * Set forumalas for a single sheet
  */
-function setSheetFormulas_(sheet) {
+function setSheetFormulas_(sheet, useVLookup) {
   var timePlusMinusColA1 = getRaceColumnA1("Time+/-"), startColA1 = getRaceColumnA1("Start"), finishColA1 = getRaceColumnA1("Finish"), elapsedColA1 = getRaceColumnA1("Elapsed"), 
-    elapsedCol = getRaceColumnNumber("Elapsed"), posnCol = getRaceColumnNumber("Posn");
+    startCol = getRaceColumnNumber("Start"), finishCol = getRaceColumnNumber("Finish"), elapsedCol = getRaceColumnNumber("Elapsed"), posnCol = getRaceColumnNumber("Posn");
   var lastRow = sheet.getLastRow();
   if (lastRow > 1) {
     // Elapsed time
@@ -2934,6 +2934,14 @@ function setSheetFormulas_(sheet) {
     if (posnCol > 0) {
       sheet.getRange(2, posnCol).setFormula('=IFERROR(RANK('+elapsedColA1+'2,'+elapsedColA1+'$2:'+elapsedColA1+'$' + lastRow + ', 1))');
       sheet.getRange(2, posnCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, posnCol).getFormulaR1C1());
+    }
+    // Start and Finish times
+    if (useVLookup) {
+      var sheetName = sheet.getName();
+      sheet.getRange(2, startCol).setFormula('=IFERROR(IF(A2<>"",VLOOKUP("'+sheetName+'",Starts!$A$1:$B$20, 2, 0), ""))'); // Lookup against sheet name for rows where there is a boat number
+      sheet.getRange(2, startCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, startCol).getFormulaR1C1());
+      sheet.getRange(2, finishCol).setFormula('=IFERROR(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0))'); // Lookup against boat number
+      sheet.getRange(2, finishCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, finishCol).getFormulaR1C1());
     }
   }
 }
