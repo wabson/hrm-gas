@@ -447,64 +447,56 @@ function importEntries(eventInfo) {
   //}
   //if (csvBlob)
   //{
-  //  var csvData = csvToArray(csvBlob.contents),
   var csvId = eventInfo.parameter.spreadsheetId;
   if (csvId)
   {
     var csv = DocsList.getFileById(csvId),
-        csvData = csvToArray(csv.getContentAsString()),
-        ass = SpreadsheetApp.getActiveSpreadsheet(),
-        sheets = getRaceSheets(ass), sheet, rows, results = [], numCrewsByRace = {},
+        csvData = Utilities.parseCsv(csv.getContentAsString()),
+        rows, results = [], numCrewsByRace = {},
         startRow = 1, // Assume a header row exists
-        newRows = {},
-        startCol = 1; // Number of columns to skip at the start of each row
+        newRows = {};
 
     for (var i=startRow; i<csvData.length; i++) {
       // "Date","First Name","Last Name","Club","Class","BCU Number","Marathon Ranking","First Name","Last Name","Club","Class","BCU Number","Marathon Ranking","Race Class"
-      if (csvData[i].length >= 14) {
-        var raceClass = csvData[i][startCol+12], sourceData = csvData[i].slice(startCol, startCol+13); // Will yield a 13-value list
+      if (csvData[i].length == csvData[0].length) {
+        var csvRow = arrayZip(csvData[0], csvData[i]);
+        var raceClass = csvRow["Race Class"];
         if (raceClass !== null && raceClass !== "") {
           newRows[raceClass] = newRows[raceClass] || [];
           numCrewsByRace[raceClass] = numCrewsByRace[raceClass] || 0;
-          newRows[raceClass].push(
-            [sourceData[1], sourceData[0], sourceData[4], sourceData[2], sourceData[3], sourceData[5]],
-            [sourceData[7], sourceData[6], sourceData[10], sourceData[8], sourceData[9], sourceData[11]]
-          ); // Surname, First name, BCU Number, Club, Class, Div
+          newRows[raceClass].push({
+            "Number": csvRow["#"] || 1,
+            "Surname": csvRow["Last Name (1)"].toUpperCase(), 
+            "First name": csvRow["First Name (1)"].toUpperCase(), 
+            "BCU Number": csvRow["BCU Number (1)"].toUpperCase(), 
+            "Club": csvRow["Club (1)"], 
+            "Class": csvRow["Class (1)"], 
+            "Div": csvRow["Ranking (1)"]
+          },{
+            "Surname": csvRow["Last Name (2)"].toUpperCase(), 
+            "First name": csvRow["First Name (2)"].toUpperCase(), 
+            "BCU Number": csvRow["BCU Number (2)"].toUpperCase(), 
+            "Club": csvRow["Club (2)"], 
+            "Class": csvRow["Class (2)"], 
+            "Div": csvRow["Ranking (2)"]
+          }); // Surname, First name, BCU Number, Club, Class, Div
           numCrewsByRace[raceClass] ++;
+        } else {
+          throw "Race class must be defined";
         }
       }
     }
     
     for (var raceName in newRows) {
       rows = newRows[raceName];
-      // Iterate through all paddlers
-      // TODO Below same code as in second part of addLocalEntries()
       if (rows.length == 0) {
         Logger.log("No rows for sheet " + raceName);
         continue;
       } else {
         Logger.log("" + rows.length + " rows for sheet " + raceName);
       }
-      
-      var dstsheet = findMatchingRaceSheet(raceName);
-      
-      if (dstsheet != null) {
-        // Find the latest row with a number but without a name in the sheet
-        var nextRow = getNextEntryRow(dstsheet);
-        if (nextRow > 0) {
-          Logger.log("Adding new rows at row " + nextRow);
-          if (dstsheet.getLastRow()-nextRow+1 >= rows.length) {
-            dstsheet.getRange(nextRow, 2, rows.length, 6).setValues(rows); // TODO Allow numbers to be added, in which case length will be 7 rather than 6
-            results.push("Added " + numCrewsByRace[raceName] + " crews to " + raceName);
-          } else {
-            throw "Too many rows to import into " + raceName + " (" + rows.length + " data rows, " + (dstsheet.getLastRow()-nextRow+1) + " in sheet)";
-          }
-        } else {
-          throw("No space left in sheet " + raceName);
-        }
-      } else {
-        throw("Destination sheet " + raceName + " not found");
-      }
+      var newResults = appendEntryRows(rows, raceName);
+      results = results.concat(newResults);
     }
   } else {
     throw "Could not locate source spreadsheet";
@@ -533,86 +525,6 @@ function importClubsCsv() {
   }
 }
 
-/* From http://stackoverflow.com/questions/1293147/javascript-code-to-parse-csv-data */
-// This will parse a delimited string into an array of
-// arrays. The default delimiter is the comma, but this
-// can be overriden in the second argument.
-function csvToArray( strData, strDelimiter ){
-  // Check to see if the delimiter is defined. If not,
-  // then default to comma.
-  strDelimiter = (strDelimiter || ",");
-  
-  // Create a regular expression to parse the CSV values.
-  var objPattern = new RegExp(
-    (
-      // Delimiters.
-      "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
-      
-      // Quoted fields.
-      "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
-      
-      // Standard fields.
-      "([^\"\\" + strDelimiter + "\\r\\n]*))"
-    ),
-    "gi"
-  );
-  
-  // Create an array to hold our data. Give the array
-  // a default empty first row.
-  var arrData = [[]];
-  
-  // Create an array to hold our individual pattern
-  // matching groups.
-  var arrMatches = null;
-  
-  // Keep looping over the regular expression matches
-  // until we can no longer find a match.
-  while (arrMatches = objPattern.exec( strData )){
-    
-    // Get the delimiter that was found.
-    var strMatchedDelimiter = arrMatches[ 1 ];
-    
-    // Check to see if the given delimiter has a length
-    // (is not the start of string) and if it matches
-    // field delimiter. If id does not, then we know
-    // that this delimiter is a row delimiter.
-    if (
-      strMatchedDelimiter.length &&
-      (strMatchedDelimiter != strDelimiter)
-      ){
-        // Since we have reached a new row of data,
-        // add an empty row to our data array.
-        arrData.push( [] );
-      }
-    
-    // Now that we have our delimiter out of the way,
-    // let's check to see which kind of value we
-    // captured (quoted or unquoted).
-    if (arrMatches[ 2 ]){
-      // We found a quoted value. When we capture
-      // this value, unescape any double quotes.
-      var strMatchedValue = arrMatches[ 2 ].replace(
-        new RegExp( "\"\"", "g" ),
-        "\""
-      );
-      
-    } else {
-      
-      // We found a non-quoted value.
-      var strMatchedValue = arrMatches[ 3 ];
-      
-    }
-    
-    
-    // Now that we have our value string, let's add
-    // it to the data array.
-    arrData[ arrData.length - 1 ].push( strMatchedValue );
-  }
-  
-  // Return the parsed data.
-  return( arrData );
-}
-
 function findMatchingRaceSheet(raceName, sheets) {
   var ass = SpreadsheetApp.getActiveSpreadsheet(), sheet = null;
   if (!sheets) { // First try simple match
@@ -636,6 +548,42 @@ function findMatchingRaceSheet(raceName, sheets) {
   return sheet;
 }
 
+function appendEntryRows(rows, sheetName) {
+  var dstsheet = findMatchingRaceSheet(sheetName), results = [], numCrews = 0; totalPaid = 0;
+  if (dstsheet != null) {
+    // Find the latest row with a number but without a name in the sheet
+    var dstSheetName = dstsheet.getName(), lastRow = dstsheet.getLastRow(), nextRow = getNextEntryRow(dstsheet);
+    if (nextRow > 0) {
+      Logger.log("Adding new rows at row " + nextRow);
+      rows.forEach(function(row, i) {
+        if (row["Surname"] || row["First name"]) {
+          if (row["Number"]) {
+            numCrews ++;
+          }
+          if (row["Paid"]) {
+            totalPaid += +row["Paid"];
+          }
+        }
+      });
+      Logger.log("" + numCrews + " crews for sheet " + sheetName);
+      if (numCrews == 0) {
+        return;
+      }
+      if (lastRow-nextRow+1 >= rows.length) {
+        setTableRowValues(dstsheet, rows, "Surname", "Paid", nextRow); // TODO Allow numbers to be added
+        results.push("Added " + numCrews + " crews to " + dstSheetName + (totalPaid > 0 ? (", Paid £" + totalPaid) : ""));
+      } else {
+        throw "Too many rows to import into " + dstSheetName + " (" + rows.length + " data rows, " + (lastRow-nextRow+1) + " in sheet)";
+      }
+    } else {
+      throw("No space left in sheet " + dstSheetName);
+    }
+  } else {
+    throw("Destination for sheet " + sheetName + " not found");
+  }
+  return results;
+}
+
 /**
  * Handler for adding entries from a spreadsheet stored in Google Docs. This is intended to be called when the dialog's submit button is clicked.
  * TODO Support keeping boat numbers
@@ -652,48 +600,20 @@ function addLocalEntries(eventInfo) {
   if (ssId)
   {
     var ss = SpreadsheetApp.openById(ssId),
-        sheets = getRaceSheets(ss), sheet, sheetName, rows, results = [], numCrews, totalPaid, lastNonEmpty;
+        sheets = getRaceSheets(ss), sheet, sheetName, rows, results = [], lastNonEmpty;
 
     for (var i=0; i<sheets.length; i++) {
       sheet = sheets[i],
         sheetName = sheet.getName(),
-        srcRows = getTableRows(sheet),
-        rows = [], numCrews = 0, totalPaid = 0;
+        srcRows = getTableRows(sheet);
       srcRows.forEach(function(row, i) {
         if (row["Surname"] || row["First name"]) {
           lastNonEmpty = i;
-          if (row["Number"]) {
-            numCrews ++;
-          }
-          if (row["Paid"]) {
-            totalPaid += +row["Paid"];
-          }
         }
       });
-      Logger.log("" + numCrews + " crews for sheet " + sheetName);
-      if (numCrews == 0) {
-        continue;
-      }
       srcRows = srcRows.slice(0, lastNonEmpty+1);
-      
-      var dstsheet = findMatchingRaceSheet(sheetName);
-      if (dstsheet != null) {
-        // Find the latest row with a number but without a name in the sheet
-        var nextRow = getNextEntryRow(dstsheet);
-        if (nextRow > 0) {
-          Logger.log("Adding new rows at row " + nextRow);
-          if (dstsheet.getLastRow()-nextRow+1 >= srcRows.length) {
-            setTableRowValues(dstsheet, srcRows, "Surname", "Paid", nextRow); // TODO Allow numbers to be added
-            results.push("Added " + numCrews + " crews to " + dstsheet.getName() + (totalPaid > 0 ? (", Paid £" + totalPaid) : ""));
-          } else {
-            throw "Too many rows to import into " + dstsheet.getName() + " (" + srcRows.length + " data rows, " + (dstsheet.getLastRow()-nextRow+1) + " in sheet)";
-          }
-        } else {
-          throw("No space left in sheet " + sheetName);
-        }
-      } else {
-        throw("Destination for sheet " + sheetName + " not found");
-      }
+      var newResults = appendEntryRows(srcRows, sheetName);
+      results = results.concat(newResults);
     }
   } else {
     throw "Could not locate source spreadsheet";
@@ -1135,7 +1055,7 @@ function setTableRowValues(sheet, values, startColumnName, endColumnName, startR
   for (var i = 0; i < values.length; i++) {
     var row = new Array();
     for (var j = (startColumnName ? headers.indexOf(startColumnName) : 0); j < (endColumnName ? headers.indexOf(endColumnName) + 1 : headers.length); j++) {
-      row.push(values[i][headers[j]]);
+      row.push(values[i][headers[j]] || "");
     }
     valueList[i] = row;
   }
