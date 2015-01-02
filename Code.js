@@ -957,9 +957,16 @@ function lookupInTable(rows, matchValues) {
   for (var i = 0; i < rows.length; i++) {
     match = true;
     for (var p in matchValues) {
-      if (rows[i][p] !== matchValues[p] && (''+rows[i][p]).trim() !== (''+matchValues[p]).trim()) {
-        match = false;
-        continue;
+      if (matchValues[p] instanceof RegExp) {
+        if (!matchValues[p].test(rows[i][p])) {
+          match = false;
+          continue;
+        }
+      } else {
+        if (rows[i][p] !== matchValues[p] && (''+rows[i][p]).trim() !== (''+matchValues[p]).trim()) {
+          match = false;
+          continue;
+        }
       }
     }
     if (match) {
@@ -981,9 +988,9 @@ function updateEntriesFromRankings() {
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
         var bcuNum = raceData[j]['BCU Number'];
-        if (bcuNum) {
+        if (bcuNum && /\d+/.exec(bcuNum)) {
           Logger.log("BCU Number: " + bcuNum);
-          var matches = lookupInTable(rankingData, {'BCU Number': bcuNum});
+          var matches = lookupInTable(rankingData, {'BCU Number': new RegExp("" + bcuNum + "/?[A-Za-z]?")});
           if (matches.length == 1) {
             Logger.log("Found match: " + matches[0]);
             var update = rankingToEntryData(matches[0]);
