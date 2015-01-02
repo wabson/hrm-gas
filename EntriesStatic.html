@@ -54,12 +54,12 @@ if (races[i].results && races[i].results.length > 0) { ?>
 <? for (var j = 0; j < races[i].results.length; ++j) { ?>
   <tr>
      <td><?= races[i].results[j].num ?></td>
-     <td><?!= races[i].results[j].names.join("<br />").toUpperCase() ?></td>
-     <td><?!= races[i].results[j].bcuNum.join("<br />").toUpperCase() ?></td>
-     <td<? if (races[i].results[j].expired) { ?> class="expired"<? } ?>><?!= races[i].results[j].expiry.join("<br />").toUpperCase() ?></td>
-     <td><?!= races[i].results[j].clubs.join("<br />").toUpperCase() ?></td>
-     <td><?!= races[i].results[j].classes.join("<br />").toUpperCase() ?></td>
-     <td><?!= races[i].results[j].divs.join("<br />") ?></td>
+     <td><?!= races[i].results[j].names.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+     <td><?!= races[i].results[j].bcuNum.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+     <td<? if (races[i].results[j].expired) { ?> class="expired"<? } ?>><?!= races[i].results[j].expiry.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+     <td><?!= races[i].results[j].clubs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+     <td><?!= races[i].results[j].classes.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+     <td><?!= races[i].results[j].divs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
   </tr>
   <? } ?>
 </table>

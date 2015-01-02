@@ -57,15 +57,15 @@ if (races[i].results && races[i].results.length > 0) { ?>
    ?>
   <tr>
      <td><?= races[i].results[j].posn ?></td>
-     <td><?!= races[i].results[j].names.join("<br />").toUpperCase() ?></td>
-     <td><?!= races[i].results[j].clubs.join("<br />").toUpperCase() ?></td>
-     <td><?!= races[i].results[j].classes.join("<br />").toUpperCase() ?></td>
-     <td><?!= races[i].results[j].divs.join("<br />") ?></td>
+     <td><?!= races[i].results[j].names.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />").toUpperCase() ?></td>
+     <td><?!= races[i].results[j].clubs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />").toUpperCase() ?></td>
+     <td><?!= races[i].results[j].classes.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />").toUpperCase() ?></td>
+     <td><?!= races[i].results[j].divs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <td><?= formatTime(races[i].results[j].time) ?></td>
-     <td><?!= races[i].results[j].points.join("<br />") ?></td>
-     <td><?!= races[i].results[j].pd.join("<br />") ?></td>
+     <td><?!= races[i].results[j].points.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+     <td><?!= races[i].results[j].pd.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <? if (showNotes) { ?>
-     <td><?!= races[i].results[j].notes.join("<br />") ?></td>
+     <td><?!= races[i].results[j].notes.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <? } ?>
   </tr>
   <? }} ?>
