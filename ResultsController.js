@@ -173,8 +173,9 @@ function getRaceResultsFromSpreadsheet(ss) {
     }
     classes.push({name: sheets[i].getName(), results: results.sort(sortResults) })
   }
-  var pdSheet = ss.getSheetByName("PandD"), pdTimes = [], coursePdTimes = [], lastCourse = "", thisCourse = "";
+  var pdSheet = ss.getSheetByName("PandD"), pdTimes = null, coursePdTimes = [], lastCourse = "", thisCourse = "";
   if (pdSheet && pdSheet.getLastRow() > 1) {
+    pdTimes = [];
     Logger.log("Reading PD times");
     var pdValues = pdSheet.getRange(2, 12, pdSheet.getLastRow()-1, 2).getValues();
     for (var i=0; i<pdValues.length; i++) {

@@ -46,8 +46,10 @@ if (races[i].results && races[i].results.length > 0) { ?>
      <th>Class</th>
      <th>Div</th>
      <th>Time</th>
+<? if (pdTimes !== null) { ?>
      <th>Points</th>
      <th>P/D</th>
+<? } ?>
 <? if (showNotes) { ?>
      <th>Notes</th>
 <? } ?>
@@ -62,8 +64,10 @@ if (races[i].results && races[i].results.length > 0) { ?>
      <td><?!= races[i].results[j].classes.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].divs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <td><?= formatTime(races[i].results[j].time) ?></td>
+<? if (pdTimes !== null) { ?>
      <td><?!= races[i].results[j].points.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <td><?!= races[i].results[j].pd.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+<? } ?>
      <? if (showNotes) { ?>
      <td><?!= races[i].results[j].notes.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <? } ?>
