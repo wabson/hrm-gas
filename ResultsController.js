@@ -276,10 +276,11 @@ function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
         club = "" + row['Club'],
         class = "" + row['Class'],
         div = "" + row['Div'],
+        paid = "" + row['Paid'],
         startTime = "" + row['Start'];
       if (name.trim() != "") {
         if (row['Number']) {
-          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [class], divs: [div], startTime: startTime });
+          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [class], divs: [div], paid: [paid], startTime: startTime });
         } else {
           var last = results.pop();
           last.names.push(name);
@@ -289,6 +290,7 @@ function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
           last.clubs.push(club);
           last.classes.push(class);
           last.divs.push(div);
+          last.paid.push(paid);
           results.push(last);
         }
       }
