@@ -1539,7 +1539,7 @@ function showRaceLevies(scriptProps) {
     // Iterate through all paddlers' classes (column F)
     var values = getTableRows(sheet);
     for (var j=0; j<values.length; j++) {
-      var class = (values[j]['Class'] || "").toUpperCase().trim(), 
+      var class = (typeof values[j]['Class'] == "string" && values[j]['Class'] !== null ? values[j]['Class'] : "").toUpperCase().trim(), 
           raceName = sheet.getName().replace(" ", ""),
           received = parseFloat(values[j]['Paid']) || 0.0;
       if (values[j]['Surname'] != "" || values[j]['First name'] != "" || values[j]['BCU Number'] != "") { // Surname, lastname or BCU number filled out
@@ -1547,11 +1547,12 @@ function showRaceLevies(scriptProps) {
           totalLightning ++;
         } else {
           if (class != "") {
-            if (class == "J" || class == "JF" || class == "JC" || class == "JCF") {
+            if (/^J[MFC]{0,2}$/.test(class)) {
               totalJnr ++;
-            } else if (class == "S" || class == "SM" || class == "V" || class == "VM" || class == "F" || class == "SF" || class == "VF" || class == "C" || class == "SC" || class == "VC") {
+            } else if (/^[SV]?[MFC]{0,2}$/.test(class)) {
               totalSnr ++;
             } else {
+              Logger.log(Utilities.formatString("Unknown class '%s'", class));
               totalUnknown ++;
             }
           } else {
