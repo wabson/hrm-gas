@@ -451,7 +451,7 @@ function importEntries(eventInfo) {
   if (csvId)
   {
     var csv = DocsList.getFileById(csvId),
-        csvData = Utilities.parseCsv(csv.getContentAsString()),
+        csvData = Utilities.parseCsv(csv.getContentAsString().replace(/\r\n/g, " ")),
         rows, results = [], numCrewsByRace = {},
         startRow = 1, // Assume a header row exists
         newRows = {};
