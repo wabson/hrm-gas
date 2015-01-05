@@ -79,13 +79,10 @@ function saveEntriesHTML(scriptProps) {
  * @param {object} e Event information
  */
 function printResults(e) {
-  var key = null, refresh, scroll = false, showNotes = false;
+  var key = null, scroll = false, showNotes = false;
   for(var k in e.parameter) {
     if ("key" == k) {
       key = e.parameter[k];
-    }
-    if ("refresh" == k) {
-      refresh = e.parameter[k];
     }
     if ("scroll" == k) {
       scroll = e.parameter[k];
