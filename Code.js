@@ -2881,15 +2881,15 @@ function setSheetFormulas_(sheet, useVLookup) {
 function setValidation(scriptProps) {
   var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
-    setSheetValidation_(sheets[i], scriptProps);
+    setSheetValidation_(sheets[i], null, scriptProps);
   }
 }
 
 /**
  * Set validation
  */
-function setSheetValidation_(sheet, scriptProps) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), clubsSheet = ss.getSheetByName('Clubs'), sheetName = sheet.getName(), allowedDivs = DIVS_ALL;
+function setSheetValidation_(sheet, ss, scriptProps) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet(), clubsSheet = ss.getSheetByName('Clubs'), sheetName = sheet.getName(), allowedDivs = DIVS_ALL;
   if (sheetName.indexOf('Div') == 0) {
     if (sheetName >= 'Div7') {
       allowedDivs = DIVS_4_MILE;
@@ -3021,7 +3021,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
     setRaceSheetHeadings_(sheet, columnNames, columnAlignments);
     setRaceSheetFormatting_(sheet);
-    setSheetValidation_(sheet);
+    setSheetValidation_(sheet, ss, null);
     setSheetFormulas_(sheet);
     if (isHidden) {
       sheet.hideSheet();
