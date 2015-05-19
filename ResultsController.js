@@ -1,4 +1,8 @@
 var rankingsSheetName = "Rankings";
+var ENTRIES_HTML_FILENAME_TMPL = "%s Entries";
+var ENTRIES_SS_FILENAME_TMPL = "%s Printable Entries";
+var RESULTS_HTML_FILENAME_TMPL = "%s Results";
+var RESULTS_SS_FILENAME_TMPL = "%s Printable Results";
 
 /**
  * Respond to a browser request
@@ -36,7 +40,7 @@ function saveResultsHTML(scriptProps) {
     template.isHaslerFinal = scriptProps.haslerRegion == "HF";
   }
   var outputHtml = template.evaluate().getContent();
-  var htmlFile = scriptProps.publishedResultsId ? DriveApp.getFileById(scriptProps.publishedResultsId) : DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  var htmlFile = scriptProps.publishedResultsId ? DriveApp.getFileById(scriptProps.publishedResultsId) : DriveApp.createFile(Utilities.formatString(RESULTS_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
   if (scriptProps.publishedResultsId) {
     htmlFile.setContent(outputHtml);
   }
@@ -61,7 +65,7 @@ function saveEntriesHTML(scriptProps) {
     template[k] = data[k];
   }
   var outputHtml = template.evaluate().getContent();
-  var htmlFile = scriptProps.publishedEntriesId ? DriveApp.getFileById(scriptProps.publishedEntriesId) : DriveApp.createFile(title, outputHtml, MimeType.HTML);
+  var htmlFile = scriptProps.publishedEntriesId ? DriveApp.getFileById(scriptProps.publishedEntriesId) : DriveApp.createFile(Utilities.formatString(ENTRIES_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
   if (scriptProps.publishedEntriesId) {
     htmlFile.setContent(outputHtml);
   }
