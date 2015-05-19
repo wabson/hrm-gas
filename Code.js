@@ -1001,7 +1001,8 @@ function updateEntriesFromRankings() {
           }
         }
       }
-      setTableRowValues(sheet, raceData, "Surname", "Div");
+      //setTableRowValues(sheet, raceData, "Surname", "Div");
+      setTableRowValues(sheet, raceData, "Expiry", "Expiry");
     }
   }
 }
