@@ -394,7 +394,7 @@ function sortResults(r1, r2) {
 }
 
 function getLastUpdated(key) {
-  var file = DocsList.getFileById(key);
+  var file = DriveApp.getFileById(key);
   if (file) {
     return file.getLastUpdated().toString();
   } else {

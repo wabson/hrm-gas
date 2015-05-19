@@ -297,7 +297,7 @@ function showAddLocalRankings() {
   lb.setVisibleItemCount(1);
 
   // add items to ListBox
-  var mySpreadsheets = DocsList.getFilesByType(DocsList.FileType.SPREADSHEET);
+  var mySpreadsheets = DriveApp.getFilesByType(MimeType.GOOGLE_SHEETS);
   for (var i=0; i<mySpreadsheets.length; i++) {
     lb.addItem(mySpreadsheets[i].getName(), mySpreadsheets[i].getId());
   }
@@ -352,7 +352,7 @@ function showAddLocalEntries() {
   lb.setVisibleItemCount(1);
 
   // add items to ListBox
-  var mySpreadsheets = DocsList.getFilesByType(DocsList.FileType.SPREADSHEET);
+  var mySpreadsheets = DriveApp.getFilesByType(MimeType.GOOGLE_SHEETS);
   for (var i=0; i<mySpreadsheets.length; i++) {
     lb.addItem(mySpreadsheets[i].getName(), mySpreadsheets[i].getId());
   }
@@ -399,7 +399,7 @@ function showImportEntries() {
   lb.setVisibleItemCount(1);
 
   // add items to ListBox
-  var mySpreadsheets = DocsList.getFilesByType(DocsList.FileType.OTHER);
+  var mySpreadsheets = DriveApp.getFilesByType(MimeType.CSV);
   for (var i=0; i<mySpreadsheets.length; i++) {
     if (mySpreadsheets[i].getName().match(/\.csv$/i)) {
       lb.addItem(mySpreadsheets[i].getName(), mySpreadsheets[i].getId());
@@ -450,7 +450,7 @@ function importEntries(eventInfo) {
   var csvId = eventInfo.parameter.spreadsheetId;
   if (csvId)
   {
-    var csv = DocsList.getFileById(csvId),
+    var csv = DriveApp.getFileById(csvId),
         csvData = Utilities.parseCsv(csv.getContentAsString().replace(/\r\n/g, " ")),
         rows, results = [], numCrewsByRace = {},
         startRow = 1, // Assume a header row exists
