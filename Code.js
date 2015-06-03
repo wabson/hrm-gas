@@ -31,6 +31,11 @@ var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Numbe
  */
 var PROJECT_ID = "AKfycbzymqCQ6rUDYiNeG63i9vYeXaSE1YtiHDEgRHFQ0TdXaBSwkLs";
 
+/**
+ * CSV file to load club data from - maintained externally
+ */
+var CLUBS_CSV_FILE_ID = "0B8A0SXNo_BkZb2hGUFphV1V3NWc";
+
 var NUMBER_FORMAT_DATE = "dd/MM/yyyy";
 var NUMBER_FORMAT_TIME = "[h]:mm:ss";
 var NUMBER_FORMAT_TIME_MS = "[h]:mm:ss.S"
@@ -451,7 +456,7 @@ function importEntries(eventInfo) {
   if (csvId)
   {
     var csv = DriveApp.getFileById(csvId),
-        csvData = Utilities.parseCsv(csv.getContentAsString().replace(/\r\n/g, " ")),
+        csvData = Utilities.parseCsv(csv.getBlob().getDataAsString().replace(/\r\n/g, " ")),
         rows, results = [], numCrewsByRace = {},
         startRow = 1, // Assume a header row exists
         newRows = {};
@@ -510,11 +515,11 @@ function importEntries(eventInfo) {
   return app;
 }
 
-function importClubsCsv() {
-  var csvData = UrlFetchApp.fetch("http://wabson.org/hrm/clubs.csv").getContentText();
+function importClubsCsv(sheet) {
+  var csvData = DriveApp.getFileById(CLUBS_CSV_FILE_ID).getBlob().getDataAsString();
   var parsedCsv = Utilities.parseCsv(csvData);
   if (parsedCsv && parsedCsv.length > 0) {
-    var clubsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Clubs");
+    var clubsSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Clubs");
     if (clubsSheet) {
       clubsSheet.clear();
       clubsSheet.getRange(1, 1, parsedCsv.length, parsedCsv[0].length).setValues(parsedCsv);
@@ -3034,6 +3039,10 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     sheet.deleteRows(leaveRows + 1, sheet.getMaxRows() - leaveRows);
     if (extraSheets[i] == "Rankings") {
       sheet.appendRow(rankingsSheetColumnNames);
+    }
+    else if (extraSheets[i] == "Clubs") {
+      // Import clubs
+      importClubsCsv(sheet);
     }
   }
   // Finally remove the temp sheet (we need this as we're not allowed to delete all sheets up-front)
