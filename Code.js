@@ -3018,6 +3018,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
         values.push([k % crewSize == 0 ? (prefix + (startNum + k/crewSize) + suffix) : '']);
       }
     }
+    sheet.deleteRows(numRows + 1, sheet.getMaxRows() - numRows);
     sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
     setRaceSheetHeadings_(sheet, columnNames, columnAlignments);
     setRaceSheetFormatting_(sheet);
@@ -3029,6 +3030,8 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
   }
   for (var i = 0; i < extraSheets.length; i++) {
     sheet = ss.insertSheet(extraSheets[i]);
+    var leaveRows = 100;
+    sheet.deleteRows(leaveRows + 1, sheet.getMaxRows() - leaveRows);
     if (extraSheets[i] == "Rankings") {
       sheet.appendRow(rankingsSheetColumnNames);
     }
