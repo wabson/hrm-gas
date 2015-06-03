@@ -2852,7 +2852,7 @@ function setFormulas() {
 function setSheetFormulas_(sheet, useVLookup) {
   var timePlusMinusColA1 = getRaceColumnA1("Time+/-"), startColA1 = getRaceColumnA1("Start"), finishColA1 = getRaceColumnA1("Finish"), elapsedColA1 = getRaceColumnA1("Elapsed"), 
     startCol = getRaceColumnNumber("Start"), finishCol = getRaceColumnNumber("Finish"), elapsedCol = getRaceColumnNumber("Elapsed"), posnCol = getRaceColumnNumber("Posn");
-  var lastRow = sheet.getLastRow();
+  var lastRow = sheet.getMaxRows();
   if (lastRow > 1) {
     // Elapsed time
     if (elapsedCol > 0) {
@@ -2909,7 +2909,7 @@ function setSheetValidation_(sheet, ss, scriptProps) {
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
     expiryRule = scriptProps && scriptProps.raceDate ? SpreadsheetApp.newDataValidation().requireDateOnOrAfter(parseDate(scriptProps.raceDate)).build() : null;
 
-  var lastRow = sheet.getLastRow(), r;
+  var lastRow = sheet.getMaxRows(), r;
   if (lastRow > 1) {
     Logger.log("Setting validation for sheet " + sheet.getName());
     if (clubRule !== null) {
@@ -2958,7 +2958,7 @@ function setSheetFormatting_(sheet, numRows, numColumns) {
  * Set formatting on a race sheet
  */
 function setRaceSheetFormatting_(sheet) {
-  var lastRow = sheet.getLastRow();
+  var lastRow = sheet.getMaxRows();
   setSheetFormatting_(sheet, null, lastRow);
   // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
   if (lastRow > 1) {
