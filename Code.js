@@ -3027,7 +3027,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
     setRaceSheetHeadings_(sheet, columnNames, columnAlignments);
     setRaceSheetFormatting_(sheet);
-    setSheetValidation_(sheet, ss, null);
+    //setSheetValidation_(sheet, ss, null);
     setSheetFormulas_(sheet);
     if (isHidden) {
       sheet.hideSheet();
@@ -3045,8 +3045,12 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
       importClubsCsv(sheet);
     }
   }
-  // Finally remove the temp sheet (we need this as we're not allowed to delete all sheets up-front)
+  // Now remove the temp sheet (we need this as we're not allowed to delete all sheets up-front)
   ss.deleteSheet(tempSheet);
+  // Go back to the race sheets and set up validation (now that we have the clubs list populated, hopefully)
+  for (var i = 0; i < raceSheets.length; i++) {
+    setSheetValidation_(ss.getSheetByName(raceSheets[i][0]), ss, null);
+  }
 }
 
 /**
