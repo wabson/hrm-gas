@@ -3081,6 +3081,24 @@ function setProtection() {
 }
 
 /**
+ * Set frozen rows and columns for the given race sheet
+ */
+function setRaceSheetFreezes_(sheet) {
+  sheet.setFrozenColumns(1);
+  sheet.setFrozenRows(1);
+}
+
+/**
+ * Set frozen rows and columns for all sheets
+ */
+function setFreezes() {
+  var sheets = getRaceSheets(), sheet;
+  for (var i=0; i<sheets.length; i++) {
+    setRaceSheetFreezes_(sheets[i]);
+  }
+}
+
+/**
  * Create a new spreadsheet to manage a race
  */
 function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, columnAlignments) {
@@ -3114,6 +3132,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
        setProtection_(sheet.protect().setDescription(sheetName + ' sheet protection'));
     }
     setRaceSheetProtection_(sheet, true);
+    setRaceSheetFreezes_(sheet);
   }
   for (var i = 0; i < extraSheets.length; i++) {
     var sheetName = extraSheets[i];

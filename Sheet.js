@@ -436,6 +436,12 @@ function setProtection() {
   HRM.setProtection();
 }
 /**
+ * Menu hook for setting frozen rows and columns
+ */
+function setFreezes() {
+  HRM.setFreezes();
+}
+/**
  * Menu hook for setting race sheet headings
  */
 function setAllRaceSheetHeadings() {
