@@ -1446,6 +1446,23 @@ function isHaslerRace() {
 }
 
 /**
+ * Return the xRM race type as a string, all uppercase
+ */
+function getRaceType(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  var firstSheetName = ss.getSheets()[0].getName();
+  if (firstSheetName == RACE_SHEETS_HASLER[0][0]) {
+    return "HRM";
+  } else if (firstSheetName == RACE_SHEETS_ASS[0][0]) {
+    return "ARM";
+  } else if (firstSheetName == RACE_SHEETS_NATIONALS[0][0]) {
+    return "NRM";
+  } else {
+    return null;
+  }
+}
+
+/**
  * Handler function for closing a dialog
  
  * @return {AppInstance} Active application instance
@@ -3123,6 +3140,15 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
   // Go back to the race sheets and set up validation (now that we have the clubs list populated, hopefully)
   for (var i = 0; i < raceSheets.length; i++) {
     setSheetValidation_(ss.getSheetByName(raceSheets[i][0]), ss, null);
+  }
+  // Set race type custom property
+  var raceType = getRaceType(ss);
+  if (raceType) {
+    Drive.Properties.insert({
+        key: 'hrmType',
+        value: raceType,
+        visibility: 'PUBLIC'
+      }, ss.getId());
   }
 }
 

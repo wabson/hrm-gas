@@ -156,6 +156,15 @@ function saveRaceDetails(e) {
     }
   }
   ScriptProperties.setProperties(props);
+  var raceType = getRaceType();
+  if (raceType) {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    Drive.Properties.insert({
+        key: 'hrmType',
+        value: raceType,
+        visibility: 'PUBLIC'
+      }, ss.getId());
+  }
   var app = UiApp.getActiveApplication();
   app.close();
   // The following line is REQUIRED for the widget to actually close.
@@ -476,6 +485,9 @@ function createK2Sheet() {
 }
 function populateFromHtmlResults() {
   HRM.populateFromHtmlResults();
+}
+function getRaceType() {
+  return HRM.getRaceType();
 }
 /**
  * Menu hook for creating printable entries sheets
