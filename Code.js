@@ -2107,7 +2107,6 @@ function setFinishTimes(eventInfo) {
             allowance: allowance,
             notes: notes
           });
-          finishValues.push([boatNumber, time, allowance, notes]);
         }
       } else {
         throw "Bad content '" + line + "' at line " + i + ", must contain at least two parts separated by spaces or tabs";
@@ -2117,6 +2116,9 @@ function setFinishTimes(eventInfo) {
   if (times.length == 0) {
     throw "You must enter some times";
   }
+  // Check for conflicts with existing data, but ignore if the same times are simply re-keyed again
+  skipOverBoats = checkFinishTimeDuplicates_(times, getFinishTimes_());
+  times = times.filter(function(t) { return skipOverBoats.indexOf(t.boatNumber) == -1 });
   // Check that that boat numbers entered actually exist
   checkFinishTimeBoatNumbersExist_(times, fetchAllEntries_());
   // Write to the Finishes sheet
@@ -2136,8 +2138,10 @@ function setFinishTimes(eventInfo) {
         {name: 'No Start Time'}, {name: 'No Division', color: COLOR_YELLOW}
       ]
     });
-    finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 4).setValues(finishValues);
-    finishesSheet.getDataRange().setFontFamily(SHEET_FONT_FAMILY);
+    finishValues = times.map(function(t) { return [t.boatNumber, t.time, t.allowance, t.notes] });
+    if (finishValues.length > 0) {
+      finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 4).setValues(finishValues).setFontFamily(SHEET_FONT_FAMILY);
+    }
   } else {
     throw "Finishes sheet was not found";
   }
@@ -2151,6 +2155,14 @@ function setFinishTimes(eventInfo) {
   app.getElementById("setFinishTimes-result").setText("Set finish times for " + times.length + " crews");
   app.getElementById("setFinishTimes-times").setValue("");
   return app;
+}
+
+function getFinishTimes_(ss) {
+  var finishesSheet = (ss || SpreadsheetApp.getActiveSpreadsheet()).getSheetByName("Finishes"), times = [];
+  if (finishesSheet && finishesSheet.getLastRow() > 1) {
+    times = finishesSheet.getRange(2, 2, finishesSheet.getLastRow()-1, 4).getValues();
+  }
+  return times;
 }
 
 function fetchAllEntries_() {
@@ -2192,6 +2204,29 @@ function checkFinishTimeBoatNumbersExist_(times, entries) {
       throw "Sheet was not found for boat " + times[i].boatNumber;
     }
   }
+}
+
+function checkFinishTimeDuplicates_(times, existingRows) {
+  // Now check against the entries to locate the row and sheet in which the boat is found
+  var time, row, skipNums = [];
+  if (existingRows.length == 0) {
+    return;
+  }
+  for (var i=0; i<times.length; i++) {
+    time = times[i];
+    skip = false;
+    for (var j=0; j<existingRows.length; j++) {
+      row = existingRows[j];
+      if (time.boatNumber == row[0]) {
+        if (time.time.replace(/0(\d)/g, "$1") != formatTime(row[1]).replace(/0(\d)/g, "$1") || time.allowance != row[2] || time.notes != row[3]) { // Conflict
+          throw "Conflicting finish data already exists for boat " + time.boatNumber;
+        } else {
+          skipNums.push(time.boatNumber);
+        }
+      }
+    }
+  }
+  return skipNums;
 }
 
 /**
