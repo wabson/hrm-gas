@@ -2860,6 +2860,7 @@ function setFormulas() {
  */
 function setSheetFormulas_(sheet, useVLookup) {
   var timePlusMinusColA1 = getRaceColumnA1("Time+/-"), startColA1 = getRaceColumnA1("Start"), finishColA1 = getRaceColumnA1("Finish"), elapsedColA1 = getRaceColumnA1("Elapsed"), 
+    notesColA1 = getRaceColumnA1("Notes"),
     startCol = getRaceColumnNumber("Start"), finishCol = getRaceColumnNumber("Finish"), elapsedCol = getRaceColumnNumber("Elapsed"), posnCol = getRaceColumnNumber("Posn"),
     notesCol = getRaceColumnNumber("Notes"), offsetCol = getRaceColumnNumber("Time+/-");
   var lastRow = sheet.getMaxRows();
@@ -2880,7 +2881,7 @@ function setSheetFormulas_(sheet, useVLookup) {
       sheet.getRange(2, startCol).setFormula('=IFERROR(IF(A2<>"",VLOOKUP("'+sheetName+'",Starts!$A$1:$B$20, 2, 0), ""))'); // Lookup against sheet name for rows where there is a boat number
       sheet.getRange(2, startCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, startCol).getFormulaR1C1());
       sheet.getRange(2, finishCol).setFormula('=IFERROR(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0))'); // Lookup against boat number
-      sheet.getRange(2, notesCol).setFormula('=IFERROR(VLOOKUP(A2,Finishes!$B$2:$D$1000, 3, 0))'); // Lookup against boat number
+      sheet.getRange(2, notesCol).setFormula('=IFERROR(IF(A2<>"",VLOOKUP(A2,Finishes!$B$2:$D$1000, 3, 0), '+notesColA1+'1))'); // Lookup against boat number
       sheet.getRange(2, offsetCol).setFormula('=IFERROR(VLOOKUP(A2,Finishes!$B$2:$E$1000, 4, 0))'); // Lookup against boat number
       sheet.getRange(2, finishCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, finishCol).getFormulaR1C1());
       sheet.getRange(2, notesCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, notesCol).getFormulaR1C1());
