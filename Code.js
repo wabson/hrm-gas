@@ -2068,17 +2068,17 @@ function showSetFinishTimes() {
  */
 function setFinishTimes(eventInfo) {
   var app = UiApp.getActiveApplication(),
-      lines = eventInfo.parameter.times.split(/\r\n|\r|\n/g), line, pair,
-      sheet, finishValues = [], times = [], boatNumber, time;
+      lines = eventInfo.parameter.times.split(/\r\n|\r|\n/g), line, parts,
+      sheet, finishValues = [], times = [], boatNumber, time, allowance, notes;
   // First check the data entered
   for (var i=0; i<lines.length; i++) {
     line = lines[i].trim();
     if (line.length > 0) { // Skip empty lines without erroring
-      pair = line.split(/[ \t]+/g);
-      if (pair.length == 2) {
-        boatNumber = pair[0], time = pair[1];
+      parts = line.split(/[ \t]+/g);
+      if (parts.length > 1) {
+        boatNumber = parts[0], time = parts[1], allowance = parts[2] || '', notes = parts[3] || '';
         if (!boatNumber) {
-          throw "Bad boat number '" + pair[0] + "' at line " + i + ", must be a number";
+          throw "Bad boat number '" + parts[0] + "' at line " + i + ", must be a number";
         }
         if (time.match(/^\d+[:\.]\d+$/)) {
           time = "00:" + time.replace(".", ":");
@@ -2091,11 +2091,13 @@ function setFinishTimes(eventInfo) {
         }
         times.push({
           boatNumber: boatNumber,
-          time: time
+          time: time,
+          allowance: allowance,
+          notes: notes
         });
-        finishValues.push([boatNumber, time]);
+        finishValues.push([boatNumber, time, allowance, notes]);
       } else {
-        throw "Bad content '" + line + "' at line " + i + ", must contain two parts separated by spaces or tabs";
+        throw "Bad content '" + line + "' at line " + i + ", must contain at least two parts separated by spaces or tabs";
       }
     }
   }
@@ -2121,7 +2123,7 @@ function setFinishTimes(eventInfo) {
         {name: 'No Start Time'}, {name: 'No Division', color: COLOR_YELLOW}
       ]
     });
-    finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 2).setValues(finishValues);
+    finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 4).setValues(finishValues);
     finishesSheet.getDataRange().setFontFamily(SHEET_FONT_FAMILY);
   } else {
     throw "Finishes sheet was not found";
