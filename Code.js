@@ -117,6 +117,8 @@ var EXTRA_SHEETS_NATIONALS = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Divisi
 var COLUMNS_NATIONALS = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Pos", "Points", "Notes"];
 var COLUMN_ALIGNMENTS_NATIONALS = ["left", "left", "left", "left", "center", "left", "center", "center", "right", "right", "center", "center", "center", "center", "center", "center"];
 
+var PROTECTED_SHEETS = ['Rankings'];
+
 var hrmTypes = [];
 
 /**
@@ -3013,6 +3015,52 @@ function setAllRaceSheetHeadings(columnNames, columnAlignments) {
 }
 
 /**
+ * Set protection for named ranges on the given race sheet
+ */
+function setRaceSheetProtection_(sheet, useVLookup) {
+  // First remove all existing protections that we can
+  var protections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+  for (var j = 0; j < protections.length; j++) {
+    var protection = protections[j];
+    if (protection.canEdit()) {
+      protection.remove();
+    }
+  }
+    // Now set up new protections
+  var lastRow = sheet.getMaxRows();
+  var offsetCol = getRaceColumnNumber("Time+/-"), startCol = getRaceColumnNumber("Start"), finishCol = getRaceColumnNumber("Finish"), elapsedCol = getRaceColumnNumber("Elapsed"), 
+    posnCol = getRaceColumnNumber("Posn"), notesCol = getRaceColumnNumber("Notes");
+  var resultsRange = sheet.getRange(2, offsetCol, lastRow-1, posnCol - offsetCol + 1);
+  setProtection_(resultsRange.protect().setDescription(sheet.getName() + ' results'));
+  if (notesCol) {
+    var notesRange = sheet.getRange(2, notesCol, lastRow-1, 1);
+    setProtection_(notesRange.protect().setDescription(sheet.getName() + ' notes'));
+  }
+}
+
+/**
+ * Configure the given Protection instance so that only the current editor has write permission
+ */
+function setProtection_(protection) {
+  var me = Session.getEffectiveUser();
+  protection.addEditor(me);
+  protection.removeEditors(protection.getEditors());
+  if (protection.canDomainEdit()) {
+    protection.setDomainEdit(false);
+  }
+}
+
+/**
+ * Set protection on all race sheets
+ */
+function setProtection() {
+  var sheets = getRaceSheets(), sheet, useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") != null;
+  for (var i=0; i<sheets.length; i++) {
+    setRaceSheetProtection_(sheets[i], useVLookup);
+  }
+}
+
+/**
  * Create a new spreadsheet to manage a race
  */
 function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, columnAlignments) {
@@ -3024,7 +3072,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
   clearColumnCache_();
   // Add new race sheets
   for (var i = 0; i < raceSheets.length; i++) {
-    var sheetName = raceSheets[i][0], numRanges = raceSheets[i][1], crewSize = raceSheets[i][2] || 1, isHidden = raceSheets[i][3] === true;
+    var sheetName = raceSheets[i][0], numRanges = raceSheets[i][1], crewSize = raceSheets[i][2] || 1, isHidden = raceSheets[i][3] === true, isProtected = raceSheets[i][4] === true || PROTECTED_SHEETS.indexOf(sheetName) > -1;
     var sheet = ss.insertSheet(sheetName), startRow = 2, values = [];
     for (var j = 0; j < numRanges.length; j++) {
       var startNum = numRanges[j][0], numPlaces = numRanges[j][1], prefix = numRanges[j][2] || '', suffix = numRanges[j][3] || '';
@@ -3042,12 +3090,20 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     if (isHidden) {
       sheet.hideSheet();
     }
+    if (isProtected) {
+       setProtection_(sheet.protect().setDescription(sheetName + ' sheet protection'));
+    }
+    setRaceSheetProtection_(sheet, true);
   }
   for (var i = 0; i < extraSheets.length; i++) {
     var sheetName = extraSheets[i];
     sheet = ss.insertSheet(sheetName);
     var leaveRows = 100;
+    var isProtected = PROTECTED_SHEETS.indexOf(sheetName) > -1;
     sheet.deleteRows(leaveRows + 1, sheet.getMaxRows() - leaveRows);
+    if (isProtected) {
+       setProtection_(sheet.protect().setDescription(sheetName + ' sheet protection'));
+    }
     if (sheetName == "Rankings") {
       sheet.appendRow(rankingsSheetColumnNames);
     }

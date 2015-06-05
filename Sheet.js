@@ -421,6 +421,12 @@ function setFormatting() {
   HRM.setFormatting();
 }
 /**
+ * Menu hook for setting sheet and region protection
+ */
+function setProtection() {
+  HRM.setProtection();
+}
+/**
  * Menu hook for setting race sheet headings
  */
 function setAllRaceSheetHeadings() {
