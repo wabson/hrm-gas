@@ -3047,6 +3047,9 @@ function setRaceSheetProtection_(sheet, useVLookup) {
   var lastRow = sheet.getMaxRows();
   var offsetCol = getRaceColumnNumber("Time+/-"), startCol = getRaceColumnNumber("Start"), finishCol = getRaceColumnNumber("Finish"), elapsedCol = getRaceColumnNumber("Elapsed"), 
     posnCol = getRaceColumnNumber("Posn"), notesCol = getRaceColumnNumber("Notes");
+  if (posnCol < 1) {
+    posnCol = getRaceColumnNumber("Pos"); // NRM uses different name!
+  }
   var resultsRange = sheet.getRange(2, offsetCol, lastRow-1, posnCol - offsetCol + 1);
   setProtection_(resultsRange.protect().setDescription(sheet.getName() + ' results'));
   if (notesCol) {
