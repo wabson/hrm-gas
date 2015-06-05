@@ -2102,6 +2102,8 @@ function setFinishTimes(eventInfo) {
   if (times.length == 0) {
     throw "You must enter some times";
   }
+  // Check that that boat numbers entered actually exist
+  checkFinishTimeBoatNumbersExist_(times, fetchAllEntries_());
   // Write to the Finishes sheet
   var finishesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Finishes");
   if (finishesSheet) {
@@ -2121,20 +2123,38 @@ function setFinishTimes(eventInfo) {
     });
     finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 2).setValues(finishValues);
     finishesSheet.getDataRange().setFontFamily(SHEET_FONT_FAMILY);
+  } else {
+    throw "Finishes sheet was not found";
   }
-  // Fetch all of the entries
-  var allEntries = [], sheets = getRaceSheets(), finishColNum = getTableColumnIndex("Finish") + 1;
+  // Finally we can set the values in the sheets
+  // NO LONGER USED NOW THAT WE USE FORUMULAS TO REFERENCE THE FINISHES SHEET DIRECTLY
+  // var finishColNum = getTableColumnIndex("Finish") + 1;
+  //for (var i=0; i<times.length; i++) {
+  //  Logger.log("Adding finish time " + times[i].time + " to row " + times[i].rowNumber + ", sheet " + times[i].sheet.getName());
+  //  times[i].sheet.getRange(times[i].rowNumber, finishColNum).setValue(times[i].time);
+  //}
+  app.getElementById("setFinishTimes-result").setText("Set finish times for " + times.length + " crews");
+  app.getElementById("setFinishTimes-times").setValue("");
+  return app;
+}
+
+function fetchAllEntries_() {
+  var allEntries = [], sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     allEntries = allEntries.concat(getEntryRowData(sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, getTableColumnIndex("Class"))));
   }
+  return allEntries;
+}
+
+function checkFinishTimeBoatNumbersExist_(times, entries) {
   // Now check against the entries to locate the row and sheet in which the boat is found
   var entry;
-  if (allEntries.length == 0) {
+  if (entries.length == 0) {
     throw "Did not find any entries";
   }
   for (var i=0; i<times.length; i++) {
-    for (var j=0; j<allEntries.length; j++) {
-      entry = allEntries[j];
+    for (var j=0; j<entries.length; j++) {
+      entry = entries[j];
       if (!entry.rowNumber) {
         throw "Row number not found for entry " + entry;
       }
@@ -2157,14 +2177,6 @@ function setFinishTimes(eventInfo) {
       throw "Sheet was not found for boat " + times[i].boatNumber;
     }
   }
-  // Finally we can set the values in the sheets
-  for (var i=0; i<times.length; i++) {
-    Logger.log("Adding finish time " + times[i].time + " to row " + times[i].rowNumber + ", sheet " + times[i].sheet.getName());
-    times[i].sheet.getRange(times[i].rowNumber, finishColNum).setValue(times[i].time);
-  }
-  app.getElementById("setFinishTimes-result").setText("Set start times for " + times.length + " crews");
-  app.getElementById("setFinishTimes-times").setValue("");
-  return app;
 }
 
 /**
