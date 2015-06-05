@@ -2069,10 +2069,11 @@ function showSetFinishTimes() {
 function setFinishTimes(eventInfo) {
   var app = UiApp.getActiveApplication(),
       lines = eventInfo.parameter.times.split(/\r\n|\r|\n/g), line, parts,
-      sheet, finishValues = [], times = [], boatNumber, time, allowance, notes;
+      sheet, finishValues = [], times = [], boatNumber, time, allowance, notes, skip;
   // First check the data entered
   for (var i=0; i<lines.length; i++) {
     line = lines[i].trim();
+    skip = false;
     if (line.length > 0) { // Skip empty lines without erroring
       parts = line.split(/[ \t]+/g);
       if (parts.length > 1) {
@@ -2089,13 +2090,25 @@ function setFinishTimes(eventInfo) {
         } else {
           throw "Invalid time format for boat " + boatNumber + " (line " + i + "), must be MM:SS or HH:MM:SS";
         }
-        times.push({
-          boatNumber: boatNumber,
-          time: time,
-          allowance: allowance,
-          notes: notes
+        // Check that a conflicting time does not exist in this batch
+        times.forEach(function(t) {
+          if (t.boatNumber == boatNumber) {
+            if (time != t.time || allowance != t.allowance || notes != t.notes) {
+              throw "Conflicting finish data for boat " + boatNumber + ", please remove one and try again";
+            } else {
+              skip = true; // Skip duplicate line
+            }
+          }
         });
-        finishValues.push([boatNumber, time, allowance, notes]);
+        if (!skip) {
+          times.push({
+            boatNumber: boatNumber,
+            time: time,
+            allowance: allowance,
+            notes: notes
+          });
+          finishValues.push([boatNumber, time, allowance, notes]);
+        }
       } else {
         throw "Bad content '" + line + "' at line " + i + ", must contain at least two parts separated by spaces or tabs";
       }
