@@ -108,9 +108,9 @@ var RACE_SHEETS_NATIONALS = [
     ['O64_VMK2', [[50, 40, 'V', '']], 2], ['O59_VLK2', [[90, 10, 'V', '']], 2],
     ['Mixed', [[600, 50, '', '']], 2]
 ];
-var EXTRA_SHEETS_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
-var EXTRA_SHEETS_NON_HASLER = ['Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
-var EXTRA_SHEETS_NATIONALS = ['Finishes', 'Rankings', 'Clubs', 'Divisional Results', 'Singles Results', 'Doubles Results', 'Summary'];
+var EXTRA_SHEETS_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
+var EXTRA_SHEETS_NON_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
+var EXTRA_SHEETS_NATIONALS = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Divisional Results', 'Singles Results', 'Doubles Results', 'Summary'];
 var COLUMNS_NATIONALS = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Pos", "Points", "Notes"];
 var COLUMN_ALIGNMENTS_NATIONALS = ["left", "left", "left", "left", "center", "left", "center", "center", "right", "right", "center", "center", "center", "center", "center", "center"];
 
@@ -1321,10 +1321,11 @@ function getTabName(crew1, crew2) {
  * Look at the tabs of the workbook and return the named races as an array of Strings
  */
 function getRaceSheets(spreadsheet) {
-  var sheets = (spreadsheet || SpreadsheetApp.getActiveSpreadsheet()).getSheets(), raceSheets = [], sheet;
+  var sheets = (spreadsheet || SpreadsheetApp.getActiveSpreadsheet()).getSheets(), raceSheets = [], sheet, sheetName;
   for (var i=0; i<sheets.length; i++) {
     sheet = sheets[i];
-    if ("Finishes" == sheet.getName()) {
+    sheetName = sheet.getName();
+    if (EXTRA_SHEETS_HASLER.indexOf(sheetName) > -1 || EXTRA_SHEETS_NATIONALS.indexOf(sheetName) > -1 || EXTRA_SHEETS_NON_HASLER.indexOf(sheetName) > -1 ) {
       break;
     }
     raceSheets.push(sheet);
