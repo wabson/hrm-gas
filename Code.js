@@ -13,6 +13,9 @@ var rankingsSheetColumnNames = ["Surname", "First name", "Club", "Class", "BCU N
 var rankingsSheetName = "Rankings";
 var rankingsUri = "http://www.marathon-canoeing.org.uk/marathon/media/RankingList.xls";
 
+var STARTS_SHEET_COLUMNS = [[1, 1], ['Race', 'Time']];
+var FINISHES_SHEET_COLUMNS = [[1, 2], ['Boat Num', 'Time', 'Notes', 'Time+/-']];
+
 /**
  * Race sheet column names
  */
@@ -3035,13 +3038,20 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     }
   }
   for (var i = 0; i < extraSheets.length; i++) {
-    sheet = ss.insertSheet(extraSheets[i]);
+    var sheetName = extraSheets[i];
+    sheet = ss.insertSheet(sheetName);
     var leaveRows = 100;
     sheet.deleteRows(leaveRows + 1, sheet.getMaxRows() - leaveRows);
-    if (extraSheets[i] == "Rankings") {
+    if (sheetName == "Rankings") {
       sheet.appendRow(rankingsSheetColumnNames);
     }
-    else if (extraSheets[i] == "Clubs") {
+    if (sheetName == "Starts") {
+      sheet.getRange(STARTS_SHEET_COLUMNS[0][0], STARTS_SHEET_COLUMNS[0][1], 1, STARTS_SHEET_COLUMNS[1].length).setValues([STARTS_SHEET_COLUMNS[1]]);
+    }
+    if (sheetName == "Finishes") {
+      sheet.getRange(FINISHES_SHEET_COLUMNS[0][0], FINISHES_SHEET_COLUMNS[0][1], 1, FINISHES_SHEET_COLUMNS[1].length).setValues([FINISHES_SHEET_COLUMNS[1]]);
+    }
+    else if (sheetName == "Clubs") {
       // Import clubs
       importClubsCsv(sheet);
     }
