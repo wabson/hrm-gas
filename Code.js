@@ -1970,6 +1970,7 @@ function setStartTimes(eventInfo) {
       time = eventInfo.parameter.time,
       raceName = eventInfo.parameter.raceName,
       sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(raceName),
+      startsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts"),
       startColIndex = getTableColumnIndex("Start");
   if (raceName == "") {
     throw "You must select a race";
@@ -1987,39 +1988,77 @@ function setStartTimes(eventInfo) {
   } else {
     throw "Invalid time format, must be MM:SS or HH:MM:SS";
   }
-  var entriesRange = sheet.getRange(2, 1, sheet.getLastRow()-1, startColIndex + 1), entries = getEntryRowData(entriesRange), entry, newTime, changedCount = 0;
-  if (entries.length > 0) {
-    // Assume that the entries are in a continuous range, for now
-    Logger.log("Found " + entries.length + " entries");
-    var firstRow = entries[0].rowNumber, lastEntry = entries[entries.length-1], lastRow = (lastEntry.rowNumber + lastEntry.values.length - 1),
-      timeValues = new Array(lastRow - 1); // Not including header
-    // Intialise array elements
-    for (var i=0; i<timeValues.length; i++) {
-      timeValues[i] = [""];
+  if (startsSheet != null) {
+    var startValues = getStartTimeValues_(startsSheet), skip = false;
+    startValues.forEach(function(row) {
+      if (""+row[0] == ""+raceName) {
+        if (time.replace(/0(\d)/g, "$1") != formatTime(row[1]).replace(/0(\d)/g, "$1")) {
+          throw "Conflicting start time " + time + " for race " + raceName + ", already had " + formatTime(row[1]) + ". Please check the Starts sheet and fix the existing record there.";
+        } else {
+          skip = true;
+        }
+      }
+    });
+    if (!skip) {
+      Logger.log("Setting time '" + time + "' for race " + raceName);
+      startValues.push([raceName, time]);
+      setStartTimeValues_(startsSheet, startValues);
+      app.getElementById("setStartTimes-result").setText("Set start time " + time + " for race " + raceName);
+    } else {
+      Logger.log("Duplicate time '" + time + "' for race " + raceName);
+      app.getElementById("setStartTimes-result").setText("Skipping duplicate start time " + time + " for race " + raceName + " as it is already set");
     }
-    // Set times on those rows where we have an entry
-    for (var i=0; i<entries.length; i++) {
-      entry = entries[i];
-      if (!entry.rowNumber) {
-        throw "Row number not found for entry " + entry;
-      }
-      if (!entry.boatNumber) {
-        throw "Boat number not found for entry " + entry;
-      }
-      newTime = (""+entry.values[0][startColIndex]).toLowerCase() != "dns" ? time : entry.values[0][startColIndex];
-      Logger.log("Setting time '" + newTime + "' for row " + entry.rowNumber);
-      timeValues[entry.rowNumber-2][0] = newTime;
-      if (newTime != "dns") {
-        changedCount ++;
-      }
-    }
-    sheet.getRange(2, startColIndex + 1, timeValues.length, 1).setValues(timeValues);
-    app.getElementById("setStartTimes-result").setText("Set start time " + time + " for " + changedCount + " crews");
     app.getElementById("setStartTimes-time").setValue("");
   } else {
-    throw "No entries in race " + raceName;
+    var entriesRange = sheet.getRange(2, 1, sheet.getLastRow()-1, startColIndex + 1), entries = getEntryRowData(entriesRange), entry, newTime, changedCount = 0;
+    if (entries.length > 0) {
+      // Assume that the entries are in a continuous range, for now
+      Logger.log("Found " + entries.length + " entries");
+      var firstRow = entries[0].rowNumber, lastEntry = entries[entries.length-1], lastRow = (lastEntry.rowNumber + lastEntry.values.length - 1),
+        timeValues = new Array(lastRow - 1); // Not including header
+      // Intialise array elements
+      for (var i=0; i<timeValues.length; i++) {
+        timeValues[i] = [""];
+      }
+      // Set times on those rows where we have an entry
+      for (var i=0; i<entries.length; i++) {
+        entry = entries[i];
+        if (!entry.rowNumber) {
+          throw "Row number not found for entry " + entry;
+        }
+        if (!entry.boatNumber) {
+          throw "Boat number not found for entry " + entry;
+        }
+        newTime = (""+entry.values[0][startColIndex]).toLowerCase() != "dns" ? time : entry.values[0][startColIndex];
+        Logger.log("Setting time '" + newTime + "' for row " + entry.rowNumber);
+        timeValues[entry.rowNumber-2][0] = newTime;
+        if (newTime != "dns") {
+          changedCount ++;
+        }
+      }
+      sheet.getRange(2, startColIndex + 1, timeValues.length, 1).setValues(timeValues);
+      app.getElementById("setStartTimes-result").setText("Set start time " + time + " for " + changedCount + " crews");
+      app.getElementById("setStartTimes-time").setValue("");
+    } else {
+      throw "No entries in race " + raceName;
+    }
   }
   return app;
+}
+
+function getStartTimeValues_(sheet) {
+  var startsSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts"), times = [];
+  if (startsSheet && startsSheet.getLastRow() > 0) {
+    times = startsSheet.getRange(1, 1, startsSheet.getLastRow(), 2).getValues();
+  }
+  return times;
+}
+
+function setStartTimeValues_(sheet, values) {
+  var startsSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts");
+  if (startsSheet && values.length > 0) {
+    startsSheet.getRange(1, 1, values.length, 2).setNumberFormat(NUMBER_FORMAT_TIME).setValues(values);
+  }
 }
 
 /**
