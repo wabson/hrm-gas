@@ -2959,9 +2959,9 @@ function setSheetFormulas_(sheet, useVLookup) {
     // Start and Finish times
     if (useVLookup) {
       var sheetName = sheet.getName();
-      sheet.getRange(2, startCol).setFormula('=IFERROR(IF(A2<>"",VLOOKUP("'+sheetName+'",Starts!$A$1:$B$20, 2, 0), ""))'); // Lookup against sheet name for rows where there is a boat number
+      sheet.getRange(2, startCol).setFormula('=IFERROR(IF(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0)="dns","dns",IF(A2<>"",VLOOKUP("'+sheetName+'",Starts!$A$1:$B$20, 2, 0))), "")'); // Lookup against sheet name for rows where there is a boat number
       sheet.getRange(2, startCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, startCol).getFormulaR1C1());
-      sheet.getRange(2, finishCol).setFormula('=IFERROR(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0))'); // Lookup against boat number
+      sheet.getRange(2, finishCol).setFormula('=IFERROR(SUBSTITUTE(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0), "dns", ""))'); // Lookup against boat number
       sheet.getRange(2, notesCol).setFormula('=IFERROR(IF(A2<>"",VLOOKUP(A2,Finishes!$B$2:$D$1000, 3, 0), '+notesColA1+'1))'); // Lookup against boat number
       sheet.getRange(2, offsetCol).setFormula('=IFERROR(VLOOKUP(A2,Finishes!$B$2:$E$1000, 4, 0))'); // Lookup against boat number
       sheet.getRange(2, finishCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, finishCol).getFormulaR1C1());
