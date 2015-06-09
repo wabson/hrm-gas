@@ -307,9 +307,10 @@ function showAddLocalRankings() {
   lb.setVisibleItemCount(1);
 
   // add items to ListBox
-  var mySpreadsheets = DriveApp.getFilesByType(MimeType.GOOGLE_SHEETS);
-  for (var i=0; i<mySpreadsheets.length; i++) {
-    lb.addItem(mySpreadsheets[i].getName(), mySpreadsheets[i].getId());
+  var files = DriveApp.getFilesByType(MimeType.GOOGLE_SHEETS), file;
+  while (files.hasNext()) {
+    file = files.next();
+    lb.addItem(file.getName(), file.getId());
   }
   mypanel.add(lb);
   
@@ -362,9 +363,10 @@ function showAddLocalEntries() {
   lb.setVisibleItemCount(1);
 
   // add items to ListBox
-  var mySpreadsheets = DriveApp.getFilesByType(MimeType.GOOGLE_SHEETS);
-  for (var i=0; i<mySpreadsheets.length; i++) {
-    lb.addItem(mySpreadsheets[i].getName(), mySpreadsheets[i].getId());
+  var files = DriveApp.getFilesByType(MimeType.GOOGLE_SHEETS), file;
+  while (files.hasNext()) {
+    file = files.next();
+    lb.addItem(file.getName(), file.getId());
   }
   mypanel.add(lb);
   
@@ -409,11 +411,10 @@ function showImportEntries() {
   lb.setVisibleItemCount(1);
 
   // add items to ListBox
-  var mySpreadsheets = DriveApp.getFilesByType(MimeType.CSV);
-  for (var i=0; i<mySpreadsheets.length; i++) {
-    if (mySpreadsheets[i].getName().match(/\.csv$/i)) {
-      lb.addItem(mySpreadsheets[i].getName(), mySpreadsheets[i].getId());
-    }
+  var files = DriveApp.getFilesByType(MimeType.CSV), file;
+  while (files.hasNext()) {
+    file = files.next();
+    lb.addItem(file.getName(), file.getId());
   }
   mypanel.add(lb);
   //mypanel.add(upload);
