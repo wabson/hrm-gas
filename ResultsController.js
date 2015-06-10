@@ -10,8 +10,10 @@ var RESULTS_SS_FILENAME_TMPL = "%s Printable Results";
  * @param {object} e Event information
  */
 function doGet(e) {
-  var action = e.parameter.show || "results";
+  var action = e.parameter.show || "list";
   switch (action) {
+    case "list":
+      return listFiles(e);
     case "results":
       return printResults(e);
     case "entries":
@@ -75,6 +77,28 @@ function saveEntriesHTML(scriptProps) {
     "https://googledrive.com/host/" + htmlFile.getId()
   );
   return {fileId: htmlFile.getId()}
+}
+
+/**
+ * List HRM files
+ *
+ * @param {object} e Event information
+ */
+function listFiles(e) {
+  var type = "HRM";
+  for(var k in e.parameter) {
+    if ("type" == k) {
+      type = e.parameter[k];
+    }
+  }
+  var template = HtmlService.createTemplateFromFile('Files'), title = "My Files";
+  template.title = title;
+  template.files = DriveApp.searchFiles(
+     "properties has { key='hrmType' and value='HRM' and visibility='PUBLIC' }");
+  var output = template.evaluate();
+  output.setSandboxMode(HtmlService.SandboxMode.NATIVE);
+  output.setTitle(title);
+  return output;
 }
 
 /**
