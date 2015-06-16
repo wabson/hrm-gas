@@ -859,9 +859,9 @@ function objUnzip(obj, keys, ignoreMissing, defaultValue) {
  * @param {string} name Search for paddlers whose names match the given string
  * @return {array} Two-dimensional array containing matching rows from the Rankings sheet
  */
-function findRankings(name) {
+function findRankings(name, spreadsheet) {
   var matches = [], bcuRegexp = /^\s*[A-Z]*\/?(\d+)\/?[A-Z]*\s*$/;
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName("Rankings");
+  var ss = spreadsheet ? spreadsheet : SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName("Rankings");
   if (sheet) {
     if (sheet.getLastRow() < 2) {
       throw "No data in Rankings sheet";

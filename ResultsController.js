@@ -128,6 +128,7 @@ function printResults(e) {
   template.show = e.parameter.show || "results";
   template.key = key;
   template.title = title;
+  template.hasEditPermission = spreadsheetHasEditPermission_(ss);
   template.scroll = scroll;
   template.checkInterval = 30; // Interval in seconds between update checks
   template.defaultScrollPeriod = 40; // Time to complete a complete scroll when enabled, if the code cannot override this
@@ -137,6 +138,24 @@ function printResults(e) {
   output.setSandboxMode(HtmlService.SandboxMode.NATIVE);
   output.setTitle(title);
   return output;
+}
+
+function spreadsheetHasEditPermission_(ss) {
+  try {
+    var editors = ss.getEditors();
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+function findSpreadsheetRankings(ssKey, val) {
+  var rankings = findRankings(val, SpreadsheetApp.openById(ssKey));
+  return rankings.map(function(row) {
+    return Object.keys(row).map(function(k) {
+      return row[k] instanceof Date ? Utilities.formatDate(row[k], "GMT", "yyyy-MM-dd") : row[k];
+    });
+  })
 }
 
 /**

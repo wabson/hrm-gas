@@ -19,6 +19,36 @@
 <div id="results-container">
   <div id="results">
     <h1><?= title ?></h1>
+    <? if (hasEditPermission) { ?>
+    <div id="dialog-form" title="Add Entry">
+      <p class="validateTips">All form fields are required.</p>
+      <form>
+        <fieldset>
+          <label for="name">Search by name or BCU number</label>
+          <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
+          <!-- Allow form submission with keyboard without duplicating the dialog button -->
+          <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+        </fieldset>
+      </form>
+      <div id="users-contain" class="ui-widget">
+        <table id="users" class="ui-widget ui-widget-content">
+          <thead>
+            <tr class="ui-widget-header ">
+              <th></th> <!-- Radio button -->
+              <th>Name</th>
+              <th>Class</th>
+              <th>Club</th>
+              <th>Division</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <button id="add-entry">Add Entry</button>
+      </div>
+    </div>
+    <div id="actions"><button id="create-user">Add Entry</button></div>
+    <? } ?>
     <div id="messages">Loading...</div>
     <div id="results-data">
       <div id="results-races"></div>
@@ -30,7 +60,120 @@
   </div> <!-- end #results -->
 </div> <!-- end #results-container -->
 </div> <!-- end #page -->
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+<style>
+  label, input { display:block; }
+  input.text { margin-bottom:12px; width:95%; padding: .4em; }
+  fieldset { padding:0; border:0; margin-top:25px; }
+  h1 { font-size: 1.2em; margin: .6em 0; }
+  div#users-contain { width: 350px; margin: 20px 0; }
+  div#users-contain table { margin: 1em 0; border-collapse: collapse; width: 100%; }
+  div#users-contain table td, div#users-contain table th { border: 1px solid #eee; padding: .6em 10px; text-align: left; }
+  .ui-dialog .ui-state-error { padding: .3em; }
+  .validateTips { border: 1px solid transparent; padding: 0.3em; }
+</style>
+<script>
+$(function() {
+  var dialog, form,
+    name = $( "#name" ),
+    allFields = $( [] ).add( name ),
+    tips = $( ".validateTips" );
+
+  function updateTips( t ) {
+    tips
+      .text( t )
+      .addClass( "ui-state-highlight" );
+    setTimeout(function() {
+      tips.removeClass( "ui-state-highlight", 1500 );
+    }, 500 );
+  }
+
+  function checkLength( o, n, min, max ) {
+    if ( o.val().length > max || o.val().length < min ) {
+      o.addClass( "ui-state-error" );
+      updateTips( "Length of " + n + " must be between " +
+        min + " and " + max + "." );
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  function checkRegexp( o, regexp, n ) {
+    if ( !( regexp.test( o.val() ) ) ) {
+      o.addClass( "ui-state-error" );
+      updateTips( n );
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  function addUser() {
+    var valid = true;
+    allFields.removeClass( "ui-state-error" );
+    valid = valid && checkLength( name, "username", 3, 16 );
+
+    if ( valid ) {
+      $( "#users tbody" ).append( "<tr>" +
+        "<td>" + name.val() + "</td>" +
+        "<td>" + password.val() + "</td>" +
+      "</tr>" );
+      dialog.dialog( "close" );
+    }
+    return valid;
+  }
+
+  function search() {
+    google.script.run.withSuccessHandler(onSearchResultsLoaded).findSpreadsheetRankings(key, name.val());
+  }
+
+  function onSearchResultsLoaded(resp) {
+    $( "#users tbody" ).empty().append(resp.map(function(row) { return "<tr>" +
+        "<td><input id=\"entry-data\" type=\"radio\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
+        "<td>" + row[1] + " " + row[0] + "</td>" +
+        "<td>" + row[2] + "</td>" +
+        "<td>" + row[3] + "</td>" +
+        "<td>" + row[6] + "</td>" +
+      "</tr>";}));
+  }
+
+  function addCrew() {
+    google.script.run.withSuccessHandler(onSearchResultsLoaded).findSpreadsheetRankings(key, name.val());
+  }
+
+  dialog = $( "#dialog-form" ).dialog({
+    autoOpen: false,
+    height: 500,
+    width: 600,
+    modal: true,
+    buttons: {
+      //"Create an account": addUser,
+      Done: function() {
+        dialog.dialog( "close" );
+      }
+    },
+    close: function() {
+      form[ 0 ].reset();
+      allFields.removeClass( "ui-state-error" );
+    }
+  });
+
+  form = dialog.find( "form" ).on( "submit", function( event ) {
+    event.preventDefault();
+    search();
+  });
+
+  $( "#create-user" ).button().on( "click", function() {
+    dialog.dialog( "open" );
+  });
+  $( "#add-entry" ).button().on( "click", function() {
+    $( "#input[name=radioName]:checked" )
+  });
+});
+</script>
 <script>
 var key = "<?= key ?>", show = "<?= show ?>", showNotes = "<?= showNotes ?>", scroll = "<?= scroll ?>", checkInterval = "<?= checkInterval ?>";
 </script>
