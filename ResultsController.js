@@ -153,9 +153,13 @@ function findSpreadsheetRankings(ssKey, val) {
   var rankings = findRankings(val, SpreadsheetApp.openById(ssKey));
   return rankings.map(function(row) {
     return Object.keys(row).map(function(k) {
-      return row[k] instanceof Date ? Utilities.formatDate(row[k], "GMT", "yyyy-MM-dd") : row[k];
+      return row[k] instanceof Date ? row[k].toDateString() : row[k];
     });
   })
+}
+
+function onHTMLAddEntryClick(ssKey, items, selectedClass) {
+  return addEntry(items, null, selectedClass, SpreadsheetApp.openById(ssKey));
 }
 
 /**

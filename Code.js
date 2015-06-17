@@ -896,32 +896,59 @@ function findRankings(name, spreadsheet) {
  * @return {AppInstance} Active application instance
  */
 function add(eventInfo) {
-  var rankingsSheetName = "Rankings";
   var app = UiApp.getActiveApplication();
   // Because the text box was named "text" and added as a callback element to the
   // button's click event, we have its value available in eventInfo.parameter.text.
   var add1 = eventInfo.parameter.list1, add2 = eventInfo.parameter.list2, k2button = eventInfo.parameter.boat;
   if (add1) {
     var items1 = add1.split("|"), 
-        items2 = add2 ? add2.split("|") : [], 
-        name1 = items1[0] + ", " + items1[1],
-        name2 = null,
-        crew = name1;
+        items2 = add2 ? add2.split("|") : [];
+
     if (k2button == "true") {
       if (items2.length > 0) { // Was there a second crew member selected?
-        name2 = items2[0] + ", " + items2[1];
-        crew = name1 + " / " + name2;
       } else {
         throw("You must select a second crew member");
       }
     }
-    var selectedClass = eventInfo.parameter.className,
-        sheetName = ("Auto" == selectedClass) ? getTabName(items1, k2button == "true" ? items2 : []) : selectedClass;
+    var selectedClass = eventInfo.parameter.className;
+    var result = addEntry(items1, items2, selectedClass);
+
+    if (result && result.boatNumber) {
+      app.getElementById("result").setText("Added " + result.boatNumber + " " + result.crewName + " in " + 
+        result.sheetName);
+      app.getElementById("name1").setValue("");
+      app.getElementById("name2").setValue("");
+      app.getElementById("list1").clear();
+      app.getElementById("list2").clear();
+      app.getElementById("lastAdd").setValue(result.sheetName + "!" + result.rowNumber);
+      return app;
+    } else {
+      throw("Could not add crew in " + selectedClass);
+    }
+  } else {
+    throw("Nobody was selected");
+  }
+  return app;
+}
+
+function addEntry(items1, items2, selectedClass, spreadsheet) {
+  if (!selectedClass) {
+    selectedClass = "Auto";
+  }
+  if (items1) {
+    var name1 = items1[0] + ", " + items1[1],
+        name2 = null,
+        crew = name1;
+    if (items2 && items2.length) { // Was there a second crew member selected?
+      name2 = items2[0] + ", " + items2[1];
+      crew = name1 + " / " + name2;
+    }
+    var sheetName = ("Auto" == selectedClass) ? getTabName(items1, items2 || [], spreadsheet) : selectedClass;
     
     var row1 = [items1[rankingsSheetColumnNames.indexOf("Surname")], items1[rankingsSheetColumnNames.indexOf("First name")], items1[rankingsSheetColumnNames.indexOf("BCU Number")], 
         items1[rankingsSheetColumnNames.indexOf("Expiry")], items1[rankingsSheetColumnNames.indexOf("Club")], items1[rankingsSheetColumnNames.indexOf("Class")], 
         items1[rankingsSheetColumnNames.indexOf("Division")]],
-      row2 = (k2button == "true" && items2.length > 0 ? [items2[rankingsSheetColumnNames.indexOf("Surname")], items2[rankingsSheetColumnNames.indexOf("First name")], items2[rankingsSheetColumnNames.indexOf("BCU Number")], 
+      row2 = (items2 && items2.length ? [items2[rankingsSheetColumnNames.indexOf("Surname")], items2[rankingsSheetColumnNames.indexOf("First name")], items2[rankingsSheetColumnNames.indexOf("BCU Number")], 
         items2[rankingsSheetColumnNames.indexOf("Expiry")], items2[rankingsSheetColumnNames.indexOf("Club")], items2[rankingsSheetColumnNames.indexOf("Class")], 
         items2[rankingsSheetColumnNames.indexOf("Division")]] : null),
       result;
@@ -932,24 +959,13 @@ function add(eventInfo) {
     if (row2 && row2[3]) {
       row2[3] = new Date(row2[3]);
     }
-
-    result = addEntryToSheet(row1, row2, sheetName);
-    
-    if (result && result.boatNumber) {
-      app.getElementById("result").setText("Added " + result.boatNumber + " " + crew + " in " + sheetName);
-      app.getElementById("name1").setValue("");
-      app.getElementById("name2").setValue("");
-      app.getElementById("list1").clear();
-      app.getElementById("list2").clear();
-      app.getElementById("lastAdd").setValue(sheetName + "!" + result.rowNumber);
-      return app;
-    } else {
-      throw("Could not add " + crew + " in " + sheetName);
-    }
+    var result = addEntryToSheet(row1, row2, sheetName, spreadsheet);
+    result.sheetName = sheetName;
+    result.crewName = crew;
+    return result;
   } else {
     throw("Nobody was selected");
   }
-  return app;
 }
 
 /**
@@ -1271,8 +1287,8 @@ function getLastEntryRowNumber(sheet) {
   return lastN;
 }
 
-function addEntryToSheet(row1, row2, sheetName) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName);
+function addEntryToSheet(row1, row2, sheetName, spreadsheet) {
+  var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName);
   // Check that sheet exists!
   if (!sheet) {
     throw("Could not find sheet " + sheetName);
@@ -1308,7 +1324,7 @@ function addEntryToSheet(row1, row2, sheetName) {
  * @param {object} crew2 Object representing the second crew member, may be null for K1
  * @return {string} Name of the sheet where the entry should be placed for this crew
  */
-function getTabName(crew1, crew2) {
+function getTabName(crew1, crew2, ss) {
   var tname = getRaceName(crew1, crew2);
   // Lightning tabs are unusual as they contain a space
   if (tname == "U10M") {
@@ -1371,7 +1387,7 @@ function getRaceNames(spreadsheet) {
  * @param {object} crew2 Object representing the second crew member, may be null for K1
  * @return {string} Name of the division
  */
-function getRaceName(crew1, crew2) {
+function getRaceName(crew1, crew2, ss) {
   var divIndex = rankingsSheetColumnNames.indexOf("Division"), 
       div1 = crew1[divIndex],
       div2 = null;
@@ -1389,7 +1405,7 @@ function getRaceName(crew1, crew2) {
       // NEW IMPLEMENTATION
       // As of 2013 K2 races are now combined for Div1/2 and 3/4.
       // Therefore there is no Div1_1, Div2_2, Div3_3 or Div4_4, only Div1_2 and Div3_4
-      var races = getRaceNames(), re = /(\d)_(\d)/;
+      var races = getRaceNames(ss), re = /(\d)_(\d)/;
       for (var i=0; i<races.length; i++) {
         var match = races[i].match(re);
         if (match && parseInt(match[1]) <= combinedInt && parseInt(match[2]) >= combinedInt) {

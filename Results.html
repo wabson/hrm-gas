@@ -20,8 +20,8 @@
   <div id="results">
     <h1><?= title ?></h1>
     <? if (hasEditPermission) { ?>
-    <div id="dialog-form" title="Add Entry">
-      <p class="validateTips">All form fields are required.</p>
+    <div id="dialog-form" title="Add Entry" style="display: none;">
+      <p class="validateTips"></p>
       <form>
         <fieldset>
           <label for="name">Search by name or BCU number</label>
@@ -44,8 +44,9 @@
           <tbody>
           </tbody>
         </table>
-        <button id="add-entry">Add Entry</button>
+        <button id="add-entry" disabled="disabled">Add Entry</button>
       </div>
+      <div id="add-entry-messages"></div>
     </div>
     <div id="actions"><button id="create-user">Add Entry</button></div>
     <? } ?>
@@ -131,17 +132,31 @@ $(function() {
   }
 
   function onSearchResultsLoaded(resp) {
+    $("button#add-entry").attr('disabled', 'disabled');
     $( "#users tbody" ).empty().append(resp.map(function(row) { return "<tr>" +
-        "<td><input id=\"entry-data\" type=\"radio\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
+        "<td><input type=\"radio\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
         "<td>" + row[1] + " " + row[0] + "</td>" +
         "<td>" + row[2] + "</td>" +
         "<td>" + row[3] + "</td>" +
         "<td>" + row[6] + "</td>" +
       "</tr>";}));
+    $("input[name=entry]").change(function() {
+      $("#add-entry").removeAttr('disabled');
+      $("#add-entry").attr('disabled', null);
+      console.log("Remove disabled flag");
+    });
   }
 
-  function addCrew() {
-    google.script.run.withSuccessHandler(onSearchResultsLoaded).findSpreadsheetRankings(key, name.val());
+  function onClickAddCrew() {
+    var selected = $("input[name=entry]:checked");
+    google.script.run.withSuccessHandler(onCrewAdded).onHTMLAddEntryClick(key, selected.val().split("|"), "Auto");
+  }
+
+  function onCrewAdded(result) {
+    $("#add-entry-messages").html("Added " + result.boatNumber + " " + result.crewName + " in " + 
+        result.sheetName);
+    $( "#users tbody" ).empty();
+    google.script.run.withSuccessHandler(onDataReloaded).getRaceEntries(key);
   }
 
   dialog = $( "#dialog-form" ).dialog({
@@ -149,6 +164,7 @@ $(function() {
     height: 500,
     width: 600,
     modal: true,
+    position: { my: "left+40 top+40", at: "left top", of: window },
     buttons: {
       //"Create an account": addUser,
       Done: function() {
@@ -169,9 +185,8 @@ $(function() {
   $( "#create-user" ).button().on( "click", function() {
     dialog.dialog( "open" );
   });
-  $( "#add-entry" ).button().on( "click", function() {
-    $( "#input[name=radioName]:checked" )
-  });
+  $( "#add-entry" ).button().on( "click", onClickAddCrew);
+  $( "#dialog-form" ).css( "display", "block");
 });
 </script>
 <script>

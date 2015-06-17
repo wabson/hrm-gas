@@ -65,7 +65,13 @@ function onDataReloaded(data) {
       });
     });
   } else {
+    if (show == 'entries') {
+    showEntries(data.races, true);
+  } else if (show == 'starters') {
+    showEntries(data.races, false);
+  } else {
     showData(data);
+  }
   }
   if (data.lastUpdated) {
     lastUpdated = data.lastUpdated;
