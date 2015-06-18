@@ -44,7 +44,7 @@
           <tbody>
           </tbody>
         </table>
-        <button id="add-entry" disabled="disabled">Add Entry</button>
+        <button id="add-entry">Add Entry</button>
       </div>
       <div id="add-entry-messages"></div>
     </div>
@@ -132,7 +132,6 @@ $(function() {
   }
 
   function onSearchResultsLoaded(resp) {
-    $("button#add-entry").attr('disabled', 'disabled');
     $( "#users tbody" ).empty().append(resp.map(function(row) { return "<tr>" +
         "<td><input type=\"radio\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
         "<td>" + row[1] + " " + row[0] + "</td>" +
@@ -140,23 +139,30 @@ $(function() {
         "<td>" + row[3] + "</td>" +
         "<td>" + row[6] + "</td>" +
       "</tr>";}));
+    $("#add-entry").button("option", "disabled", true);
     $("input[name=entry]").change(function() {
-      $("#add-entry").removeAttr('disabled');
-      $("#add-entry").attr('disabled', null);
-      console.log("Remove disabled flag");
+      $("#add-entry").button("option", "disabled", false);
     });
   }
 
   function onClickAddCrew() {
     var selected = $("input[name=entry]:checked");
-    google.script.run.withSuccessHandler(onCrewAdded).onHTMLAddEntryClick(key, selected.val().split("|"), "Auto");
+    google.script.run
+      .withSuccessHandler(onAddCrewSuccess)
+      .withFailureHandler(onAddCrewFailure)
+      .onHTMLAddEntryClick(key, selected.val().split("|"), "Auto");
   }
 
-  function onCrewAdded(result) {
+  function onAddCrewSuccess(result) {
     $("#add-entry-messages").html("Added " + result.boatNumber + " " + result.crewName + " in " + 
         result.sheetName);
     $( "#users tbody" ).empty();
+    $("#add-entry").button("option", "disabled", true);
     google.script.run.withSuccessHandler(onDataReloaded).getRaceEntries(key);
+  }
+
+  function onAddCrewFailure(result) {
+    $("#add-entry").button("option", "disabled", true);
   }
 
   dialog = $( "#dialog-form" ).dialog({
@@ -186,6 +192,7 @@ $(function() {
     dialog.dialog( "open" );
   });
   $( "#add-entry" ).button().on( "click", onClickAddCrew);
+  $("#add-entry").button("option", "disabled", true);
   $( "#dialog-form" ).css( "display", "block");
 });
 </script>
