@@ -79,6 +79,9 @@
       <div id="results-lightning-points"></div>
       <div id="entries-data"></div>
     </div> <!-- end #results-data -->
+    <? if (hasEditPermission && show == "entries") { ?>
+    <a href="https://docs.google.com/spreadsheets/d/<?= key ?>/edit">Edit Full Spreadsheet</a>
+    <? } ?>
   </div> <!-- end #results -->
 </div> <!-- end #results-container -->
 </div> <!-- end #page -->
