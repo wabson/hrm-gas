@@ -19,7 +19,7 @@
 <div id="results-container">
   <div id="results">
     <h1><?= title ?></h1>
-    <? if (hasEditPermission) { ?>
+    <? if (hasEditPermission && show == "entries") { ?>
     <div id="dialog-form" title="Add Entry" style="display: none;">
       <!-- <p class="validateTips"></p> -->
       <form>
