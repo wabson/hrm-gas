@@ -166,6 +166,10 @@ function onHTMLAddEntryClick(ssKey, items1, items2, selectedClass) {
   return addEntry(items1, items2, selectedClass, SpreadsheetApp.openById(ssKey));
 }
 
+function checkEntryDuplicateWarningsHTML(ssKey) {
+  return checkEntryDuplicateWarnings(SpreadsheetApp.openById(ssKey));
+}
+
 /**
  * Get results for display
  *

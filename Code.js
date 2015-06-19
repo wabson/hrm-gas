@@ -3672,8 +3672,9 @@ function createNumberBoards_(name, truncateEmpty) {
 /**
  * Look through all the current entries and flag duplicates
  */
-function checkEntryDuplicates() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = getRaceSheets(ss), boatNumsByPaddler = {}, warnings = [];
+function checkEntryDuplicateWarnings(spreadsheet) {
+  var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(), 
+    sheets = getRaceSheets(ss), boatNumsByPaddler = {}, warnings = [];
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
     var raceData = getTableRows(sheet);
@@ -3693,6 +3694,14 @@ function checkEntryDuplicates() {
       warnings.push(k.replace(/\|/g, ', ') + ' found in crews ' + boatNumsByPaddler[k].join(', '));
     }
   }
+  return warnings;
+}
+
+/**
+ * Look through all the current entries and flag duplicates
+ */
+function checkEntryDuplicates(spreadsheet) {
+  var warnings = checkEntryDuplicateWarnings(spreadsheet);
   showDialog('Duplicate Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>');
 }
 

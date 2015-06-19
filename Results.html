@@ -63,7 +63,13 @@
       </div>
       <div id="add-entry-messages"></div>
     </div>
-    <div id="actions"><button id="create-user">Add Entry</button></div>
+    <div id="actions">
+      <button id="create-user">Add Entry</button>
+      <button id="check-duplicates">Check Duplicates</button>
+    </div>
+    <div id="dialog-check-duplicates" title="Check Duplicates" style="display: none;">
+      <div>Checking...</div>
+    </div>
     <? } ?>
     <div id="messages">Loading...</div>
     <div id="results-data">
@@ -257,6 +263,30 @@ $(function() {
   $("#add-member").button("option", "disabled", true);
   $( "#dialog-form" ).css( "display", "block");
   loadRaceNames();
+
+  // Create duplicates dialog and then unhide the form
+  var checkDuplicatesDialog = $("#dialog-check-duplicates").dialog({
+    autoOpen: false,
+    resizable: false,
+    height: 300,
+    width: 500,
+    position: { my: "left+40 top+40", at: "left top", of: window },
+    modal: true,
+    buttons: {
+      Cancel: function() {
+        $(this).dialog( "close" );
+      }
+    }
+  });
+  $("#dialog-check-duplicates").css("display", "block");
+  // Enable button
+  $("#check-duplicates").button().on("click", function() {
+    checkDuplicatesDialog.dialog("open");
+    $("#dialog-check-duplicates div").html("Checking...");
+    google.script.run.withSuccessHandler(function(warnings) {
+      $("#dialog-check-duplicates div").html(warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>')
+    }).checkEntryDuplicateWarningsHTML(key);
+  });
 });
 </script>
 <script>
