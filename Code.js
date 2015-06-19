@@ -1325,7 +1325,7 @@ function addEntryToSheet(row1, row2, sheetName, spreadsheet) {
  * @return {string} Name of the sheet where the entry should be placed for this crew
  */
 function getTabName(crew1, crew2, ss) {
-  var tname = getRaceName(crew1, crew2);
+  var tname = getRaceName(crew1, crew2, ss);
   // Lightning tabs are unusual as they contain a space
   if (tname == "U10M") {
     tname = "U10 M";

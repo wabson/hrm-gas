@@ -149,6 +149,10 @@ function spreadsheetHasEditPermission_(ss) {
   return true;
 }
 
+function getRaceSheetNamesHTML(ssKey) {
+  return getRaceSheetNames(SpreadsheetApp.openById(ssKey));
+}
+
 function findSpreadsheetRankings(ssKey, val) {
   var rankings = findRankings(val, SpreadsheetApp.openById(ssKey));
   return rankings.map(function(row) {
@@ -158,8 +162,8 @@ function findSpreadsheetRankings(ssKey, val) {
   })
 }
 
-function onHTMLAddEntryClick(ssKey, items, selectedClass) {
-  return addEntry(items, null, selectedClass, SpreadsheetApp.openById(ssKey));
+function onHTMLAddEntryClick(ssKey, items1, items2, selectedClass) {
+  return addEntry(items1, items2, selectedClass, SpreadsheetApp.openById(ssKey));
 }
 
 /**

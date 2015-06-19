@@ -44,6 +44,20 @@
           <tbody>
           </tbody>
         </table>
+        <button id="add-member">Add to Crew</button>
+        <table id="crew-members" class="ui-widget ui-widget-content">
+          <thead>
+            <tr class="ui-widget-header">
+              <th>Name</th>
+              <th>Class</th>
+              <th>Club</th>
+              <th>Division</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <select name="race"><option>Auto</option></select>
         <button id="add-entry">Add Entry</button>
       </div>
       <div id="add-entry-messages"></div>
@@ -127,6 +141,16 @@ $(function() {
     return valid;
   }
 
+  function loadRaceNames() {
+    google.script.run.withSuccessHandler(onRaceNamesLoaded).getRaceSheetNamesHTML(key);
+  }
+
+  function onRaceNamesLoaded(resp) {
+    $.each(resp, function(i, name) {
+      $("select[name=race]").append("<option>" + name + "</option>");
+    });
+  }
+
   function search() {
     google.script.run.withSuccessHandler(onSearchResultsLoaded).findSpreadsheetRankings(key, name.val());
   }
@@ -139,25 +163,55 @@ $(function() {
         "<td>" + row[3] + "</td>" +
         "<td>" + row[6] + "</td>" +
       "</tr>";}));
-    $("#add-entry").button("option", "disabled", true);
-    $("input[name=entry]").change(function() {
-      $("#add-entry").button("option", "disabled", false);
+    var addToCrewEnabled = resp.length > 0;
+    if (resp.length == 1) {
+      $("#users input[name=entry]").prop("checked", true);
+    } else if (resp.length == 1) {
+      // TODO indicate nothing there
+    }
+    $("#add-member").button("option", "disabled", !addToCrewEnabled);
+
+    $("#users input[name=entry]").change(function() {
+      $("#add-member").button("option", "disabled", false);
     });
   }
 
+  function onClickAddToCrew() {
+    var selectedVal = $("#users input[name=entry]:checked").val().split("|");
+    $("#crew-members tbody").append("<tr>" +
+        "<td><input type=\"hidden\" name=\"entry\" value=\"" + selectedVal.join("|") + "\" />" +
+        "" + selectedVal[1] + " " + selectedVal[0] + "</td>" +
+        "<td>" + selectedVal[2] + "</td>" +
+        "<td>" + selectedVal[3] + "</td>" +
+        "<td>" + selectedVal[6] + "</td>" +
+      "</tr>");
+    $("#users tbody" ).empty();
+    $("#add-entry").button("option", "disabled", false);
+    name.val("");
+  }
+
   function onClickAddCrew() {
-    var selected = $("input[name=entry]:checked");
-    google.script.run
-      .withSuccessHandler(onAddCrewSuccess)
-      .withFailureHandler(onAddCrewFailure)
-      .onHTMLAddEntryClick(key, selected.val().split("|"), "Auto");
+    var selected = $("#crew-members input[type=hidden]");
+    var raceName = $("select[name=race]").val();
+    if (selected.length > 0 && selected.length <= 2) {
+      google.script.run
+        .withSuccessHandler(onAddCrewSuccess)
+        .withFailureHandler(onAddCrewFailure)
+        .onHTMLAddEntryClick(
+          key, 
+          $(selected[0]).attr("value").split("|"), 
+          selected.length > 1 ? $(selected[1]).attr("value").split("|") : null, 
+          raceName
+        );
+    }
   }
 
   function onAddCrewSuccess(result) {
     $("#add-entry-messages").html("Added " + result.boatNumber + " " + result.crewName + " in " + 
         result.sheetName);
-    $( "#users tbody" ).empty();
+    $( "#crew-members tbody" ).empty();
     $("#add-entry").button("option", "disabled", true);
+    name.focus();
     google.script.run.withSuccessHandler(onDataReloaded).getRaceEntries(key);
   }
 
@@ -193,7 +247,10 @@ $(function() {
   });
   $( "#add-entry" ).button().on( "click", onClickAddCrew);
   $("#add-entry").button("option", "disabled", true);
+  $("#add-member").button().on( "click", onClickAddToCrew);
+  $("#add-member").button("option", "disabled", true);
   $( "#dialog-form" ).css( "display", "block");
+  loadRaceNames();
 });
 </script>
 <script>
