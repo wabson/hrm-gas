@@ -59,6 +59,7 @@
         </table>
         <select name="race"><option>Auto</option></select>
         <button id="add-entry">Add Entry</button>
+        <button id="clear-crew">Clear</button>
       </div>
       <div id="add-entry-messages"></div>
     </div>
@@ -219,6 +220,10 @@ $(function() {
     $("#add-entry").button("option", "disabled", true);
   }
 
+  function onClickClearCrew() {
+    $( "#crew-members tbody" ).empty();
+  }
+
   dialog = $( "#dialog-form" ).dialog({
     autoOpen: false,
     height: 500,
@@ -247,6 +252,7 @@ $(function() {
   });
   $( "#add-entry" ).button().on( "click", onClickAddCrew);
   $("#add-entry").button("option", "disabled", true);
+  $("#clear-crew").button().on("click", onClickClearCrew);
   $("#add-member").button().on( "click", onClickAddToCrew);
   $("#add-member").button("option", "disabled", true);
   $( "#dialog-form" ).css( "display", "block");
