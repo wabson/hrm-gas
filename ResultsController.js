@@ -206,13 +206,15 @@ function getRaceResultsFromSpreadsheet(ss) {
           class = "" + row['Class'],
           div = "" + row['Div'],
           time = formatTime(row['Elapsed']),
+          startTime = formatTime(row['Start']),
+          finishTime = formatTime(row['Finish']),
           points = row['Points'],
           pd = row['P/D'],
           notes = row['Notes'];
       if (name.trim() != "") {
         if (bn) {
           if (time) {
-            results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [class], divs: [div], time: time, points: [points], pd: [pd], notes: [notes] });
+            results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [class], divs: [div], time: time, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
           }
         } else if (results.length > 0) {
           var last = results.pop();

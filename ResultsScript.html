@@ -108,6 +108,7 @@ function stopAnimation() {
 function showData(data) {
   if (data.races) {
     showResults(data);
+    showResultsSummary(data);
   }
   if (data.pdTimes) {
     showPdTimes(data.pdTimes);
@@ -167,6 +168,46 @@ function showResults(data) {
   if (html == '') {
     html = isScrollingEnabled() ? '<p>Results will be displayed here as they become available</p>' : '<p>No results to display</p>';
   }
+  div.append(html);
+}
+
+function showResultsSummary(data) {
+  var races = data.races, div = $('#results-summary'), html = '';
+  div.empty();
+  html += ('<table>')
+  html += ('  <tr>');
+  html += ('     <th>Race Name</th>');
+  html += ('     <th>First</th>');
+  html += ('     <th>Last</th>');
+  html += ('     <th>Finishers</th>');
+  html += ('     <th>Actions</th>');
+  html += ('  </tr>')
+  for (var i = 0; i < races.length; i++) {
+    first = null;
+    last = null;
+    numEntries = 0;
+    numFinishers = 0;
+    numStarters = 0;
+    html += ('  <tr>');
+    for (var j = 0; j < races[i].results.length; ++j) {
+      numEntries ++;
+      first = first || races[i].results[j].finishTime;
+      last = races[i].results[j].finishTime;
+      if (races[i].results[j].startTime && races[i].results[j].startTime !== 'dns') {
+        numStarters ++;
+      }
+      if (races[i].results[j].time) {
+        numFinishers ++;
+      }
+    }
+    html += ('     <td>' + races[i].name + '</td>');
+    html += ('     <td>' + first + '</td>');
+    html += ('     <td>' + last + '</td>');
+    html += ('     <td>' + Math.round(numFinishers / numStarters) + '%</td>');
+    html += ('     <td>' + '</td>'); // TODO actions
+    html += ('  </tr>');
+  }
+  html += ('</table>');
   div.append(html);
 }
 
