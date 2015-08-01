@@ -10,9 +10,10 @@
 <div id="page">
 <div id="results-container">
 <h1><?= title ?></h1>
-<? while (files.hasNext()) {
+<? var url = getScriptUrl();
+  while (files.hasNext()) {
     var file = files.next(); ?>
-<div><a href="?key=<?= file.getId() ?>&amp;show=entries"><?= file.getName() ?></a></div>
+<div><a href="<?= url ?>?key=<?= file.getId() ?>&amp;show=entries"><?= file.getName() ?></a></div>
 <? } ?>
 </div> <!-- end #results-container -->
 </div> <!-- end #page -->

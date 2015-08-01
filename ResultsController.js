@@ -171,6 +171,14 @@ function checkEntryDuplicateWarningsHTML(ssKey) {
 }
 
 /**
+ * Get the URL for the Google Apps Script running as a WebApp.
+ */
+function getScriptUrl() {
+ var url = ScriptApp.getService().getUrl();
+ return url;
+}
+
+/**
  * Get results for display
  *
  * @function getRaceResults
