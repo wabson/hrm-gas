@@ -242,6 +242,10 @@ function addMenu() {
       functionName : "showImportEntries"
     },
     {
+      name : "Update Expiry Dates",
+      functionName : "updateEntriesFromRankings"
+    },
+    {
       name : "Clear Entries",
       functionName : "showClearEntries"
     },
