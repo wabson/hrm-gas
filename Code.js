@@ -192,7 +192,7 @@ function showLoadRankings() {
  */
 function loadRankingsXLS(clubName) {
   var pageResp = UrlFetchApp.fetch("http://canoeracing.org.uk/marathon/index.php/latest-marathon-ranking-list/"), pageSrc = pageResp.getContentText(),
-    reMatch = /<a href="([\w\/\-_:\.]+)">Ranking *List<\/a>/ig.exec(pageSrc);
+    reMatch = /<a href="([\w\/\-_:\.]+.xls)">RankingList<\/a>/ig.exec(pageSrc);
   if (!reMatch) {
     throw("Ranking list URL not found");
   }
@@ -224,8 +224,8 @@ function loadRankingsSheet_(spreadsheetId, clubName) {
     var headerRange = sheet.getRange(1, 1, 1, sourceWidth), headers = getTableHeaders(sheet);
     if (!(headers && headers.length > 0)) {
       // Copy header names from the source sheet
-      headers = sourceHeaderRange.getValues();
-      headerRange.setValues(headers);
+      headers = sourceHeaderRange.getValues()[0];
+      headerRange.setValues([headers]);
       // Set header row format
       headerRange.setBackgrounds(sourceHeaderRange.getBackgrounds());
       headerRange.setHorizontalAlignments(sourceHeaderRange.getHorizontalAlignments());
@@ -792,10 +792,10 @@ function onAddEntrySearch(eventInfo, n) {
     var matches = findRankings(name.trim());
     if (matches.length > 0) {
       for (var i=0; i<matches.length; i++) {
-        var expiryDate = matches[i]["Expiry"],
-          itemName = "" + matches[i]["Surname"] + ", " + matches[i]["First name"] + " (" + matches[i]["Club"] + ", " + matches[i]["Class"] + ")",
-          itemValue = "" + matches[i]["Surname"] + "|" + matches[i]["First name"] + "|" + matches[i]["Club"] + "|" + matches[i]["Class"] + "|" + 
-            matches[i]["BCU Number"] + "|" + (expiryDate instanceof Date ? expiryDate.toDateString() : expiryDate) + "|" + matches[i]["Division"];
+        var expiryDate = matches[i]["expiry"],
+          itemName = "" + matches[i]["surname"] + ", " + matches[i]["first name"] + " (" + matches[i]["club"] + ", " + matches[i]["class"] + ")",
+          itemValue = "" + matches[i]["surname"] + "|" + matches[i]["first name"] + "|" + matches[i]["club"] + "|" + matches[i]["class"] + "|" + 
+            matches[i]["bcu number"] + "|" + (expiryDate instanceof Date ? expiryDate.toDateString() : expiryDate) + "|" + matches[i]["division"];
         list.addItem(itemName, itemValue);
       }
     } else {
@@ -868,15 +868,15 @@ function findRankings(name, spreadsheet) {
     }
     if (name) { // check name is not emptysheet.getLastRow()
       var isBCUNum = bcuRegexp.test(name.toUpperCase()), 
-          range = sheet.getRange(1, 1, sheet.getLastRow()-1, sheet.getLastColumn()), values = range.getValues(), columnNames = values[0];
+          range = sheet.getRange(1, 1, sheet.getLastRow()-1, sheet.getLastColumn()), values = range.getValues(), columnNames = values[0].map(function(n) { return ("" + n).toLowerCase() });
       for (var i=1; i<values.length; i++) {
         if (isBCUNum) { // BCU number
-          var bcu = String(values[i][columnNames.indexOf("BCU Number")]).toUpperCase().trim(), result = bcuRegexp.exec(bcu);
+          var bcu = String(values[i][columnNames.indexOf("bcu number")]).toUpperCase().trim(), result = bcuRegexp.exec(bcu);
           if (result && (bcu == name || result[1] == name)) { // Match the whole number or just the content between the slashes (if present)
             matches.push(arrayZip(columnNames, values[i]));
           }
         } else { // Name
-          if ((""+values[i][columnNames.indexOf("Surname")]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0 || (""+values[i][columnNames.indexOf("First name")]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0) {
+          if ((""+values[i][columnNames.indexOf("surname")]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0 || (""+values[i][columnNames.indexOf("first name")]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0) {
             matches.push(arrayZip(columnNames, values[i]));
           }
         }
@@ -1008,7 +1008,7 @@ function lookupInTable(rows, matchValues) {
  */
 function updateEntriesFromRankings() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = getRaceSheets(ss);
-  var rankingData = getTableRows(rankingsSheet), sheet;
+  var rankingData = getTableRows(rankingsSheet, true), sheet;
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
     var raceData = getTableRows(sheet);
@@ -1017,7 +1017,7 @@ function updateEntriesFromRankings() {
         var bcuNum = raceData[j]['BCU Number'];
         if (bcuNum && /\d+/.exec(bcuNum)) {
           Logger.log("BCU Number: " + bcuNum);
-          var matches = lookupInTable(rankingData, {'BCU Number': new RegExp("" + bcuNum + "/?[A-Za-z]?")});
+          var matches = lookupInTable(rankingData, {'bcu number': new RegExp("" + bcuNum + "/?[A-Za-z]?")});
           if (matches.length == 1) {
             Logger.log("Found match: " + matches[0]);
             var update = rankingToEntryData(matches[0]);
@@ -1029,7 +1029,7 @@ function updateEntriesFromRankings() {
         }
       }
       //setTableRowValues(sheet, raceData, "Surname", "Div");
-      setTableRowValues(sheet, raceData, "Expiry", "Expiry");
+      setTableRowValues(sheet, raceData, "expiry", "expiry", null, true);
     }
   }
 }
@@ -1080,12 +1080,16 @@ function checkEntriesFromRankings_() {
   showDialog('Check Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No problems found</p>');
 }
 
-function setTableRowValues(sheet, values, startColumnName, endColumnName, startRow) {
+function setTableRowValues(sheet, values, startColumnName, endColumnName, startRow, convertHeadersToLowerCase) {
+  convertHeadersToLowerCase = typeof convertHeadersToLowerCase != "undefined" ? convertHeadersToLowerCase : false;
   if (values.length == 0) {
     return;
   }
   var startRow = startRow || 2;
   var headers = getTableHeaders(sheet);
+  if (convertHeadersToLowerCase) {
+    headers = headers.map(function(n) {return n.toLowerCase()});
+  }
   var valueList = new Array(values.length);
   for (var i = 0; i < values.length; i++) {
     var row = new Array();
@@ -1123,14 +1127,17 @@ function getTableHeaders(sheet) {
  *
  * Return {array} Array containing each row as an object, with properties named according to the table heading name. Array will be empty if no data rows are present.
  */
-function getTableRows(sheet) {
+function getTableRows(sheet, convertToLowerCase) {
+  convertToLowerCase = typeof convertToLowerCase != "undefined" ? convertToLowerCase : false;
   if (sheet.getLastRow() < 2)
     return [];
   var range = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()), values = range.getValues(), headers = values[0], rows = [], row = null;
   for (var i=1; i<values.length; i++) {
     row = new Object();
     for (var j=0; j<headers.length; j++) {
-      row[headers[j]] = values[i][j];
+      if (headers[j] && typeof headers[j] == "string") {
+        row[convertToLowerCase ? headers[j].toLowerCase() : headers[j]] = values[i][j];
+      }
     }
     rows.push(row);
   }
