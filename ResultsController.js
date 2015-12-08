@@ -211,7 +211,7 @@ function getRaceResultsFromSpreadsheet(ss) {
       var bn = row['Number'],
           name = "" + row['First name'] + " " + row['Surname'],
           club = "" + row['Club'],
-          class = "" + row['Class'],
+          raceClass = "" + row['Class'],
           div = "" + row['Div'],
           time = formatTime(row['Elapsed']),
           startTime = formatTime(row['Start']),
@@ -222,14 +222,14 @@ function getRaceResultsFromSpreadsheet(ss) {
       if (name.trim() != "") {
         if (bn) {
           if (time) {
-            results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [class], divs: [div], time: time, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
+            results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [raceClass], divs: [div], time: time, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
           }
         } else if (results.length > 0) {
           var last = results.pop();
           if (lastbn != 0 && lastbn == last.num) { // Check it is the same boat as we may have skipped some if missing a time
             last.names.push(name);
             last.clubs.push(club);
-            last.classes.push(class);
+            last.classes.push(raceClass);
             last.divs.push(div);
             last.points.push(points);
             last.pd.push(pd);
@@ -341,13 +341,13 @@ function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
         expiry = "" + formatDate(row['Expiry']),
         expired = row['Expiry'] < raceDate,
         club = "" + row['Club'],
-        class = "" + row['Class'],
+        raceClass = "" + row['Class'],
         div = "" + row['Div'],
         paid = "" + row['Paid'],
         startTime = "" + row['Start'];
       if (name.trim() != "") {
         if (row['Number']) {
-          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [class], divs: [div], paid: [paid], startTime: startTime });
+          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [raceClass], divs: [div], paid: [paid], startTime: startTime });
         } else {
           var last = results.pop();
           last.names.push(name);
@@ -355,7 +355,7 @@ function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
           last.expiry.push(expiry);
           last.expired = last.expired || expired;
           last.clubs.push(club);
-          last.classes.push(class);
+          last.classes.push(raceClass);
           last.divs.push(div);
           last.paid.push(paid);
           results.push(last);

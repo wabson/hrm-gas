@@ -1592,20 +1592,20 @@ function showRaceLevies(scriptProps) {
     // Iterate through all paddlers' classes (column F)
     var values = getTableRows(sheet);
     for (var j=0; j<values.length; j++) {
-      var class = (typeof values[j]['Class'] == "string" && values[j]['Class'] !== null ? values[j]['Class'] : "").toUpperCase().trim(), 
+      var raceClass = (typeof values[j]['Class'] == "string" && values[j]['Class'] !== null ? values[j]['Class'] : "").toUpperCase().trim(),
           raceName = sheet.getName().replace(" ", ""),
           received = parseFloat(values[j]['Paid']) || 0.0;
       if (values[j]['Surname'] != "" || values[j]['First name'] != "" || values[j]['BCU Number'] != "") { // Surname, lastname or BCU number filled out
         if (isLightningRaceName_(raceName)) {
           totalLightning ++;
         } else {
-          if (class != "") {
-            if (/^J[MFC]{0,2}$/.test(class)) {
+          if (raceClass != "") {
+            if (/^J[MFC]{0,2}$/.test(raceClass)) {
               totalJnr ++;
-            } else if (/^[SV]?[MFC]{0,2}$/.test(class)) {
+            } else if (/^[SV]?[MFC]{0,2}$/.test(raceClass)) {
               totalSnr ++;
             } else {
-              Logger.log(Utilities.formatString("Unknown class '%s'", class));
+              Logger.log(Utilities.formatString("Unknown class '%s'", raceClass));
               totalUnknown ++;
             }
           } else {
@@ -2393,21 +2393,21 @@ function pdStatus(values, pFactors, dFactors, raceDiv, isFinal) {
     Logger.log("Transferred from another division, skipping");
     return "";
   }
-  var currDiv = parseInt(values[classDivIndex]), class = (typeof class == "string") ? values[classColIndex] : "";
+  var currDiv = parseInt(values[classDivIndex]), raceClass = (typeof raceClass == "string") ? values[classColIndex] : "";
   // Go through promotion times
   for (var i=0; i<pFactors.length; i++) {
     if (time < pFactors[i][2] && currDiv && currDiv > pFactors[i][0]) {
       var newDiv = pFactors[i][0];
       // No female junior paddler to be promoted higher than division 4
-      if (class.indexOf("J") > -1 && class.indexOf("F") > -1 && newDiv < 4) {
+      if (raceClass.indexOf("J") > -1 && raceClass.indexOf("F") > -1 && newDiv < 4) {
         continue;
       }
       // No woman or canoe paddler to be promoted higher than division 3
-      if ((class.indexOf("F") > -1 || class.indexOf("C") > -1) && newDiv < 3) {
+      if ((raceClass.indexOf("F") > -1 || raceClass.indexOf("C") > -1) && newDiv < 3) {
         continue;
       }
       // No male junior kayak paddler to be promoted higher than division 2
-      if (class.indexOf("J") > -1 && newDiv < 2) {
+      if (raceClass.indexOf("J") > -1 && newDiv < 2) {
         continue;
       }
       status = "P" + pFactors[i][0];
