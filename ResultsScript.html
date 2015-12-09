@@ -173,7 +173,9 @@ function showResults(data) {
 
 function showResultsSummary(data) {
   var races = data.races, div = $('#results-summary'), html = '';
+  var ssKey = key;
   div.empty();
+  html += ('<div id="pd-result"></div>');
   html += ('<table>');
   html += ('  <tr>');
   html += ('     <th>Race Name</th>');
@@ -193,7 +195,7 @@ function showResultsSummary(data) {
       numEntries ++;
       first = first || races[i].results[j].finishTime;
       last = races[i].results[j].finishTime;
-      if (races[i].results[j].startTime && races[i].results[j].startTime !== 'dns') {
+      if (races[i].results[j].startTime !== 'dns') {
         numStarters ++;
       }
       if (races[i].results[j].time) {
@@ -201,14 +203,31 @@ function showResultsSummary(data) {
       }
     }
     html += ('     <td>' + races[i].name + '</td>');
-    html += ('     <td>' + first + '</td>');
-    html += ('     <td>' + last + '</td>');
-    html += ('     <td>' + Math.round(numFinishers / numStarters) + '%</td>');
-    html += ('     <td>' + '</td>'); // TODO actions
+    html += ('     <td>' + (first ? first : '-') + '</td>');
+    html += ('     <td>' + (last ? last : '-') + '</td>');
+    html += ('     <td>' + numFinishers + '/' + numEntries + '</td>');
+    if (races[i].name == 'Div1' || races[i].name == 'Div4' || races[i].name == 'Div7') {
+      html += ('     <td rowspan="3"><button id="pd-' + races[i].name.toLowerCase() + '">Promotions</button></td>'); // TODO actions
+    }
     html += ('  </tr>');
   }
   html += ('</table>');
   div.append(html);
+  $("#pd-div1").button().on("click", function() {
+    google.script.run.withSuccessHandler(function(data) {
+      $("#pd-result").html('Applied ' + data.length + ' promotions/demotions for Divs 1-3');
+    }).setPromotionsDiv123(ssKey, false);
+  });
+  $("#pd-div4").button().on("click", function() {
+    google.script.run.withSuccessHandler(function(data) {
+      $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 4-6');
+    }).setPromotionsDiv456(ssKey, false);
+  });
+  $("#pd-div7").button().on("click", function() {
+    google.script.run.withSuccessHandler(function(data) {
+      $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 7-9');
+    }).setPromotionsDiv789(ssKey, false);
+  });
 }
 
 function showPdTimes(pdTimes) {

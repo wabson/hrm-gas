@@ -2309,23 +2309,24 @@ function getNextFinishesRow(sheet) {
 function getTimesAndPD(sheet) {
   var lastNonBlank = 0;
   if (sheet.getLastRow() > 1) {
-    var startRow = 2, range = sheet.getRange(startRow, 1, sheet.getLastRow()-1, getTableColumnIndex("P/D") + 1), values = range.getValues();
+    var startRow = 2, range = sheet.getRange(startRow, 1, sheet.getLastRow()-1, getTableColumnIndex("P/D", sheet) + 1), values = range.getValues();
     for (var i=0; i<values.length; i++) {
       if (values[i][0] !== "") { // If there is a time then add the row
         lastNonBlank = i;
       }
     }
+    return values.slice(0, lastNonBlank+1);
   }
-  return values.slice(0, i+1);
+  return [];
 }
 
 function setPD(sheet, values) {
   var colValues = [];
   for (var i=0; i<values.length; i++) {
-    colValues.push([values[i][getTableColumnIndex("P/D")]]);
+    colValues.push([values[i][getTableColumnIndex("P/D", sheet)]]);
   }
   if (colValues.length > 0) {
-    var startRow = 2, range = sheet.getRange(startRow, getTableColumnIndex("P/D") + 1, colValues.length, 1);
+    var startRow = 2, range = sheet.getRange(startRow, getTableColumnIndex("P/D", sheet) + 1, colValues.length, 1);
     range.setValues(colValues);
   }
 }
@@ -2344,8 +2345,8 @@ function numEntries(values) {
   return count;
 }
 
-function medianTime(values) {
-  var times = [], timeColIndex = getTableColumnIndex("Elapsed");
+function medianTime(values, sheet) {
+  var times = [], timeColIndex = getTableColumnIndex("Elapsed", sheet);
   for (var i=0; i<values.length; i++) {
     if (values[i][0] !== "" && (values[i][timeColIndex] instanceof Date)) { // If there is a time then add the row
       times.push(timeInMillis(values[i][timeColIndex]));
@@ -2383,8 +2384,8 @@ function overallZero(divZeroes) {
   return meanValue(divZeroes);
 }
 
-function pdStatus(values, pFactors, dFactors, raceDiv, isFinal) {
-  var status = "", classDivIndex = getTableColumnIndex("Div"), classColIndex = getTableColumnIndex("Class"), timeColIndex = getTableColumnIndex("Elapsed"), time = timeInMillis(values[timeColIndex]);
+function pdStatus(values, pFactors, dFactors, raceDiv, sheet, isFinal) {
+  var status = "", classDivIndex = getTableColumnIndex("Div", sheet), classColIndex = getTableColumnIndex("Class", sheet), timeColIndex = getTableColumnIndex("Elapsed", sheet), time = timeInMillis(values[timeColIndex]);
   // Rule 32(h) and 33(g) Paddlers transferred from another division are not eligible for promotion/demotion
   if (!isFinal && (""+values[0]).indexOf(""+raceDiv) !== 0) {
     Logger.log("Transferred from another division, skipping");
@@ -2487,11 +2488,10 @@ function addPDSummary_(pdSheet, div, rows) {
   }
 }
 
-function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFactors, dFactors, isHaslerFinal) {
+function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFactors, dFactors, isHaslerFinal, spreadsheet) {
   var skipNonComplete = true;
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), 
-      sheetName, sheetValues = new Array(10), sheets = new Array(10), sheet, zeroTimes = [], 
-      timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D"), pdTimeRows = [];
+  var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(),
+      sheetName, sheetValues = new Array(10), sheets = new Array(10), sheet, zeroTimes = [], pdTimeRows = [];
   var pdSheet = ss.getSheetByName("PandD");
   if (pdSheet === null) {
     throw "Cannot find PandD sheet";
@@ -2510,7 +2510,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
       if (!sheetValues[calculateFromDivs[i]]) {
         sheetValues[calculateFromDivs[i]] = getTimesAndPD(sheet);
       }
-      var median = medianTime(sheetValues[calculateFromDivs[i]]);
+      var median = medianTime(sheetValues[calculateFromDivs[i]], sheet);
       zeroTimes.push(median / sourceFactors[i]);
       Logger.log("Adding " + sheetName + " median value " + timeToStringMs_(new Date(median)));
     } else {
@@ -2547,12 +2547,15 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   addPDTimes_(pdSheet, pdTimeRows);
   
   // Apply promotions
-  var pdDivRows;
+  var pdDivRows, timeColIndex, pdColIndex, pds, allPds = [];
   for (var l=0; l<applyToDivs.length; l++) {
     sheetName = "Div" + applyToDivs[l];
     sheet = ss.getSheetByName(sheetName);
-    pdDivRows = [];
+    timeColIndex = getTableColumnIndex("Elapsed", sheet);
+    pdColIndex = getTableColumnIndex("P/D", sheet);
+        pdDivRows = [];
     if (sheet !== null) {
+      pds = [];
       if (!sheets[applyToDivs[l]]) {
         sheets[applyToDivs[l]] = sheet;
       }
@@ -2568,8 +2571,9 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
         for (var m=0; m<values.length; m++) {
           var elapsed = values[m][timeColIndex];
           if (elapsed && elapsed instanceof Date) {
-            var status = pdStatus(values[m], pTimes, dTimes, applyToDivs[l], isHaslerFinal);
+            var status = pdStatus(values[m], pTimes, dTimes, applyToDivs[l], sheet, isHaslerFinal);
             if (status !== "") {
+              pds.push(status);
               Logger.log("Got P/D status " + status + " for boat " + values[m][0]);
             }
             if (status && status.indexOf("P") === 0) { // Only promotions seem to be displayed
@@ -2588,6 +2592,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
           Logger.log("Skipping P/D for Div" + applyToDivs[l]);
           continue;
         }
+        allPds = allPds.concat(pds);
         // Set the P/D values
         setPD(sheets[applyToDivs[l]], sheetValues[applyToDivs[l]]);
         // Then put in the summary rows
@@ -2598,6 +2603,40 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
     } else {
       throw "Destination sheet " + sheetName + " not found";
     }
+  }
+  return allPds;
+}
+
+function setPromotionsDiv123(ss, isHaslerFinal) {
+  if (ss) {
+    if (typeof ss == 'string') {
+      ss = SpreadsheetApp.openById(ss);
+    }
+    return setCoursePromotions([1, 2, 3], [1, 2, 3], [1.033, 1.117, 1.2], [[1, 1.067, false], [2, 1.15, false]], [[2, 1.083], [3, 1.167], [4, 1.25]], isHaslerFinal, ss); // No automatic promotions, only demotions
+  } else {
+    throw "No spreadsheet was specified";
+  }
+}
+
+function setPromotionsDiv456(ss, isHaslerFinal) {
+  if (ss) {
+    if (typeof ss == 'string') {
+      ss = SpreadsheetApp.openById(ss);
+    }
+    return setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15], [3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]], isHaslerFinal, ss);
+  } else {
+    throw "No spreadsheet was specified";
+  }
+}
+
+function setPromotionsDiv789(ss, isHaslerFinal) {
+  if (ss) {
+    if (typeof ss == 'string') {
+      ss = SpreadsheetApp.openById(ss);
+    }
+    return setCoursePromotions([7, 8], [7, 8, 9], [1.533, 1.617], [[5, 1.4], [6, 1.483], [7, 1.567], [8, 1.65]], [[8, 1.583], [9, 1.667]], isHaslerFinal, ss);
+  } else {
+    throw "No spreadsheet was specified";
   }
 }
 
@@ -2612,9 +2651,9 @@ function calculatePromotions(scriptProps) {
     }
     pdSheet.getRange(1, 1).setValue("Version 5.0");
     pdSheet.getRange(1, 12).setValue("P/D");
-    setCoursePromotions([1, 2, 3], [1, 2, 3], [1.033, 1.117, 1.2], [[1, 1.067, false], [2, 1.15, false]], [[2, 1.083], [3, 1.167], [4, 1.25]], isHaslerFinal); // No automatic promotions, only demotions
-    setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15], [3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]], isHaslerFinal);
-    setCoursePromotions([7, 8], [7, 8, 9], [1.533, 1.617], [[5, 1.4], [6, 1.483], [7, 1.567], [8, 1.65]], [[8, 1.583], [9, 1.667]], isHaslerFinal);
+    setPromotionsDiv123(ss, isHaslerFinal);
+    setPromotionsDiv456(ss, isHaslerFinal);
+    setPromotionsDiv789(ss, isHaslerFinal);
     // These extra rows appear at the end with no times - presumably for manual promotions
     addPDTimes_(pdSheet, [
       [pdTimeLabel_([5, 6], "K2", "P", 3), ""],
@@ -2962,10 +3001,10 @@ function getTableColumnIndex(colName, sheet) {
   sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   var cache = CacheService.getPrivateCache(), cacheKey = "col_index__" + sheet.getName() + "__" + colName;
   var cached = cache.get(cacheKey);
-  if (cached != null) {
+  if (cached !== null) {
      return +cached; // convert to a number
   }
-  var headers = getTableHeaders(SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]); // takes some time
+  var headers = getTableHeaders(sheet); // takes some time
   var index = headers.indexOf(colName);
   cache.put(cacheKey, index, 300); // cache for 5 minutes
   return index;
