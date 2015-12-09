@@ -11,7 +11,6 @@
  */
 var rankingsSheetColumnNames = ["Surname", "First name", "Club", "Class", "BCU Number", "Expiry", "Division"];
 var rankingsSheetName = "Rankings";
-var rankingsUri = "http://www.marathon-canoeing.org.uk/marathon/media/RankingList.xls";
 
 var STARTS_SHEET_COLUMNS = [[1, 1], ['Race', 'Time']];
 var FINISHES_SHEET_COLUMNS = [[1, 2], ['Boat Num', 'Time', 'Notes', 'Time+/-']];
@@ -41,7 +40,6 @@ var CLUBS_CSV_FILE_ID = "0B8A0SXNo_BkZb2hGUFphV1V3NWc";
 
 var NUMBER_FORMAT_DATE = "dd/MM/yyyy";
 var NUMBER_FORMAT_TIME = "[h]:mm:ss";
-var NUMBER_FORMAT_TIME_MS = "[h]:mm:ss.S"
 var NUMBER_FORMAT_CURRENCY = "£0.00";
 var NUMBER_FORMAT_INTEGER = "0";
 
@@ -57,11 +55,6 @@ var COLOR_YELLOW = "#ffff99"; // Key columns
 var COLOR_BLUE = "#ccffff"; // Value columns
 
 var SHEET_FONT_FAMILY = "Courier New";
-
-/**
- * List of canoe clubs
- */
-var clubs = [];
 
 var RACE_SHEETS_K4 = [['RaceA', [[101, 10]], 4], ['RaceB', [[201, 10]], 4], ['RaceC', [[301, 10]], 4], ['Rocket', [[1001, 10]], 4]];
 var RACE_SHEETS_K2 = [['SMA', [[101, 20]], 2], ['SMB', [[201, 20]], 2], ['SMC', [[301, 20]], 2], ['JMU18', [[401, 20]], 2], ['JMU16', [[501, 20]], 2], ['C2', [[601, 20]], 2], ['SL', [[701, 20]], 2], ['JLU18', [[801, 20]], 2], ['JLU16', [[901, 20]], 2], ['Vet', [[1001, 20]], 2], ['Mix', [[2001, 20]], 2]];
@@ -118,8 +111,6 @@ var COLUMNS_NATIONALS = ["Number", "Surname", "First name", "BCU Number", "Expir
 var COLUMN_ALIGNMENTS_NATIONALS = ["left", "left", "left", "left", "center", "left", "center", "center", "right", "right", "center", "center", "center", "center", "center", "center"];
 
 var PROTECTED_SHEETS = ['Rankings'];
-
-var hrmTypes = [];
 
 /**
  * Button handler for load rankings dialog
@@ -187,10 +178,8 @@ function showLoadRankings() {
 
 /**
  * Load current Hasler Rankings from the latest Excel file on the marathon web site
- *
- * @param {string} clubName Code of the club which should be loaded, if null then rankings from all clubs will be loaded
  */
-function loadRankingsXLS(clubName) {
+function loadRankingsXLS() {
   var pageResp = UrlFetchApp.fetch("http://canoeracing.org.uk/marathon/index.php/latest-marathon-ranking-list/"), pageSrc = pageResp.getContentText(),
     reMatch = /<a href="([\w\/\-_:\.]+.xls)">RankingList<\/a>/ig.exec(pageSrc);
   if (!reMatch) {
@@ -499,15 +488,17 @@ function importEntries(eventInfo) {
     }
     
     for (var raceName in newRows) {
-      rows = newRows[raceName];
-      if (rows.length == 0) {
-        Logger.log("No rows for sheet " + raceName);
-        continue;
-      } else {
-        Logger.log("" + rows.length + " rows for sheet " + raceName);
+      if (newRows.hasOwnProperty(raceName)) {
+        rows = newRows[raceName];
+        if (rows.length == 0) {
+          Logger.log("No rows for sheet " + raceName);
+          continue;
+        } else {
+          Logger.log("" + rows.length + " rows for sheet " + raceName);
+        }
+        var newResults = appendEntryRows(rows, raceName);
+        results = results.concat(newResults);
       }
-      var newResults = appendEntryRows(rows, raceName);
-      results = results.concat(newResults);
     }
   } else {
     throw "Could not locate source spreadsheet";
@@ -560,13 +551,13 @@ function findMatchingRaceSheet(raceName, sheets) {
 }
 
 function appendEntryRows(rows, sheetName) {
-  var dstsheet = findMatchingRaceSheet(sheetName), results = [], numCrews = 0; totalPaid = 0;
+  var dstsheet = findMatchingRaceSheet(sheetName), results = [], numCrews = 0, totalPaid = 0;
   if (dstsheet != null) {
     // Find the latest row with a number but without a name in the sheet
     var dstSheetName = dstsheet.getName(), lastRow = dstsheet.getLastRow(), nextRow = getNextEntryRow(dstsheet);
     if (nextRow > 0) {
       Logger.log("Adding new rows at row " + nextRow);
-      rows.forEach(function(row, i) {
+      rows.forEach(function(row) {
         if (row["Surname"] || row["First name"]) {
           if (row["Number"]) {
             numCrews ++;
@@ -607,16 +598,16 @@ function addLocalEntries(eventInfo) {
   var app = UiApp.getActiveApplication();
   // Because the list box was named "spreadsheetId" and added as a callback element to the
   // button's click event, we have its value available in eventInfo.parameter.spreadsheetId.
-  var ssId = eventInfo.parameter.spreadsheetId;
+  var ssId = eventInfo.parameter.spreadsheetId, srcRows;
   if (ssId)
   {
     var ss = SpreadsheetApp.openById(ssId),
-        sheets = getRaceSheets(ss), sheet, sheetName, rows, results = [], lastNonEmpty;
+        sheets = getRaceSheets(ss), sheet, sheetName, results = [], lastNonEmpty = 0;
 
     for (var i=0; i<sheets.length; i++) {
-      sheet = sheets[i],
-        sheetName = sheet.getName(),
-        srcRows = getTableRows(sheet);
+      sheet = sheets[i];
+      sheetName = sheet.getName();
+      srcRows = getTableRows(sheet);
       srcRows.forEach(function(row, i) {
         if (row["Surname"] || row["First name"]) {
           lastNonEmpty = i;
@@ -646,8 +637,6 @@ function showAddEntries() {
   if (sheet && sheet.getLastRow() > 1) {
     // Dialog height in pixels
     var dialogHeight = 360;
-    
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
     
     // Create the UiInstance object myapp and set the title text
     var app = UiApp.createApplication().setTitle('Add Entries').setHeight(dialogHeight);
@@ -742,8 +731,7 @@ function showAddEntries() {
 }
 
 function onEntryResultClick(e) {
-  var app = UiApp.getActiveApplication(), source = e.parameter.source,
-      widget = app.getElementById(source);
+  var app = UiApp.getActiveApplication();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   if (e.parameter.lastAdd) {
     var pair = e.parameter.lastAdd.split("!");
@@ -767,8 +755,7 @@ function onAddEntryEnter(e) {
     var n = parseInt(e.parameter.source.replace(/[a-z]+/, "")); // Paddler 1 or 2?
     return onAddEntrySearch(e, n);
   }
-  var app = UiApp.getActiveApplication();
-  return app;
+  return UiApp.getActiveApplication();
 }
 
 /**
@@ -826,7 +813,7 @@ function arrayZip(keys, values)
   var obj = {};
   for (var i = 0; i < keys.length; i++) {
     obj[keys[i]] = values[i];
-  };
+  }
   return obj;
 }
 
@@ -857,6 +844,7 @@ function objUnzip(obj, keys, ignoreMissing, defaultValue) {
  * Surname, First name, Club, Class, BCU Number, BCU Expiration, Division
  *
  * @param {string} name Search for paddlers whose names match the given string
+ * @param {string} spreadsheet Spreadsheet in which to look up ranking data, defaults to the active spreadsheet if not specified
  * @return {array} Two-dimensional array containing matching rows from the Rankings sheet
  */
 function findRankings(name, spreadsheet) {
@@ -928,7 +916,6 @@ function add(eventInfo) {
   } else {
     throw("Nobody was selected");
   }
-  return app;
 }
 
 function addEntry(items1, items2, selectedClass, spreadsheet) {
@@ -959,7 +946,7 @@ function addEntry(items1, items2, selectedClass, spreadsheet) {
     if (row2 && row2[3]) {
       row2[3] = new Date(row2[3]);
     }
-    var result = addEntryToSheet(row1, row2, sheetName, spreadsheet);
+    result = addEntryToSheet(row1, row2, sheetName, spreadsheet);
     result.sheetName = sheetName;
     result.crewName = crew;
     return result;
@@ -974,7 +961,9 @@ function addEntry(items1, items2, selectedClass, spreadsheet) {
 function rankingToEntryData(ranking) {
   var entry = {};
   for (var k in ranking) {
-    entry[k == "Division" ? "Div" : k] = ranking[k];
+    if (ranking.hasOwnProperty(k)) {
+      entry[k == "Division" ? "Div" : k] = ranking[k];
+    }
   }
   return entry;
 }
@@ -984,15 +973,15 @@ function lookupInTable(rows, matchValues) {
   for (var i = 0; i < rows.length; i++) {
     match = true;
     for (var p in matchValues) {
-      if (matchValues[p] instanceof RegExp) {
-        if (!matchValues[p].test(rows[i][p])) {
-          match = false;
-          continue;
-        }
-      } else {
-        if (rows[i][p] !== matchValues[p] && (''+rows[i][p]).trim() !== (''+matchValues[p]).trim()) {
-          match = false;
-          continue;
+      if (matchValues.hasOwnProperty(p)) {
+        if (matchValues[p] instanceof RegExp) {
+          if (!matchValues[p].test(rows[i][p])) {
+            match = false;
+          }
+        } else {
+          if (rows[i][p] !== matchValues[p] && (''+rows[i][p]).trim() !== (''+matchValues[p]).trim()) {
+            match = false;
+          }
         }
       }
     }
@@ -1022,8 +1011,10 @@ function updateEntriesFromRankings() {
             Logger.log("Found match: " + matches[0]);
             var update = rankingToEntryData(matches[0]);
             for (var p in update) {
-              Logger.log("Set " + p + ": " + update[p]);
-              raceData[j][p] = update[p];
+              if (update.hasOwnProperty(p)) {
+                Logger.log("Set " + p + ": " + update[p]);
+                raceData[j][p] = update[p];
+              }
             }
           }
         }
@@ -1061,8 +1052,10 @@ function checkEntriesFromRankings_() {
               Logger.log("Found match: " + matches[0]);
               var update = rankingToEntryData(matches[0]);
               for (var p in update) {
-                if (columns.indexOf(p) > -1 && raceData[j][p] != update[p] && (""+raceData[j][p]).trim() != (""+update[p]).trim()) {
-                  warnings.push(boatNum + ' ' + buildIdentity(raceData[j]) + ': Expected ' + p + " '" + update[p] + "', found '" + raceData[j][p] + "'");
+                if (update.hasOwnProperty(p)) {
+                  if (columns.indexOf(p) > -1 && raceData[j][p] != update[p] && ("" + raceData[j][p]).trim() != ("" + update[p]).trim()) {
+                    warnings.push(boatNum + ' ' + buildIdentity(raceData[j]) + ': Expected ' + p + " '" + update[p] + "', found '" + raceData[j][p] + "'");
+                  }
                 }
               }
             } else if (matches.length == 0) {
@@ -1085,14 +1078,14 @@ function setTableRowValues(sheet, values, startColumnName, endColumnName, startR
   if (values.length == 0) {
     return;
   }
-  var startRow = startRow || 2;
+  startRow = startRow || 2;
   var headers = getTableHeaders(sheet);
   if (convertHeadersToLowerCase) {
     headers = headers.map(function(n) {return n.toLowerCase()});
   }
   var valueList = new Array(values.length);
   for (var i = 0; i < values.length; i++) {
-    var row = new Array();
+    var row = [];
     for (var j = (startColumnName ? headers.indexOf(startColumnName) : 0); j < (endColumnName ? headers.indexOf(endColumnName) + 1 : headers.length); j++) {
       row.push(values[i][headers[j]] || "");
     }
@@ -1133,7 +1126,7 @@ function getTableRows(sheet, convertToLowerCase) {
     return [];
   var range = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()), values = range.getValues(), headers = values[0], rows = [], row = null;
   for (var i=1; i<values.length; i++) {
-    row = new Object();
+    row = {};
     for (var j=0; j<headers.length; j++) {
       if (headers[j] && typeof headers[j] == "string") {
         row[convertToLowerCase ? headers[j].toLowerCase() : headers[j]] = values[i][j];
@@ -1182,6 +1175,7 @@ function getEntryRows(sheet) {
 /**
  * Return a full list of the spreadsheet rows, grouped into entries
  *
+ * @param {object} range Range object to retrieve data from
  * @param {Boolean} returnEmptyEntries Set to true if you want to return entries without any data in them i.e. just the numbers
  * @return {array} Array of objects, each object represents an entry and includes the raw values from the rows
  */
@@ -1205,7 +1199,6 @@ function getEntryRowData(range, returnEmptyEntries) {
         rows: headers ? [arrayZip(headers, values[i])] : null,
         sheet: range.getSheet()
       };
-      currRows = [];
     } else if ((""+values[i][0]).trim() == "") { // No number
       if (currEntry != null) {
         currEntry.values.push(values[i]);
@@ -1329,6 +1322,7 @@ function addEntryToSheet(row1, row2, sheetName, spreadsheet) {
  *
  * @param {object} crew1 Object representing the first crew member
  * @param {object} crew2 Object representing the second crew member, may be null for K1
+ * @param {object} ss Spreadsheet object to pass to getRaceName(), optional
  * @return {string} Name of the sheet where the entry should be placed for this crew
  */
 function getTabName(crew1, crew2, ss) {
@@ -1392,6 +1386,7 @@ function getRaceNames(spreadsheet) {
  *
  * @param {object} crew1 Object representing the first crew member
  * @param {object} crew2 Object representing the second crew member, may be null for K1
+ * @param {object} ss Spreadsheet object to pass to getRaceName(), optional
  * @return {string} Name of the division
  */
 function getRaceName(crew1, crew2, ss) {
@@ -1619,7 +1614,7 @@ function showRaceLevies(scriptProps) {
     }
   }
   
-  var totalLevies = totalSnr * 2 + totalJnr * 1 + totalUnknown * 2;
+  var totalLevies = totalSnr * 2 + totalJnr + totalUnknown * 2;
   var grandTotal = totalSnr + totalJnr + totalLightning + totalUnknown;
   
   // Dialog height in pixels
@@ -1721,7 +1716,8 @@ function getSelectedEntryRows(sheet) {
   for (var i=0; i<allEntries.length; i++) {
     // If the entry overlaps the selected area in any way, then we'll add it
     // This means either the bottom of the entry falls within the selected range, or the top does, or both
-    entryTop = allEntries[i][1], entryBottom = allEntries[i][1] + allEntries[i][2] - 1;
+    entryTop = allEntries[i][1];
+    entryBottom = allEntries[i][1] + allEntries[i][2] - 1;
     if (entryTop >= range.getRow() && entryTop <= range.getLastRow() ||
       entryBottom >= range.getRow() && entryBottom <= range.getLastRow()) {
         Logger.log("Adding boat " + allEntries[i][0]);
@@ -1765,7 +1761,7 @@ function showModifyCrews() {
   mvpanel.add(mlb);
   var mvbutton = app.createButton("Move").setStyleAttributes({"margin": "0px", "padding": "0px"});
   mvbutton.addClickHandler(app.createServerHandler("moveCrews").addCallbackElement(clb).addCallbackElement(mlb));
-  mvpanel.add(mvbutton)
+  mvpanel.add(mvbutton);
   mypanel.add(mvpanel);
   
   var delpanel = app.createHorizontalPanel().setSpacing(5);
@@ -1944,7 +1940,7 @@ function showSetStartTimes() {
   hpanel.add(time);
   var setbutton = app.createButton("Set").setStyleAttributes({"margin": "0px", "padding": "0px"});
   setbutton.addClickHandler(app.createServerHandler("setStartTimes").addCallbackElement(clb).addCallbackElement(time));
-  hpanel.add(setbutton)
+  hpanel.add(setbutton);
   mypanel.add(hpanel);
   
   // Key handler to detect when enter key is pressed
@@ -1979,8 +1975,7 @@ function onSetStartTimesEnter(e) {
   if (e.parameter.keyCode==13) {
     return setStartTimes(e);
   }
-  var app = UiApp.getActiveApplication();
-  return app;
+  return UiApp.getActiveApplication();
 }
 
 /**
@@ -2038,15 +2033,15 @@ function setStartTimes(eventInfo) {
     if (entries.length > 0) {
       // Assume that the entries are in a continuous range, for now
       Logger.log("Found " + entries.length + " entries");
-      var firstRow = entries[0].rowNumber, lastEntry = entries[entries.length-1], lastRow = (lastEntry.rowNumber + lastEntry.values.length - 1),
+      var lastEntry = entries[entries.length-1], lastRow = (lastEntry.rowNumber + lastEntry.values.length - 1),
         timeValues = new Array(lastRow - 1); // Not including header
       // Intialise array elements
       for (var i=0; i<timeValues.length; i++) {
         timeValues[i] = [""];
       }
       // Set times on those rows where we have an entry
-      for (var i=0; i<entries.length; i++) {
-        entry = entries[i];
+      for (var j=0; j<entries.length; j++) {
+        entry = entries[j];
         if (!entry.rowNumber) {
           throw "Row number not found for entry " + entry;
         }
@@ -2089,7 +2084,7 @@ function setStartTimeValues_(sheet, values) {
  * Display the set finish times dialog
  */
 function showSetFinishTimes() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
   
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Enter Finish Times').setHeight(300);
@@ -2140,7 +2135,10 @@ function setFinishTimes(eventInfo) {
     if (line.length > 0) { // Skip empty lines without erroring
       parts = line.split(/[ \t]+/g);
       if (parts.length > 1) {
-        boatNumber = parts[0], time = parts[1], allowance = parts[2] || '', notes = parts[3] || '';
+        boatNumber = parts[0];
+        time = parts[1];
+        allowance = parts[2] || '';
+        notes = parts[3] || '';
         if (!boatNumber) {
           throw "Bad boat number '" + parts[0] + "' at line " + i + ", must be a number";
         }
@@ -2180,7 +2178,7 @@ function setFinishTimes(eventInfo) {
     throw "You must enter some times";
   }
   // Check for conflicts with existing data, but ignore if the same times are simply re-keyed again
-  skipOverBoats = checkFinishTimeDuplicates_(times, getFinishTimes_());
+  var skipOverBoats = checkFinishTimeDuplicates_(times, getFinishTimes_());
   times = times.filter(function(t) { return skipOverBoats.indexOf(t.boatNumber) == -1 });
   // Check that that boat numbers entered actually exist
   checkFinishTimeBoatNumbersExist_(times, fetchAllEntries_());
@@ -2257,7 +2255,6 @@ function checkFinishTimeBoatNumbersExist_(times, entries) {
       if (times[i].boatNumber == entry.boatNumber) {
         times[i].rowNumber = entry.rowNumber;
         times[i].sheet = entry.sheet;
-        continue;
       }
     }
     if (!times[i].rowNumber) {
@@ -2277,7 +2274,6 @@ function checkFinishTimeDuplicates_(times, existingRows) {
   }
   for (var i=0; i<times.length; i++) {
     time = times[i];
-    skip = false;
     for (var j=0; j<existingRows.length; j++) {
       row = existingRows[j];
       if (time.boatNumber == row[0]) {
@@ -2415,9 +2411,9 @@ function pdStatus(values, pFactors, dFactors, raceDiv, isFinal) {
     }
   }
   // Go backwards through demotion times, process lower divs first
-  for (var i=dFactors.length-1; i>0; i--) {
-    if (time > dFactors[i][2] && currDiv && currDiv < dFactors[i][0]) {
-      status = "D" + dFactors[i][0];
+  for (var j=dFactors.length-1; j>0; j--) {
+    if (time > dFactors[j][2] && currDiv && currDiv < dFactors[j][0]) {
+      status = "D" + dFactors[j][0];
       break;
     }
   }
@@ -2494,8 +2490,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   var skipNonComplete = true;
   var ss = SpreadsheetApp.getActiveSpreadsheet(), 
       sheetName, sheetValues = new Array(10), sheets = new Array(10), sheet, zeroTimes = [], 
-      timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D"), pdTimeRows = [],
-      min;
+      timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D"), pdTimeRows = [];
   var pdSheet = ss.getSheetByName("PandD");
   if (pdSheet == null) {
     throw "Cannot find PandD sheet";
@@ -2505,7 +2500,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
     throw "Number of source factors must be the same as the number of source sheets";
   }
   for (var i=0; i<calculateFromDivs.length; i++) {
-    sheetName = "Div" + calculateFromDivs[i]
+    sheetName = "Div" + calculateFromDivs[i];
     sheet = ss.getSheetByName(sheetName);
     if (sheet != null) {
       if (!sheets[calculateFromDivs[i]]) {
@@ -2526,23 +2521,23 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   
   // Calculate P/D times
   var pTimes = [], dTimes = [], boundary, t, label;
-  for (var i=0; i<pFactors.length; i++) {
-    boundary = zeroTime * pFactors[i][1];
-    if (pFactors[i][2] !== false) {
-      pTimes.push([pFactors[i][0], pFactors[i][1], boundary]);
+  for (var j=0; j<pFactors.length; j++) {
+    boundary = zeroTime * pFactors[j][1];
+    if (pFactors[j][2] !== false) {
+      pTimes.push([pFactors[j][0], pFactors[j][1], boundary]);
     }
     t = timeToStringDs_(new Date(boundary));
-    label = pdTimeLabel_(applyToDivs, "K1", "P", pFactors[i][0]);
+    label = pdTimeLabel_(applyToDivs, "K1", "P", pFactors[j][0]);
     pdTimeRows.push([label, t]);
     Logger.log(label + ": " + t);
   }
-  for (var i=0; i<dFactors.length; i++) {
-    boundary = zeroTime * dFactors[i][1];
-    if (dFactors[i][2] !== false) {
-      dTimes.push([dFactors[i][0], dFactors[i][1], boundary]);
+  for (var k=0; k<dFactors.length; k++) {
+    boundary = zeroTime * dFactors[k][1];
+    if (dFactors[k][2] !== false) {
+      dTimes.push([dFactors[k][0], dFactors[k][1], boundary]);
     }
     t = timeToStringDs_(new Date(boundary));
-    label = pdTimeLabel_(applyToDivs, "K1", "D", dFactors[i][0]);
+    label = pdTimeLabel_(applyToDivs, "K1", "D", dFactors[k][0]);
     pdTimeRows.push([label, t]);
     Logger.log(label + ": " + t);
   }
@@ -2552,50 +2547,50 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   
   // Apply promotions
   var pdDivRows;
-  for (var i=0; i<applyToDivs.length; i++) {
-    sheetName = "Div" + applyToDivs[i]
+  for (var l=0; l<applyToDivs.length; l++) {
+    sheetName = "Div" + applyToDivs[l];
     sheet = ss.getSheetByName(sheetName);
     pdDivRows = [];
     if (sheet != null) {
-      if (!sheets[applyToDivs[i]]) {
-        sheets[applyToDivs[i]] = sheet;
+      if (!sheets[applyToDivs[l]]) {
+        sheets[applyToDivs[l]] = sheet;
       }
-      if (!sheetValues[applyToDivs[i]]) {
-        sheetValues[applyToDivs[i]] = getTimesAndPD(sheet);
+      if (!sheetValues[applyToDivs[l]]) {
+        sheetValues[applyToDivs[l]] = getTimesAndPD(sheet);
       }
       // Check there are at least 5 entries in the sheet
-      var values = sheetValues[applyToDivs[i]];
+      var values = sheetValues[applyToDivs[l]];
       if (numEntries(values) >= 5) {
         // Look through the times and set each P/D value
         Logger.log("Setting P/D times for " + sheetName);
         var noElapsedValueCount = 0;
-        for (var j=0; j<values.length; j++) {
-          var elapsed = values[j][timeColIndex];
+        for (var m=0; m<values.length; m++) {
+          var elapsed = values[m][timeColIndex];
           if (elapsed && elapsed instanceof Date) {
-            var status = pdStatus(values[j], pTimes, dTimes, applyToDivs[i], isHaslerFinal);
+            var status = pdStatus(values[m], pTimes, dTimes, applyToDivs[l], isHaslerFinal);
             if (status != "") {
-              Logger.log("Got P/D status " + status + " for boat " + values[j][0]);
+              Logger.log("Got P/D status " + status + " for boat " + values[m][0]);
             }
             if (status && status.indexOf("P") == 0) { // Only promotions seem to be displayed
-              pdDivRows.push(values[j].slice(1, 7).concat(status));
+              pdDivRows.push(values[m].slice(1, 7).concat(status));
             }
-            values[j][pdColIndex] = status.replace(/^D\d$/, "D?");
+            values[m][pdColIndex] = status.replace(/^D\d$/, "D?");
           }
           // Make sure that all boats have a time or dns/rtd etc.
-          if (values[j][0] && (values[j][1] || values[j][2]) && elapsed == "") {
-            Logger.log("No time for boat " + values[j][0]);
+          if (values[m][0] && (values[m][1] || values[m][2]) && elapsed == "") {
+            Logger.log("No time for boat " + values[m][0]);
             noElapsedValueCount ++;
           }
         }
         // Bail out before setting times, if there are still unfinished crews
         if (skipNonComplete && noElapsedValueCount > 0) {
-          Logger.log("Skipping P/D for Div" + applyToDivs[i]);
+          Logger.log("Skipping P/D for Div" + applyToDivs[l]);
           continue;
         }
         // Set the P/D values
-        setPD(sheets[applyToDivs[i]], sheetValues[applyToDivs[i]]);
+        setPD(sheets[applyToDivs[l]], sheetValues[applyToDivs[l]]);
         // Then put in the summary rows
-        addPDSummary_(pdSheet, applyToDivs[i], pdDivRows);
+        addPDSummary_(pdSheet, applyToDivs[l], pdDivRows);
       } else {
         Logger.log("Fewer than 5 starters in " + sheetName + ", no automatic promotions/demotions");
       }
@@ -2641,7 +2636,9 @@ function calculatePointsBoundary(entries, raceName, isHaslerFinal) {
     return null;
   }
   for (var i=0; i<entries.length; i++) {
-    boatNum = entries[i].boatNumber, pd = entries[i].values[0][pdColIndex], time = entries[i].values[0][timeColIndex];
+    boatNum = entries[i].boatNumber;
+    pd = entries[i].values[0][pdColIndex];
+    time = entries[i].values[0][timeColIndex];
     // Skip boats transferred from another division (i.e. strange numbers)
     // However strange numbers are to be expected in the Hasler Final (e.g. 17xx numbers for Div7s)
     if (!isHaslerFinal && raceName && raceName[0] != (""+boatNum)[0]) {
@@ -2720,7 +2717,7 @@ function calculatePoints(scriptProps) {
   }
   
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
-      clubsSheet = ss.getSheetByName("Clubs"), clubRows = [], clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
+      clubsSheet = ss.getSheetByName("Clubs"), clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
       clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"), 
       pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
   if (clubsSheet != null) {
@@ -2743,22 +2740,28 @@ function calculatePoints(scriptProps) {
   } else {
     Logger.log("Regional clubs: " + clubsInRegion);
   }
-  haslerPoints = new Array(clubsInRegion.length), lightningPoints = new Array(allClubs.length);
+  haslerPoints = new Array(clubsInRegion.length);
+  lightningPoints = new Array(allClubs.length);
   doublesPoints = isHaslerFinal ? new Array(clubsInRegion.length) : null;
-  for (var i=0; i<clubsInRegion.length; i++) {
-    haslerPoints[i] = [];
+  for (var j=0; j<clubsInRegion.length; j++) {
+    haslerPoints[j] = [];
     if (doublesPoints) { 
-      doublesPoints[i] = [];
+      doublesPoints[j] = [];
     }
   }
-  for (var i=0; i<allClubs.length; i++) {
-    lightningPoints[i] = [];
+  for (var k=0; k<allClubs.length; k++) {
+    lightningPoints[k] = [];
   }
   
   // TODO Check that promotions have first been calculated...
   
   // For each race...
-  var entries = [], sheets = getRaceSheets(), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace;
+  var entries = [], sheets = getRaceSheets(), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace, isDoublesRace;
+  var sheetRange, sheetValues;
+  var count, noElapsedValueCount, pointsByBoatNum, pointsAwarded;
+  var boatNum, pd, time, minPoints, lastTime, lastPoints;
+  var mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
+  var club1, club2, posn, notes1, notes2;
   for (var i=0; i<sheets.length; i++) {
     // Fetch all of the entries
     if (sheets[i].getLastRow() < 2) {
@@ -2766,23 +2769,34 @@ function calculatePoints(scriptProps) {
     }
     sheetName = sheets[i].getName();
     divStr = sheetName.replace("Div", "");
-    isHaslerRace = sheetName.indexOf("Div") == 0, isLightningRace = isLightningRaceName_(sheetName), isDoublesRace = sheetName.indexOf("_") > -1;
-    var sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, numHeaders), sheetValues = sheetRange.getValues();
-    colValues = Array(sheetRange.getNumRows());
+    isHaslerRace = sheetName.indexOf("Div") == 0;
+    isLightningRace = isLightningRaceName_(sheetName);
+    isDoublesRace = sheetName.indexOf("_") > -1;
+    sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, numHeaders);
+    sheetValues = sheetRange.getValues();
+    colValues = new Array(sheetRange.getNumRows());
     entries = getEntryRowData(sheetRange);
     // Calculate 110% boundary - time of fastest crew NOT promoted for K1 or 110% of winning boat for K2
     // Boats must not have been transferred from another division
     entries.sort( function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);} ); // Sort by position, ascending then blanks (non-finishers)
     boundary = calculatePointsBoundary(entries, divStr, isHaslerFinal);
     // Allocate points to clubs within the region
-    var count = (isHaslerFinal && isLightningRace) ? 40 : 20, noElapsedValueCount = 0, pointsByBoatNum = new Array(99);
-    var boatNum, pd, time, minPoints = (divStr[0] == "9" ? 2 : 1), lastTime = 0, lastPoints = 0;
-    var mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
-    for (var j=0; j<entries.length; j++) {
-      boatNum = entries[j].boatNumber, pd = entries[j].values[0][pdColIndex], time = entries[j].values[0][timeColIndex], 
-        club1 = entries[j].values[0][clubColIndex], club2 = entries[j].values[1] ? entries[j].values[1][clubColIndex] : "",
-        posn = parseInt(entries[j].values[0][posnColIndex]) || 0, notes1 = entries[j].values[0][notesColIndex], 
-        notes2 = entries[j].values[1] ? entries[j].values[1][notesColIndex] : null;
+    count = (isHaslerFinal && isLightningRace) ? 40 : 20;
+    noElapsedValueCount = 0;
+    pointsByBoatNum = new Array(99);
+    minPoints = (divStr[0] == "9" ? 2 : 1);
+    lastTime = 0;
+    lastPoints = 0;
+    mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
+    for (var l=0; l<entries.length; l++) {
+      boatNum = entries[l].boatNumber;
+      pd = entries[l].values[0][pdColIndex];
+      time = entries[l].values[0][timeColIndex];
+      club1 = entries[l].values[0][clubColIndex];
+      club2 = entries[l].values[1] ? entries[l].values[1][clubColIndex] : "";
+      posn = parseInt(entries[l].values[0][posnColIndex]) || 0;
+      notes1 = entries[l].values[0][notesColIndex];
+      notes2 = entries[l].values[1] ? entries[l].values[1][notesColIndex] : null;
       if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0) && notes1 != "ill" && notes2 != "ill") {
         if (isHaslerRace && boundary && time instanceof Date && boundary < timeInMillis(time)) {
           pointsAwarded = minPoints;
@@ -2795,12 +2809,12 @@ function calculatePoints(scriptProps) {
           }
         }
         Logger.log("Allocate " + pointsAwarded + " to boat " + boatNum + " (pos " + posn + ") - club in region: " + club1);
-        pointsByBoatNum[entries[j].boatNumber] = pointsAwarded;
+        pointsByBoatNum[entries[l].boatNumber] = pointsAwarded;
         lastTime = timeInMillis(time);
         lastPoints = pointsAwarded;
         count --;
       } else {
-          pointsByBoatNum[entries[j].boatNumber] = "";
+          pointsByBoatNum[entries[l].boatNumber] = "";
       }
       if (time == "") { // Unfinished crew, should either be a time or dns/rtd etc.
         noElapsedValueCount ++;
@@ -2808,10 +2822,10 @@ function calculatePoints(scriptProps) {
       }
       // Check clubs are in the main list
       if (club1 != "" && allClubs.indexOf(club1) == -1) {
-        unfoundClubs.push([club1, entries[j].boatNumber]);
+        unfoundClubs.push([club1, entries[l].boatNumber]);
       }
       if (club2 != "" && allClubs.indexOf(club2) == -1) {
-        unfoundClubs.push([club2, entries[j].boatNumber]);
+        unfoundClubs.push([club2, entries[l].boatNumber]);
       }
       if (club2 && (club1 != club2) && isHaslerFinal) {
         mixedClubDoubles.push(boatNum);
@@ -2823,15 +2837,15 @@ function calculatePoints(scriptProps) {
     }
     // Set the values ready to go into the sheet and add to totals by club
     var bn = 0, clubIndex, points, clubCode;
-    for (var j=0; j<sheetValues.length; j++) {
-      bn = sheetValues[j][0] || bn; // Use last boat number encountered, to cover second person in a K2
-      clubCode = sheetValues[j][clubColIndex]
-      clubIndex = clubsInRegion.indexOf(clubCode)
+    for (var m=0; m<sheetValues.length; m++) {
+      bn = sheetValues[m][0] || bn; // Use last boat number encountered, to cover second person in a K2
+      clubCode = sheetValues[m][clubColIndex];
+      clubIndex = clubsInRegion.indexOf(clubCode);
       if (clubCode != '') {
         // Check clubs again, as only one of the K2 partners may be entitled to points
         if (clubIndex >= 0) {
-          points = pointsByBoatNum[bn]
-          colValues[j] = [points || ""];
+          points = pointsByBoatNum[bn];
+          colValues[m] = [points || ""];
           if (points) {
             if (isHaslerRace) {
               if (isHaslerFinal && isDoublesRace) {
@@ -2848,10 +2862,10 @@ function calculatePoints(scriptProps) {
           }
         } else {
           Logger.log("Club " + clubCode + " not in region list " + clubsInRegion.join(','));
-          colValues[j] = [""];
+          colValues[m] = [""];
         }
       } else {
-        colValues[j] = [""];
+        colValues[m] = [""];
       }
     }
     
@@ -2864,22 +2878,22 @@ function calculatePoints(scriptProps) {
   }
   
   if (haslerPoints.length > 0) {
-    var clubPointsRows = [], lastPoints = 9999;
-    for (var j=0; j<clubsInRegion.length; j++) {
-      if (haslerPoints[j] && haslerPoints[j].length > 0) {
-        clubPointsRows.push([clubNames[j], clubsInRegion[j], !isHaslerFinal ? sumPoints(haslerPoints[j], 12) : sumPoints(haslerPoints[j], 6) + sumPoints(doublesPoints[j], 6)]);
+    var clubPointsRows = [], lastHaslerPoints = 9999;
+    for (var n=0; n<clubsInRegion.length; n++) {
+      if (haslerPoints[n] && haslerPoints[n].length > 0) {
+        clubPointsRows.push([clubNames[n], clubsInRegion[n], !isHaslerFinal ? sumPoints(haslerPoints[n], 12) : sumPoints(haslerPoints[n], 6) + sumPoints(doublesPoints[n], 6)]);
       }
     }
     if (clubPointsRows.length > 0) {
       clubPointsRows.sort(function(a, b) { return b[2] - a[2] }); // Sort by number of points
       // Add Hasler points column value
       var lastpos = 11, nextpos = 10, pos;
-      for (var j=0; j<clubPointsRows.length; j++) {
-        pos = clubPointsRows[j][2] == lastPoints ? lastpos : nextpos;
+      for (var o=0; o<clubPointsRows.length; o++) {
+        pos = clubPointsRows[o][2] == lastHaslerPoints ? lastpos : nextpos;
         nextpos = nextpos - 1;
-        clubPointsRows[j].push(pos);
-        lastpos = pos
-        lastPoints = clubPointsRows[j][2]
+        clubPointsRows[o].push(pos);
+        lastpos = pos;
+        lastHaslerPoints = clubPointsRows[o][2]
       }
       drawTable_(clubsSheet, {
         column: 5, 
@@ -2900,9 +2914,9 @@ function calculatePoints(scriptProps) {
   
   if (lightningPoints.length > 0) {
     var lightningPointsRows = [];
-    for (var j=0; j<allClubs.length; j++) {
-      if (lightningPoints[j].length > 0) {
-        lightningPointsRows.push([allClubNames[j], allClubs[j], sumPoints(lightningPoints[j])]);
+    for (var p=0; p<allClubs.length; p++) {
+      if (lightningPoints[p].length > 0) {
+        lightningPointsRows.push([allClubNames[p], allClubs[p], sumPoints(lightningPoints[p])]);
       }
     }
     if (lightningPointsRows.length > 0) {
@@ -3048,7 +3062,8 @@ function setValidation(scriptProps) {
  * Set validation
  */
 function setSheetValidation_(sheet, ss, scriptProps) {
-  ss = ss || SpreadsheetApp.getActiveSpreadsheet(), clubsSheet = ss.getSheetByName('Clubs'), sheetName = sheet.getName(), allowedDivs = DIVS_ALL;
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  var clubsSheet = ss.getSheetByName('Clubs'), sheetName = sheet.getName(), allowedDivs = DIVS_ALL;
   if (sheetName.indexOf('Div') == 0) {
     if (sheetName >= 'Div7') {
       allowedDivs = DIVS_4_MILE;
@@ -3159,7 +3174,7 @@ function setAllRaceSheetHeadings(columnNames, columnAlignments) {
 /**
  * Set protection for named ranges on the given race sheet
  */
-function setRaceSheetProtection_(sheet, useVLookup) {
+function setRaceSheetProtection_(sheet) {
   // First remove all existing protections that we can
   var protections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
   for (var j = 0; j < protections.length; j++) {
@@ -3170,7 +3185,7 @@ function setRaceSheetProtection_(sheet, useVLookup) {
   }
     // Now set up new protections
   var lastRow = sheet.getMaxRows();
-  var offsetCol = getRaceColumnNumber("Time+/-"), startCol = getRaceColumnNumber("Start"), finishCol = getRaceColumnNumber("Finish"), elapsedCol = getRaceColumnNumber("Elapsed"), 
+  var offsetCol = getRaceColumnNumber("Time+/-"),
     posnCol = getRaceColumnNumber("Posn"), notesCol = getRaceColumnNumber("Notes");
   if (posnCol < 1) {
     posnCol = getRaceColumnNumber("Pos"); // NRM uses different name!
@@ -3199,7 +3214,7 @@ function setProtection_(protection) {
  * Set protection on all race sheets
  */
 function setProtection() {
-  var sheets = getRaceSheets(), sheet, useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") != null;
+  var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") != null;
   for (var i=0; i<sheets.length; i++) {
     setRaceSheetProtection_(sheets[i], useVLookup);
   }
@@ -3217,7 +3232,7 @@ function setRaceSheetFreezes_(sheet) {
  * Set frozen rows and columns for all sheets
  */
 function setFreezes() {
-  var sheets = getRaceSheets(), sheet;
+  var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     setRaceSheetFreezes_(sheets[i]);
   }
@@ -3231,17 +3246,17 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
   // Delete preexisting sheets
   for (var i = 0; i < sheets.length; i++) {
     ss.deleteSheet(sheets[i]);
-  };
+  }
   clearColumnCache_();
   // Add new race sheets
-  for (var i = 0; i < raceSheets.length; i++) {
-    var sheetName = raceSheets[i][0], numRanges = raceSheets[i][1], crewSize = raceSheets[i][2] || 1, isHidden = raceSheets[i][3] === true, isProtected = raceSheets[i][4] === true || PROTECTED_SHEETS.indexOf(sheetName) > -1;
+  for (var j = 0; j < raceSheets.length; j++) {
+    var sheetName = raceSheets[j][0], numRanges = raceSheets[j][1], crewSize = raceSheets[j][2] || 1, isHidden = raceSheets[j][3] === true, isProtected = raceSheets[j][4] === true || PROTECTED_SHEETS.indexOf(sheetName) > -1;
     var sheet = ss.insertSheet(sheetName), startRow = 2, values = [];
-    for (var j = 0; j < numRanges.length; j++) {
-      var startNum = numRanges[j][0], numPlaces = numRanges[j][1], prefix = numRanges[j][2] || '', suffix = numRanges[j][3] || '';
+    for (var k = 0; k < numRanges.length; k++) {
+      var startNum = numRanges[k][0], numPlaces = numRanges[k][1], prefix = numRanges[k][2] || '', suffix = numRanges[k][3] || '';
       var numRows = numPlaces * crewSize; // Number of places * crew size
-      for (var k = 0; k < numRows; k++) {
-        values.push([k % crewSize == 0 ? (prefix + (startNum + k/crewSize) + suffix) : '']);
+      for (var l = 0; l < numRows; l++) {
+        values.push([l % crewSize == 0 ? (prefix + (startNum + l/crewSize) + suffix) : '']);
       }
     }
     sheet.deleteRows(numRows + 1, sheet.getMaxRows() - numRows);
@@ -3259,25 +3274,25 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     setRaceSheetProtection_(sheet, true);
     setRaceSheetFreezes_(sheet);
   }
-  for (var i = 0; i < extraSheets.length; i++) {
-    var sheetName = extraSheets[i];
-    sheet = ss.insertSheet(sheetName);
+  for (var m = 0; m < extraSheets.length; m++) {
+    var sheetNameExtra = extraSheets[m];
+    sheet = ss.insertSheet(sheetNameExtra);
     var leaveRows = 100;
-    var isProtected = PROTECTED_SHEETS.indexOf(sheetName) > -1;
+    var isProtectedExtra = PROTECTED_SHEETS.indexOf(sheetNameExtra) > -1;
     sheet.deleteRows(leaveRows + 1, sheet.getMaxRows() - leaveRows);
-    if (isProtected) {
-       setProtection_(sheet.protect().setDescription(sheetName + ' sheet protection'));
+    if (isProtectedExtra) {
+       setProtection_(sheet.protect().setDescription(sheetNameExtra + ' sheet protection'));
     }
-    if (sheetName == "Rankings") {
+    if (sheetNameExtra == "Rankings") {
       sheet.appendRow(rankingsSheetColumnNames);
     }
-    if (sheetName == "Starts") {
+    if (sheetNameExtra == "Starts") {
       sheet.getRange(STARTS_SHEET_COLUMNS[0][0], STARTS_SHEET_COLUMNS[0][1], 1, STARTS_SHEET_COLUMNS[1].length).setValues([STARTS_SHEET_COLUMNS[1]]);
     }
-    if (sheetName == "Finishes") {
+    if (sheetNameExtra == "Finishes") {
       sheet.getRange(FINISHES_SHEET_COLUMNS[0][0], FINISHES_SHEET_COLUMNS[0][1], 1, FINISHES_SHEET_COLUMNS[1].length).setValues([FINISHES_SHEET_COLUMNS[1]]);
     }
-    else if (sheetName == "Clubs") {
+    else if (sheetNameExtra == "Clubs") {
       // Import clubs
       importClubsCsv(sheet);
     }
@@ -3285,8 +3300,8 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
   // Now remove the temp sheet (we need this as we're not allowed to delete all sheets up-front)
   ss.deleteSheet(tempSheet);
   // Go back to the race sheets and set up validation (now that we have the clubs list populated, hopefully)
-  for (var i = 0; i < raceSheets.length; i++) {
-    setSheetValidation_(ss.getSheetByName(raceSheets[i][0]), ss, null);
+  for (var n = 0; n < raceSheets.length; n++) {
+    setSheetValidation_(ss.getSheetByName(raceSheets[n][0]), ss, null);
   }
   // Set race type custom property
   var raceType = getRaceType(ss);
@@ -3363,7 +3378,7 @@ function createNRMSheet() {
 function getElementsByTagName(element, tagName) {  
   var data = [];
   var descendants = element.getDescendants();  
-  for(i in descendants) {
+  for(var i in descendants) {
     var elt = descendants[i].asElement();     
     if( elt !=null && elt.getName()== tagName) data.push(elt);      
   }
@@ -3446,18 +3461,18 @@ function populateFromHtmlResults() {
     */
 }
 
-function autoResizeAllColumns(sheet) {
+function autoResizeAllColumns() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = ss.getSheets();
   for (var i = 0; i < sheets.length; i++) {
     autoResizeColumns(sheets[i]);
-  };
+  }
 }
 
 function autoResizeColumns(sheet) {
   var numColumns = sheet.getLastColumn();
   for (var i = 1; i <= numColumns; i++) {
     sheet.autoResizeColumn(i);
-  };
+  }
 }
 
 function createPrintableEntries(fileId) {
@@ -3480,7 +3495,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
   var newss = fileId ? SpreadsheetApp.openById(fileId) : SpreadsheetApp.create(name), 
     srcSheets = getRaceSheets(ss);
   if (fileId) {
-    tempSheet = newss.insertSheet("Temp", 0);
+    newss.insertSheet("Temp", 0);
     // Delete preexisting sheets
     var oldSheets = newss.getSheets();
     for (var i = 1; i < oldSheets.length; i++) {
@@ -3488,13 +3503,13 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
     }
   }
   // Copy existing sheets
-  for (var i = 0; i < srcSheets.length; i++) {
-    if (srcSheets[i].isSheetHidden()) {
+  for (var j = 0; j < srcSheets.length; j++) {
+    if (srcSheets[j].isSheetHidden()) {
       continue;
     }
-    var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[i]) - 1 : srcSheets[i].getLastRow();
+    var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[j]) - 1 : srcSheets[j].getLastRow();
     if (lastRow > 1) {
-      var newSheet = newss.insertSheet(srcSheets[i].getName()), srcRange = srcSheets[i].getRange(1, 1, lastRow, srcSheets[i].getLastColumn()), values = [columnNames], 
+      var newSheet = newss.insertSheet(srcSheets[j].getName()), srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()), values = [columnNames],
           entries = getEntryRowData(srcRange, !truncateEmpty);
       // Sort entries
       if (sortColumn !== null) {
@@ -3543,7 +3558,7 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
   name = name || ss.getName() + " (Clubs)";
   var newss = scriptProps && scriptProps.clubEntriesId ? SpreadsheetApp.openById(scriptProps.clubEntriesId) : SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss), clubValues = {}, currClub, currClubValues;
   if (scriptProps && scriptProps.clubEntriesId) {
-    tempSheet = newss.insertSheet("Temp", 0);
+    newss.insertSheet("Temp", 0);
     // Delete preexisting sheets
     var oldSheets = newss.getSheets();
     for (var i = 1; i < oldSheets.length; i++) {
@@ -3552,13 +3567,13 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
   }
   var clubCounts = {};
   // Copy existing sheets
-  for (var i = 0; i < srcSheets.length; i++) {
-    if (srcSheets[i].isSheetHidden()) {
+  for (var j = 0; j < srcSheets.length; j++) {
+    if (srcSheets[j].isSheetHidden()) {
       continue;
     }
-    var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[i]) - 1 : srcSheets[i].getLastRow(), lastRaceNum;
+    var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[j]) - 1 : srcSheets[j].getLastRow(), lastRaceNum;
     if (lastRow > 1) {
-      var raceName = srcSheets[i].getName(), srcRange = srcSheets[i].getRange(1, 1, lastRow, srcSheets[i].getLastColumn()), 
+      var raceName = srcSheets[j].getName(), srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()),
           entries = getEntryRowData(srcRange, true);
       entries.forEach(function(a) {
         a.rows.forEach(function(b) {
@@ -3592,30 +3607,32 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
   }
   Logger.log(clubCounts);
   for (var c in clubValues) {
-    var newSheet = newss.insertSheet(c), values = clubValues[c], targetRange = newSheet.getRange(1, 1, values.length, values[0].length);
-    targetRange.setValues(values);
-    targetRange.setFontFamily(SHEET_FONT_FAMILY);
-    newSheet.getRange(1, 1, 1, values[0].length).setBorder(true, true, true, true, true, true).setFontWeight("bold").setBackground("#ccffff"); // 1st row
-    newSheet.getRange(2, 1, values.length-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
-    if (columnNames.indexOf("Elapsed") > -1) {
-      newSheet.getRange(1, columnNames.indexOf("Elapsed") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_TIME);
-    }
-    if (columnNames.indexOf("Paid") > -1) {
-      newSheet.getRange(1, columnNames.indexOf("Paid") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
-    }
-    if (columnNames.indexOf("Expiry") > -1) {
-      newSheet.getRange(1, columnNames.indexOf("Expiry") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_DATE);
-    }
+    if (clubValues.hasOwnProperty(c)) {
+      var newSheet = newss.insertSheet(c), values = clubValues[c], targetRange = newSheet.getRange(1, 1, values.length, values[0].length);
+      targetRange.setValues(values);
+      targetRange.setFontFamily(SHEET_FONT_FAMILY);
+      newSheet.getRange(1, 1, 1, values[0].length).setBorder(true, true, true, true, true, true).setFontWeight("bold").setBackground("#ccffff"); // 1st row
+      newSheet.getRange(2, 1, values.length-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
+      if (columnNames.indexOf("Elapsed") > -1) {
+        newSheet.getRange(1, columnNames.indexOf("Elapsed") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_TIME);
+      }
+      if (columnNames.indexOf("Paid") > -1) {
+        newSheet.getRange(1, columnNames.indexOf("Paid") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+      }
+      if (columnNames.indexOf("Expiry") > -1) {
+        newSheet.getRange(1, columnNames.indexOf("Expiry") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_DATE);
+      }
 
-    var extraValues = [];
-    var totalSeniors = clubCounts[c].seniors * scriptProps.entrySenior, totalJuniors = clubCounts[c].juniors * scriptProps.entryJunior, totalLightnings = clubCounts[c].lightnings * scriptProps.entryLightning;
-    extraValues.push(['', '', '']);
-    extraValues.push(['Seniors', clubCounts[c].seniors, totalSeniors]);
-    extraValues.push(['Juniors', clubCounts[c].juniors, totalJuniors]);
-    extraValues.push(['Lightnings', clubCounts[c].lightnings, totalLightnings]);
-    extraValues.push(['', '', totalSeniors + totalJuniors + totalLightnings]);
-    newSheet.getRange(values.length + 1, values[0].length - extraValues[0].length + 1, extraValues.length, extraValues[0].length).setValues(extraValues).setFontFamily(SHEET_FONT_FAMILY);
-    newSheet.getRange(values.length + 1, values[0].length, extraValues.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+      var extraValues = [];
+      var totalSeniors = clubCounts[c].seniors * scriptProps.entrySenior, totalJuniors = clubCounts[c].juniors * scriptProps.entryJunior, totalLightnings = clubCounts[c].lightnings * scriptProps.entryLightning;
+      extraValues.push(['', '', '']);
+      extraValues.push(['Seniors', clubCounts[c].seniors, totalSeniors]);
+      extraValues.push(['Juniors', clubCounts[c].juniors, totalJuniors]);
+      extraValues.push(['Lightnings', clubCounts[c].lightnings, totalLightnings]);
+      extraValues.push(['', '', totalSeniors + totalJuniors + totalLightnings]);
+      newSheet.getRange(values.length + 1, values[0].length - extraValues[0].length + 1, extraValues.length, extraValues[0].length).setValues(extraValues).setFontFamily(SHEET_FONT_FAMILY);
+      newSheet.getRange(values.length + 1, values[0].length, extraValues.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+    }
   }
   // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
   newss.deleteSheet(newss.getSheets()[0]);
@@ -3637,7 +3654,7 @@ function createNumberBoards_(name, truncateEmpty) {
   style[DocumentApp.Attribute.FONT_FAMILY] = DocumentApp.FontFamily.ARIAL;
   style[DocumentApp.Attribute.FONT_SIZE] = 230;
   style[DocumentApp.Attribute.BOLD] = true;
-  var lastbn;
+  var lastbn = 0;
   function appendNumber(body, num) {
     if (("" + num).length > 3) {
       style[DocumentApp.Attribute.FONT_SIZE] = 200;
@@ -3667,9 +3684,9 @@ function createNumberBoards_(name, truncateEmpty) {
       });
       // Add 10 more onto the end (or 5 for K2s)
       var numToAdd = sheetName.match(/Div\d_\d/) ? 5 : 10;
-      for (var j = lastbn + 1; j <= lastbn + 10; j++) {
+      for (var j = lastbn + 1; j <= lastbn + numToAdd; j++) {
         appendNumber(body, j);
-      };
+      }
     }
     doc.saveAndClose();
   }
@@ -3681,7 +3698,7 @@ function createNumberBoards_(name, truncateEmpty) {
  */
 function checkEntryDuplicateWarnings(spreadsheet) {
   var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(), 
-    sheets = getRaceSheets(ss), boatNumsByPaddler = {}, warnings = [];
+    sheets = getRaceSheets(ss), sheet, boatNumsByPaddler = {}, warnings = [];
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
     var raceData = getTableRows(sheet);
@@ -3697,8 +3714,10 @@ function checkEntryDuplicateWarnings(spreadsheet) {
     }
   }
   for (var k in boatNumsByPaddler) {
-    if (boatNumsByPaddler[k].length > 1) {
-      warnings.push(k.replace(/\|/g, ', ') + ' found in crews ' + boatNumsByPaddler[k].join(', '));
+    if (boatNumsByPaddler.hasOwnProperty(k)) {
+      if (boatNumsByPaddler[k].length > 1) {
+        warnings.push(k.replace(/\|/g, ', ') + ' found in crews ' + boatNumsByPaddler[k].join(', '));
+      }
     }
   }
   return warnings;
