@@ -3,7 +3,7 @@
  */
 function onOpen() {
   addMenu();
-};
+}
 
 /**
  * Automatically invoked whenever a cell is edited
@@ -24,7 +24,7 @@ function onEdit(e) {
     var headerRange = sheet.getRange(1, 4);
     if (headerRange.getValue() == "BCU Number") {
       var matches = HRM.findRankings(""+e.value);
-      if (matches.length == 0) {
+      if (matches.length === 0) {
         e.range.setComment("BCU Number " + e.value + " not known");
       } else if (matches.length == 1) {
         // TODO Do this re-ordering of values via a util function
@@ -32,7 +32,7 @@ function onEdit(e) {
         for (var i = 1; i < raceHeaders.length; i++) {
           headerName = raceHeaders[i] == "Div" ? "Division" : raceHeaders[i]; // translate from rankings data to race sheet headings
           dataRowValues.push(matches[0][headerName] || "");
-        };
+        }
         // Remove empty values from the end
         while (dataRowValues.length > 0 && dataRowValues[dataRowValues.length-1] === "") {
           dataRowValues.pop();
@@ -45,7 +45,7 @@ function onEdit(e) {
     }
   }
   //e.range.setComment("Edited at: " + new Date().toTimeString());
-};
+}
 
 /**
  * Display the edit race details dialog
@@ -142,7 +142,7 @@ function showEditRaceDetails() {
 function saveRaceDetails(e) {
   // Set script properties
   var props = {};
-  for (p in e.parameter) {
+  for (var p in e.parameter) {
     Logger.log(p + ': ' + e.parameter[p]);
     if (e.parameter[p]) {
       if (e.parameter[p] instanceof Date) {

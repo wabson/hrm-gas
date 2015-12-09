@@ -174,20 +174,20 @@ function showResults(data) {
 function showResultsSummary(data) {
   var races = data.races, div = $('#results-summary'), html = '';
   div.empty();
-  html += ('<table>')
+  html += ('<table>');
   html += ('  <tr>');
   html += ('     <th>Race Name</th>');
   html += ('     <th>First</th>');
   html += ('     <th>Last</th>');
   html += ('     <th>Finishers</th>');
   html += ('     <th>Actions</th>');
-  html += ('  </tr>')
+  html += ('  </tr>');
   for (var i = 0; i < races.length; i++) {
-    first = null;
-    last = null;
-    numEntries = 0;
-    numFinishers = 0;
-    numStarters = 0;
+    var first = null,
+      last = null,
+      numEntries = 0,
+      numFinishers = 0,
+      numStarters = 0;
     html += ('  <tr>');
     for (var j = 0; j < races[i].results.length; ++j) {
       numEntries ++;

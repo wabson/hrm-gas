@@ -193,11 +193,11 @@ function loadRankingsXLS() {
     file = Drive.Files.insert(file, response.getBlob(), {
       convert: true
     });
+    loadRankingsSheet_(file.id);
+    DriveApp.removeFile(DriveApp.getFileById(file.id));
   } else {
     throw "An error was encountered loading the rankings spreadsheet (code: " + response.getResponseCode() + ")";
   }
-  loadRankingsSheet_(file.id);
-  DriveApp.removeFile(DriveApp.getFileById(file.id));
 }
 
 function loadRankingsSheet_(spreadsheetId, clubName) {
@@ -227,7 +227,7 @@ function loadRankingsSheet_(spreadsheetId, clubName) {
     Logger.log(Utilities.formatString("Found %d total rankings", srcRows.length));
     if (clubName) {
       Logger.log(Utilities.formatString("Filtering by club name '%s'", clubName));
-      srcRows = srcRows.filter(function(val) { return val["Club"] == clubName });
+      srcRows = srcRows.filter(function(val) { return val["Club"] == clubName; });
     }
     appendTableRowValues(sheet, srcRows);
     // Set expiration date formats (column F)
@@ -490,7 +490,7 @@ function importEntries(eventInfo) {
     for (var raceName in newRows) {
       if (newRows.hasOwnProperty(raceName)) {
         rows = newRows[raceName];
-        if (rows.length == 0) {
+        if (rows.length === 0) {
           Logger.log("No rows for sheet " + raceName);
           continue;
         } else {
@@ -500,14 +500,14 @@ function importEntries(eventInfo) {
         results = results.concat(newResults);
       }
     }
+
+    app.getElementById("importEntriesFileId").setVisible(false);
+    app.getElementById("importEntriesAddBn").setVisible(false);
+    app.getElementById("importEntriesResult").setHTML(results.join("<br />")).setVisible(true);
+    app.getElementById("importEntriesCloseBn").setVisible(true);
   } else {
     throw "Could not locate source spreadsheet";
   }
-  
-  app.getElementById("importEntriesFileId").setVisible(false);
-  app.getElementById("importEntriesAddBn").setVisible(false);
-  app.getElementById("importEntriesResult").setHTML(results.join("<br />")).setVisible(true);
-  app.getElementById("importEntriesCloseBn").setVisible(true);
 
   return app;
 }
@@ -532,7 +532,7 @@ function findMatchingRaceSheet(raceName, sheets) {
   if (!sheets) { // First try simple match
     sheet = ass.getSheetByName(raceName);
   }
-  if (sheet == null) {
+  if (sheet === null) {
     var k2re = /Div(\d)_(\d)/, nameMatch = raceName.match(k2re);
     if (nameMatch) { // K2 divisional race?
       sheets = sheets || ass.getSheets(); // Fall back to active SS sheets if no list provided
@@ -552,7 +552,7 @@ function findMatchingRaceSheet(raceName, sheets) {
 
 function appendEntryRows(rows, sheetName) {
   var dstsheet = findMatchingRaceSheet(sheetName), results = [], numCrews = 0, totalPaid = 0;
-  if (dstsheet != null) {
+  if (dstsheet !== null) {
     // Find the latest row with a number but without a name in the sheet
     var dstSheetName = dstsheet.getName(), lastRow = dstsheet.getLastRow(), nextRow = getNextEntryRow(dstsheet);
     if (nextRow > 0) {
@@ -568,7 +568,7 @@ function appendEntryRows(rows, sheetName) {
         }
       });
       Logger.log("" + numCrews + " crews for sheet " + sheetName);
-      if (numCrews == 0) {
+      if (numCrews === 0) {
         return;
       }
       if (lastRow-nextRow+1 >= rows.length) {
@@ -604,27 +604,28 @@ function addLocalEntries(eventInfo) {
     var ss = SpreadsheetApp.openById(ssId),
         sheets = getRaceSheets(ss), sheet, sheetName, results = [], lastNonEmpty = 0;
 
+    var iterFn = function(row, i) {
+      if (row["Surname"] || row["First name"]) {
+        lastNonEmpty = i;
+      }
+    };
     for (var i=0; i<sheets.length; i++) {
       sheet = sheets[i];
       sheetName = sheet.getName();
       srcRows = getTableRows(sheet);
-      srcRows.forEach(function(row, i) {
-        if (row["Surname"] || row["First name"]) {
-          lastNonEmpty = i;
-        }
-      });
+      srcRows.forEach(iterFn);
       srcRows = srcRows.slice(0, lastNonEmpty+1);
       var newResults = appendEntryRows(srcRows, sheetName);
       results = results.concat(newResults);
     }
+
+    app.getElementById("addLocalEntriesSpreadsheetId").setVisible(false);
+    app.getElementById("addLocalEntriesAddBn").setVisible(false);
+    app.getElementById("addLocalEntriesResult").setHTML(results.join("<br />")).setVisible(true);
+    app.getElementById("addLocalEntriesCloseBn").setVisible(true);
   } else {
     throw "Could not locate source spreadsheet";
   }
-  
-  app.getElementById("addLocalEntriesSpreadsheetId").setVisible(false);
-  app.getElementById("addLocalEntriesAddBn").setVisible(false);
-  app.getElementById("addLocalEntriesResult").setHTML(results.join("<br />")).setVisible(true);
-  app.getElementById("addLocalEntriesCloseBn").setVisible(true);
 
   return app;
 }
@@ -726,7 +727,7 @@ function showAddEntries() {
     
     ss.show(app);
   } else {
-    throw "No rankings found. You must add some rankings before you can enter crew details."
+    throw "No rankings found. You must add some rankings before you can enter crew details.";
   }
 }
 
@@ -856,7 +857,7 @@ function findRankings(name, spreadsheet) {
     }
     if (name) { // check name is not emptysheet.getLastRow()
       var isBCUNum = bcuRegexp.test(name.toUpperCase()), 
-          range = sheet.getRange(1, 1, sheet.getLastRow()-1, sheet.getLastColumn()), values = range.getValues(), columnNames = values[0].map(function(n) { return ("" + n).toLowerCase() });
+          range = sheet.getRange(1, 1, sheet.getLastRow()-1, sheet.getLastColumn()), values = range.getValues(), columnNames = values[0].map(function(n) { return ("" + n).toLowerCase(); });
       for (var i=1; i<values.length; i++) {
         if (isBCUNum) { // BCU number
           var bcu = String(values[i][columnNames.indexOf("bcu number")]).toUpperCase().trim(), result = bcuRegexp.exec(bcu);
@@ -864,7 +865,7 @@ function findRankings(name, spreadsheet) {
             matches.push(arrayZip(columnNames, values[i]));
           }
         } else { // Name
-          if ((""+values[i][columnNames.indexOf("surname")]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0 || (""+values[i][columnNames.indexOf("first name")]).toLowerCase().trim().indexOf(name.toLowerCase()) == 0) {
+          if ((""+values[i][columnNames.indexOf("surname")]).toLowerCase().trim().indexOf(name.toLowerCase()) === 0 || (""+values[i][columnNames.indexOf("first name")]).toLowerCase().trim().indexOf(name.toLowerCase()) === 0) {
             matches.push(arrayZip(columnNames, values[i]));
           }
         }
@@ -872,8 +873,7 @@ function findRankings(name, spreadsheet) {
     }
     return matches;
   } else {
-    // TODO Support live lookups from ScraperWiki
-    throw "Rankings sheet could not be found"
+    throw "Rankings sheet could not be found";
   }
 }
 
@@ -1044,11 +1044,11 @@ function checkEntriesFromRankings_() {
           var boatNum = raceData[j]['Number'] || raceData[j-1]['Number'], bcuNum = raceData[j]['BCU Number'];
           if (bcuNum) {
             var matches = lookupInTable(rankingData, {'Surname': raceData[j]['Surname'], 'First name': raceData[j]['First name'], 'Club': raceData[j]['Club'], 'Class': raceData[j]['Class']});
-            if (matches.length == 0) { // Try again based on BCU number
+            if (matches.length === 0) { // Try again based on BCU number
               matches = lookupInTable(rankingData, {'BCU Number': raceData[j]['BCU Number']});
               columns = ['Div', 'Club', 'Surname', 'First name', 'Class'];
             }
-            if (matches.length == 1) {
+            if (matches.length === 1) {
               Logger.log("Found match: " + matches[0]);
               var update = rankingToEntryData(matches[0]);
               for (var p in update) {
@@ -1058,7 +1058,7 @@ function checkEntriesFromRankings_() {
                   }
                 }
               }
-            } else if (matches.length == 0) {
+            } else if (matches.length === 0) {
               warnings.push(boatNum + ' ' + buildIdentity(raceData[j]) + ": not found!");
             } else {
               warnings.push(boatNum + ' ' + buildIdentity(raceData[j]) + ": found multiple matches");
@@ -1075,13 +1075,13 @@ function checkEntriesFromRankings_() {
 
 function setTableRowValues(sheet, values, startColumnName, endColumnName, startRow, convertHeadersToLowerCase) {
   convertHeadersToLowerCase = typeof convertHeadersToLowerCase != "undefined" ? convertHeadersToLowerCase : false;
-  if (values.length == 0) {
+  if (values.length === 0) {
     return;
   }
   startRow = startRow || 2;
   var headers = getTableHeaders(sheet);
   if (convertHeadersToLowerCase) {
-    headers = headers.map(function(n) {return n.toLowerCase()});
+    headers = headers.map(function(n) {return n.toLowerCase();});
   }
   var valueList = new Array(values.length);
   for (var i = 0; i < values.length; i++) {
@@ -1148,25 +1148,25 @@ function getEntryRows(sheet) {
   // Find the latest row with a number but without a name in the sheet
   var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 4), values = range.getValues(), rows = [], currEntry = null;
   for (var i=0; i<values.length; i++) {
-    if (values[i][0] && !((""+values[i][1]).trim() == "" && (""+values[i][2]).trim() == "" && (""+values[i][3]).trim() == "")) { // Number present and a name or BCU number
+    if (values[i][0] && !((""+values[i][1]).trim() === "" && (""+values[i][2]).trim() === "" && (""+values[i][3]).trim() === "")) { // Number present and a name or BCU number
       Logger.log("getEntryRows: Add " + values[i][0]);
-      if (currEntry != null) {
+      if (currEntry !== null) {
         rows.push(currEntry);
       }
       currEntry = [values[i][0], i+2, 1];
-    } else if ((""+values[i][0]).trim() == "") { // No number
-      if (currEntry != null) {
+    } else if ((""+values[i][0]).trim() === "") { // No number
+      if (currEntry !== null) {
         currEntry[2] ++;
       }
     } else { // Number present but no details, this is not a completed entry
-      if (currEntry != null) {
+      if (currEntry !== null) {
         rows.push(currEntry);
       }
       currEntry = null;
     }
   }
   // There may still be an entry in the buffer
-  if (currEntry != null) {
+  if (currEntry !== null) {
     rows.push(currEntry);
   }
   return rows;
@@ -1182,14 +1182,14 @@ function getEntryRows(sheet) {
 function getEntryRowData(range, returnEmptyEntries) {
   // Find the latest row with a number but without a name in the sheet
   var values = range.getValues(), rows = [], currEntry = null, headers, startRow = 0;
-  if (range.getRow() == 1) { // has the header row been included?
+  if (range.getRow() === 1) { // has the header row been included?
     headers = values[0];
     startRow = 1;
   }
   for (var i=startRow; i<values.length; i++) {
-    if (returnEmptyEntries || values[i][0] && !((""+values[i][1]).trim() == "" && (""+values[i][2]).trim() == "" && (""+values[i][3]).trim() == "")) { // Number present and a name or BCU number
+    if (returnEmptyEntries || values[i][0] && !((""+values[i][1]).trim() === "" && (""+values[i][2]).trim() === "" && (""+values[i][3]).trim() === "")) { // Number present and a name or BCU number
       Logger.log("getEntryRowValues: Add " + values[i][0]);
-      if (currEntry != null) {
+      if (currEntry !== null) {
         rows.push(currEntry);
       }
       currEntry = {
@@ -1199,22 +1199,22 @@ function getEntryRowData(range, returnEmptyEntries) {
         rows: headers ? [arrayZip(headers, values[i])] : null,
         sheet: range.getSheet()
       };
-    } else if ((""+values[i][0]).trim() == "") { // No number
-      if (currEntry != null) {
+    } else if ((""+values[i][0]).trim() === "") { // No number
+      if (currEntry !== null) {
         currEntry.values.push(values[i]);
         if (headers) {
           currEntry.rows.push(arrayZip(headers, values[i]));
         }
       }
     } else { // Number present but no details, this is not a completed entry
-      if (currEntry != null) {
+      if (currEntry !== null) {
         rows.push(currEntry);
       }
       currEntry = null;
     }
   }
   // There may still be an entry in the buffer
-  if (currEntry != null) {
+  if (currEntry !== null) {
     rows.push(currEntry);
   }
   return rows;
@@ -1229,13 +1229,13 @@ function getNextEntryRows(sheet) {
   // Find the latest row with a number but without a name in the sheet
   var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 2), values = range.getValues(), rows = [], currEntry = null;
   for (var i=0; i<values.length; i++) {
-    if (values[i][0] && values[i][1] == "") { // Number present but no name
-      if (currEntry != null) {
+    if (values[i][0] && values[i][1] === "") { // Number present but no name
+      if (currEntry !== null) {
         rows.push(currEntry);
       }
       currEntry = [values[i][0], i+2, 1];
-    } else if ((""+values[i][0]).trim() == "" && values[i][1] == "") { // No number, no name
-      if (currEntry != null) {
+    } else if ((""+values[i][0]).trim() === "" && values[i][1] === "") { // No number, no name
+      if (currEntry !== null) {
         currEntry[2] ++;
       }
     } else { // Name present but no number, entry is not valid
@@ -1243,7 +1243,7 @@ function getNextEntryRows(sheet) {
     }
   }
   // There may still be an entry in the buffer
-  if (currEntry != null) {
+  if (currEntry !== null) {
     rows.push(currEntry);
   }
   return rows;
@@ -1257,7 +1257,7 @@ function getNextEntryRows(sheet) {
 function getNextEntryRow(sheet) {
   var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 2), values = range.getValues();
   for (var i=0; i<values.length; i++) {
-    if (values[i][0] && values[i][1] == "") {
+    if (values[i][0] && values[i][1] === "") {
       return i+2;
     }
   }
@@ -1278,7 +1278,7 @@ function getLastEntryRowNumber(sheet) {
       Logger.log("Found boat number " + values[i][0]);
       lastN = range.getRow() + i; // Current row number
       // Bit of a hacky way to account for K2s, where we should leave an extra row at the bottom
-      if (lastBn == "") {
+      if (lastBn === "") {
         lastN ++;
       }
     }
@@ -1300,7 +1300,7 @@ function addEntryToSheet(row1, row2, sheetName, spreadsheet) {
   if (nextRowPos > 0) {
     var rowValues = [row1];
     if (row2 && row2.length > 0) {
-      rowValues.push(row2)
+      rowValues.push(row2);
     }
     if (nextRowSize != rowValues.length) {
       if (nextRowSize == 1 && rowValues.length == 2) {
@@ -1430,17 +1430,17 @@ function getRaceName(crew1, crew2, ss) {
  * @return {string} Name of the combined division
  */
 function combineDivs(div1, div2) {
-  if (div1 == div2 || div2 == null) {
+  if (div1 == div2 || div2 === null) {
     return div1;
   }
   if (!parseInt(div1) || !parseInt(div2)) {
-    if (div1.indexOf("U10") == 0 && div2.indexOf("U10") == 0) {
+    if (div1.indexOf("U10") === 0 && div2.indexOf("U10") === 0) {
       return "HodyU10";
-    } else if (div1.indexOf("U12") == 0 && div2.indexOf("U10") == 0) {
+    } else if (div1.indexOf("U12") === 0 && div2.indexOf("U10") === 0) {
       return "HodyU12";
-    } else if (div1.indexOf("U10") == 0 && div2.indexOf("U12") == 0) {
+    } else if (div1.indexOf("U10") === 0 && div2.indexOf("U12") === 0) {
       return "HodyU12";
-    } else if (div1.indexOf("U12") == 0 && div2.indexOf("U12") == 0) {
+    } else if (div1.indexOf("U12") === 0 && div2.indexOf("U12") === 0) {
       return "HodyU12";
     } else {
       throw "Cannot combine " + div1 + " and " + div2;
@@ -1573,7 +1573,7 @@ function showDialog(title, text, dialogHeight) {
 }
 
 function isLightningRaceName_(raceName) {
-  return /U1[02] ?[MF]/i.exec(raceName) != null || raceName.indexOf("Hody") == 0;
+  return /U1[02] ?[MF]/i.exec(raceName) !== null || raceName.indexOf("Hody") === 0;
 }
 
 /**
@@ -1590,11 +1590,11 @@ function showRaceLevies(scriptProps) {
       var raceClass = (typeof values[j]['Class'] == "string" && values[j]['Class'] !== null ? values[j]['Class'] : "").toUpperCase().trim(),
           raceName = sheet.getName().replace(" ", ""),
           received = parseFloat(values[j]['Paid']) || 0.0;
-      if (values[j]['Surname'] != "" || values[j]['First name'] != "" || values[j]['BCU Number'] != "") { // Surname, lastname or BCU number filled out
+      if (values[j]['Surname'] !== "" || values[j]['First name'] !== "" || values[j]['BCU Number'] !== "") { // Surname, lastname or BCU number filled out
         if (isLightningRaceName_(raceName)) {
           totalLightning ++;
         } else {
-          if (raceClass != "") {
+          if (raceClass !== "") {
             if (/^J[MFC]{0,2}$/.test(raceClass)) {
               totalJnr ++;
             } else if (/^[SV]?[MFC]{0,2}$/.test(raceClass)) {
@@ -1803,7 +1803,7 @@ function moveEntryRows(srcRange, dstSheet) {
     if (!entries[i].values) {
       throw "No values found in the entry";
     }
-    if (!(entries[i].values.length > 0)) {
+    if (entries[i].values.length === 0) {
       throw "Entry must have at least 1 row";
     }
     if (dstRows[i][2] != entries[i].values.length) {
@@ -1834,10 +1834,10 @@ function moveCrews(eventInfo) {
       dstSheetName = eventInfo.parameter.className,
       dstSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(dstSheetName),
       sheet = SpreadsheetApp.getActiveSheet();
-  if (dstSheetName == "") {
+  if (!dstSheetName) {
     throw "You must select a race";
   }
-  if (dstSheet == null) {
+  if (dstSheet === null) {
     throw "Could not find sheet " + dstSheetName;
   }
   var selectedEntries = getSelectedEntryRows(sheet);
@@ -1991,13 +1991,13 @@ function setStartTimes(eventInfo) {
       sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(raceName),
       startsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts"),
       startColIndex = getTableColumnIndex("Start");
-  if (raceName == "") {
+  if (!raceName) {
     throw "You must select a race";
   }
-  if (sheet == null) {
+  if (sheet === null) {
     throw "Race " + raceName + " was not found";
   }
-  if (time == "") {
+  if (!time) {
     throw "You must enter a time";
   }
   if (time.match(/^\d+[:\.]\d+$/)) {
@@ -2007,7 +2007,7 @@ function setStartTimes(eventInfo) {
   } else {
     throw "Invalid time format, must be MM:SS or HH:MM:SS";
   }
-  if (startsSheet != null) {
+  if (startsSheet !== null) {
     var startValues = getStartTimeValues_(startsSheet), skip = false;
     startValues.forEach(function(row) {
       if (""+row[0] == ""+raceName) {
@@ -2128,6 +2128,16 @@ function setFinishTimes(eventInfo) {
   var app = UiApp.getActiveApplication(),
       lines = eventInfo.parameter.times.split(/\r\n|\r|\n/g), line, parts,
       sheet, finishValues = [], times = [], boatNumber, time, allowance, notes, skip;
+  // Check that a conflicting time does not exist in this batch
+  var timeIter = function(t) {
+    if (t.boatNumber == boatNumber) {
+      if (time != t.time || allowance != t.allowance || notes != t.notes) {
+        throw "Conflicting finish data for boat " + boatNumber + ", please remove one and try again";
+      } else {
+        skip = true; // Skip duplicate line
+      }
+    }
+  };
   // First check the data entered
   for (var i=0; i<lines.length; i++) {
     line = lines[i].trim();
@@ -2151,16 +2161,7 @@ function setFinishTimes(eventInfo) {
         } else {
           throw "Invalid time format for boat " + boatNumber + " (line " + i + "), must be MM:SS or HH:MM:SS";
         }
-        // Check that a conflicting time does not exist in this batch
-        times.forEach(function(t) {
-          if (t.boatNumber == boatNumber) {
-            if (time != t.time || allowance != t.allowance || notes != t.notes) {
-              throw "Conflicting finish data for boat " + boatNumber + ", please remove one and try again";
-            } else {
-              skip = true; // Skip duplicate line
-            }
-          }
-        });
+        times.forEach(timeIter);
         if (!skip) {
           times.push({
             boatNumber: boatNumber,
@@ -2174,12 +2175,12 @@ function setFinishTimes(eventInfo) {
       }
     }
   }
-  if (times.length == 0) {
+  if (times.length === 0) {
     throw "You must enter some times";
   }
   // Check for conflicts with existing data, but ignore if the same times are simply re-keyed again
   var skipOverBoats = checkFinishTimeDuplicates_(times, getFinishTimes_());
-  times = times.filter(function(t) { return skipOverBoats.indexOf(t.boatNumber) == -1 });
+  times = times.filter(function(t) { return skipOverBoats.indexOf(t.boatNumber) == -1; });
   // Check that that boat numbers entered actually exist
   checkFinishTimeBoatNumbersExist_(times, fetchAllEntries_());
   // Write to the Finishes sheet
@@ -2199,7 +2200,7 @@ function setFinishTimes(eventInfo) {
         {name: 'No Start Time'}, {name: 'No Division', color: COLOR_YELLOW}
       ]
     });
-    finishValues = times.map(function(t) { return [t.boatNumber, t.time, t.allowance, t.notes] });
+    finishValues = times.map(function(t) { return [t.boatNumber, t.time, t.allowance, t.notes]; });
     if (finishValues.length > 0) {
       finishesSheet.getRange(getNextFinishesRow(finishesSheet), 2, finishValues.length, 4).setValues(finishValues).setFontFamily(SHEET_FONT_FAMILY);
     }
@@ -2237,7 +2238,7 @@ function fetchAllEntries_() {
 function checkFinishTimeBoatNumbersExist_(times, entries) {
   // Now check against the entries to locate the row and sheet in which the boat is found
   var entry;
-  if (entries.length == 0) {
+  if (entries.length === 0) {
     throw "Did not find any entries";
   }
   for (var i=0; i<times.length; i++) {
@@ -2269,7 +2270,7 @@ function checkFinishTimeBoatNumbersExist_(times, entries) {
 function checkFinishTimeDuplicates_(times, existingRows) {
   // Now check against the entries to locate the row and sheet in which the boat is found
   var time, row, skipNums = [];
-  if (existingRows.length == 0) {
+  if (existingRows.length === 0) {
     return;
   }
   for (var i=0; i<times.length; i++) {
@@ -2297,7 +2298,7 @@ function getNextFinishesRow(sheet) {
   if (sheet.getLastRow() > 1) {
     var startRow = 2, range = sheet.getRange(startRow, 2, sheet.getLastRow()-1, 1), values = range.getValues();
     for (var i=0; i<values.length; i++) {
-      if (values[i][0] == "") {
+      if (values[i][0] === "") {
         return startRow + i;
       }
     }
@@ -2310,7 +2311,7 @@ function getTimesAndPD(sheet) {
   if (sheet.getLastRow() > 1) {
     var startRow = 2, range = sheet.getRange(startRow, 1, sheet.getLastRow()-1, getTableColumnIndex("P/D") + 1), values = range.getValues();
     for (var i=0; i<values.length; i++) {
-      if (values[i][0] != "") { // If there is a time then add the row
+      if (values[i][0] !== "") { // If there is a time then add the row
         lastNonBlank = i;
       }
     }
@@ -2336,7 +2337,7 @@ function timeInMillis(d) {
 function numEntries(values) {
   var count = 0;
   for (var i=0; i<values.length; i++) {
-    if (values[i][0] != "") {
+    if (values[i][0] !== "") {
       count ++;
     }
   }
@@ -2346,7 +2347,7 @@ function numEntries(values) {
 function medianTime(values) {
   var times = [], timeColIndex = getTableColumnIndex("Elapsed");
   for (var i=0; i<values.length; i++) {
-    if (values[i][0] != "" && (values[i][timeColIndex] instanceof Date)) { // If there is a time then add the row
+    if (values[i][0] !== "" && (values[i][timeColIndex] instanceof Date)) { // If there is a time then add the row
       times.push(timeInMillis(values[i][timeColIndex]));
       Logger.log("Adding median item " + timeInMillis(values[i][timeColIndex]));
     }
@@ -2356,7 +2357,7 @@ function medianTime(values) {
 }
 
 function medianValue(values) {
-  if (values.length == 0) {
+  if (values.length === 0) {
     return NaN;
   }
   values.sort( function(a,b) {return a - b;} );
@@ -2385,7 +2386,7 @@ function overallZero(divZeroes) {
 function pdStatus(values, pFactors, dFactors, raceDiv, isFinal) {
   var status = "", classDivIndex = getTableColumnIndex("Div"), classColIndex = getTableColumnIndex("Class"), timeColIndex = getTableColumnIndex("Elapsed"), time = timeInMillis(values[timeColIndex]);
   // Rule 32(h) and 33(g) Paddlers transferred from another division are not eligible for promotion/demotion
-  if (!isFinal && (""+values[0]).indexOf(""+raceDiv) != 0) {
+  if (!isFinal && (""+values[0]).indexOf(""+raceDiv) !== 0) {
     Logger.log("Transferred from another division, skipping");
     return "";
   }
@@ -2430,7 +2431,7 @@ function getNextColumnRow(sheet, column) {
     Logger.log("Looking through rows " + startRow + " to " + lastRow);
     var range = sheet.getRange(startRow, column, lastRow-startRow+1, 1), values = range.getValues();
     for (var i=0; i<values.length; i++) {
-      if (values[i][0] == "") {
+      if (values[i][0] === "") {
         return startRow + i;
       }
     }
@@ -2492,7 +2493,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
       sheetName, sheetValues = new Array(10), sheets = new Array(10), sheet, zeroTimes = [], 
       timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D"), pdTimeRows = [];
   var pdSheet = ss.getSheetByName("PandD");
-  if (pdSheet == null) {
+  if (pdSheet === null) {
     throw "Cannot find PandD sheet";
   }
   Logger.log(pdSheet.getRange(13, 2).getNumberFormats());
@@ -2502,7 +2503,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   for (var i=0; i<calculateFromDivs.length; i++) {
     sheetName = "Div" + calculateFromDivs[i];
     sheet = ss.getSheetByName(sheetName);
-    if (sheet != null) {
+    if (sheet !== null) {
       if (!sheets[calculateFromDivs[i]]) {
         sheets[calculateFromDivs[i]] = sheet;
       }
@@ -2551,7 +2552,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
     sheetName = "Div" + applyToDivs[l];
     sheet = ss.getSheetByName(sheetName);
     pdDivRows = [];
-    if (sheet != null) {
+    if (sheet !== null) {
       if (!sheets[applyToDivs[l]]) {
         sheets[applyToDivs[l]] = sheet;
       }
@@ -2568,16 +2569,16 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
           var elapsed = values[m][timeColIndex];
           if (elapsed && elapsed instanceof Date) {
             var status = pdStatus(values[m], pTimes, dTimes, applyToDivs[l], isHaslerFinal);
-            if (status != "") {
+            if (status !== "") {
               Logger.log("Got P/D status " + status + " for boat " + values[m][0]);
             }
-            if (status && status.indexOf("P") == 0) { // Only promotions seem to be displayed
+            if (status && status.indexOf("P") === 0) { // Only promotions seem to be displayed
               pdDivRows.push(values[m].slice(1, 7).concat(status));
             }
             values[m][pdColIndex] = status.replace(/^D\d$/, "D?");
           }
           // Make sure that all boats have a time or dns/rtd etc.
-          if (values[m][0] && (values[m][1] || values[m][2]) && elapsed == "") {
+          if (values[m][0] && (values[m][1] || values[m][2]) && elapsed === "") {
             Logger.log("No time for boat " + values[m][0]);
             noElapsedValueCount ++;
           }
@@ -2604,7 +2605,7 @@ function calculatePromotions(scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
       pdSheet = ss.getSheetByName("PandD");
   var raceRegion = scriptProps.haslerRegion, isHaslerFinal = raceRegion == "HF";
-  if (pdSheet != null) {
+  if (pdSheet !== null) {
     // Clear existing values
     if (pdSheet.getLastRow() > 1) {
       pdSheet.getRange(2, 1, pdSheet.getLastRow()-1, pdSheet.getLastColumn()).clear();
@@ -2645,7 +2646,7 @@ function calculatePointsBoundary(entries, raceName, isHaslerFinal) {
       continue;
     }
     // Skip promoted boats
-    if (pd != "") {
+    if (pd !== "") {
       Logger.log("Skipping due to PD: " + pd);
       continue;
     }
@@ -2709,9 +2710,9 @@ function sumPoints(values, count) {
 }
 
 function calculatePoints(scriptProps) {
-  var skipNonComplete = true;
+  var skipNonComplete = true, raceRegion;
   if (scriptProps.haslerRegion) {
-    var raceRegion = scriptProps.haslerRegion;
+    raceRegion = scriptProps.haslerRegion;
   } else {
     throw "No Hasler region is defined";
   }
@@ -2720,7 +2721,7 @@ function calculatePoints(scriptProps) {
       clubsSheet = ss.getSheetByName("Clubs"), clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
       clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"), 
       pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
-  if (clubsSheet != null) {
+  if (clubsSheet !== null) {
     // Clear existing calculated values
     if (clubsSheet.getLastRow() > 1 && clubsSheet.getLastColumn() > 4) {
       clubsSheet.getRange(2, 5, clubsSheet.getLastRow()-1, clubsSheet.getLastColumn()-4).clearContent();
@@ -2735,7 +2736,7 @@ function calculatePoints(scriptProps) {
   allClubNames = getClubNames(clubsRange);
   clubsInRegion = isHaslerFinal ? allClubs : getClubCodes(clubsRange, raceRegion);
   clubNames = isHaslerFinal ? allClubNames : getClubNames(clubsRange, raceRegion);
-  if (clubsInRegion.length == 0) {
+  if (clubsInRegion.length === 0) {
     throw "No clubs found in region " + raceRegion;
   } else {
     Logger.log("Regional clubs: " + clubsInRegion);
@@ -2762,6 +2763,7 @@ function calculatePoints(scriptProps) {
   var boatNum, pd, time, minPoints, lastTime, lastPoints;
   var mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
   var club1, club2, posn, notes1, notes2;
+  var sortFn = function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);};
   for (var i=0; i<sheets.length; i++) {
     // Fetch all of the entries
     if (sheets[i].getLastRow() < 2) {
@@ -2769,7 +2771,7 @@ function calculatePoints(scriptProps) {
     }
     sheetName = sheets[i].getName();
     divStr = sheetName.replace("Div", "");
-    isHaslerRace = sheetName.indexOf("Div") == 0;
+    isHaslerRace = sheetName.indexOf("Div") === 0;
     isLightningRace = isLightningRaceName_(sheetName);
     isDoublesRace = sheetName.indexOf("_") > -1;
     sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, numHeaders);
@@ -2778,7 +2780,7 @@ function calculatePoints(scriptProps) {
     entries = getEntryRowData(sheetRange);
     // Calculate 110% boundary - time of fastest crew NOT promoted for K1 or 110% of winning boat for K2
     // Boats must not have been transferred from another division
-    entries.sort( function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);} ); // Sort by position, ascending then blanks (non-finishers)
+    entries.sort(sortFn); // Sort by position, ascending then blanks (non-finishers)
     boundary = calculatePointsBoundary(entries, divStr, isHaslerFinal);
     // Allocate points to clubs within the region
     count = (isHaslerFinal && isLightningRace) ? 40 : 20;
@@ -2816,15 +2818,15 @@ function calculatePoints(scriptProps) {
       } else {
           pointsByBoatNum[entries[l].boatNumber] = "";
       }
-      if (time == "") { // Unfinished crew, should either be a time or dns/rtd etc.
+      if (time === "") { // Unfinished crew, should either be a time or dns/rtd etc.
         noElapsedValueCount ++;
         Logger.log("No time for boat " + boatNum);
       }
       // Check clubs are in the main list
-      if (club1 != "" && allClubs.indexOf(club1) == -1) {
+      if (club1 !== "" && allClubs.indexOf(club1) == -1) {
         unfoundClubs.push([club1, entries[l].boatNumber]);
       }
-      if (club2 != "" && allClubs.indexOf(club2) == -1) {
+      if (club2 !== "" && allClubs.indexOf(club2) == -1) {
         unfoundClubs.push([club2, entries[l].boatNumber]);
       }
       if (club2 && (club1 != club2) && isHaslerFinal) {
@@ -2841,7 +2843,7 @@ function calculatePoints(scriptProps) {
       bn = sheetValues[m][0] || bn; // Use last boat number encountered, to cover second person in a K2
       clubCode = sheetValues[m][clubColIndex];
       clubIndex = clubsInRegion.indexOf(clubCode);
-      if (clubCode != '') {
+      if (clubCode !== '') {
         // Check clubs again, as only one of the K2 partners may be entitled to points
         if (clubIndex >= 0) {
           points = pointsByBoatNum[bn];
@@ -2885,7 +2887,7 @@ function calculatePoints(scriptProps) {
       }
     }
     if (clubPointsRows.length > 0) {
-      clubPointsRows.sort(function(a, b) { return b[2] - a[2] }); // Sort by number of points
+      clubPointsRows.sort(function(a, b) { return b[2] - a[2]; }); // Sort by number of points
       // Add Hasler points column value
       var lastpos = 11, nextpos = 10, pos;
       for (var o=0; o<clubPointsRows.length; o++) {
@@ -2893,7 +2895,7 @@ function calculatePoints(scriptProps) {
         nextpos = nextpos - 1;
         clubPointsRows[o].push(pos);
         lastpos = pos;
-        lastHaslerPoints = clubPointsRows[o][2]
+        lastHaslerPoints = clubPointsRows[o][2];
       }
       drawTable_(clubsSheet, {
         column: 5, 
@@ -2920,7 +2922,7 @@ function calculatePoints(scriptProps) {
       }
     }
     if (lightningPointsRows.length > 0) {
-      lightningPointsRows.sort(function(a, b) { return b[2] - a[2] }); // Sort by number of points
+      lightningPointsRows.sort(function(a, b) { return b[2] - a[2]; }); // Sort by number of points
       Logger.log("Lightning points rows: " + lightningPointsRows);
       clubsSheet.getRange(2, 13, lightningPointsRows.length, 3).setValues(lightningPointsRows);
     }
@@ -3007,7 +3009,7 @@ function getRaceColumnA1(colName) {
  * Set forumalas for all race sheets
  */
 function setFormulas() {
-  var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") != null;
+  var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") !== null;
   for (var i=0; i<sheets.length; i++) {
     setSheetFormulas_(sheets[i], useVLookup);
   }
@@ -3064,7 +3066,7 @@ function setValidation(scriptProps) {
 function setSheetValidation_(sheet, ss, scriptProps) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var clubsSheet = ss.getSheetByName('Clubs'), sheetName = sheet.getName(), allowedDivs = DIVS_ALL;
-  if (sheetName.indexOf('Div') == 0) {
+  if (sheetName.indexOf('Div') === 0) {
     if (sheetName >= 'Div7') {
       allowedDivs = DIVS_4_MILE;
     }
@@ -3075,7 +3077,7 @@ function setSheetValidation_(sheet, ss, scriptProps) {
       allowedDivs = DIVS_12_MILE;
     }
   }
-  if (sheetName.indexOf('U10 ') == 0 || sheetName.indexOf('U12 ') == 0) {
+  if (sheetName.indexOf('U10 ') === 0 || sheetName.indexOf('U12 ') === 0) {
     allowedDivs = DIVS_LIGHTNING;
   }
   var classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
@@ -3214,7 +3216,7 @@ function setProtection_(protection) {
  * Set protection on all race sheets
  */
 function setProtection() {
-  var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") != null;
+  var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") !== null;
   for (var i=0; i<sheets.length; i++) {
     setRaceSheetProtection_(sheets[i], useVLookup);
   }
@@ -3248,18 +3250,31 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
     ss.deleteSheet(sheets[i]);
   }
   clearColumnCache_();
+  var sheetName, numRanges, crewSize, sheet, isHidden, isProtected, numRows, startRow, values, totalRows, startNum;
+  var numPlaces, prefix, suffix;
   // Add new race sheets
   for (var j = 0; j < raceSheets.length; j++) {
-    var sheetName = raceSheets[j][0], numRanges = raceSheets[j][1], crewSize = raceSheets[j][2] || 1, isHidden = raceSheets[j][3] === true, isProtected = raceSheets[j][4] === true || PROTECTED_SHEETS.indexOf(sheetName) > -1;
-    var sheet = ss.insertSheet(sheetName), startRow = 2, values = [];
+    sheetName = raceSheets[j][0];
+    numRanges = raceSheets[j][1];
+    crewSize = raceSheets[j][2] || 1;
+    isHidden = raceSheets[j][3] === true;
+    isProtected = raceSheets[j][4] === true || PROTECTED_SHEETS.indexOf(sheetName) > -1;
+    sheet = ss.insertSheet(sheetName);
+    startRow = 2;
+    values = [];
+    totalRows = 0;
     for (var k = 0; k < numRanges.length; k++) {
-      var startNum = numRanges[k][0], numPlaces = numRanges[k][1], prefix = numRanges[k][2] || '', suffix = numRanges[k][3] || '';
-      var numRows = numPlaces * crewSize; // Number of places * crew size
+      startNum = numRanges[k][0];
+      numPlaces = numRanges[k][1];
+      prefix = numRanges[k][2] || '';
+      suffix = numRanges[k][3] || '';
+      numRows = numPlaces * crewSize; // Number of places * crew size
       for (var l = 0; l < numRows; l++) {
-        values.push([l % crewSize == 0 ? (prefix + (startNum + l/crewSize) + suffix) : '']);
+        values.push([l % crewSize === 0 ? (prefix + (startNum + l/crewSize) + suffix) : '']);
       }
+      totalRows += numRows;
     }
-    sheet.deleteRows(numRows + 1, sheet.getMaxRows() - numRows);
+    sheet.deleteRows(totalRows + 1, sheet.getMaxRows() - totalRows);
     sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
     setRaceSheetHeadings_(sheet, columnNames, columnAlignments);
     setRaceSheetFormatting_(sheet);
@@ -3380,7 +3395,9 @@ function getElementsByTagName(element, tagName) {
   var descendants = element.getDescendants();  
   for(var i in descendants) {
     var elt = descendants[i].asElement();     
-    if( elt !=null && elt.getName()== tagName) data.push(elt);      
+    if ( elt !== null && elt.getName() == tagName) {
+      data.push(elt);
+    }
   }
   return data;
 }
@@ -3502,6 +3519,13 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       newss.deleteSheet(oldSheets[i]);
     }
   }
+  var sortFn = function(a,b) {return (parseInt(a.rows[0][sortColumn])||999) - (parseInt(b.rows[0][sortColumn])||999);};
+  var entriesIter = function(a) {
+    values.push(objUnzip(a.rows[0], columnNames, false, ''));
+    if (a.rows.length > 1) {
+      values.push(objUnzip(a.rows[1], columnNames, false, ''));
+    }
+  };
   // Copy existing sheets
   for (var j = 0; j < srcSheets.length; j++) {
     if (srcSheets[j].isSheetHidden()) {
@@ -3513,15 +3537,10 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
           entries = getEntryRowData(srcRange, !truncateEmpty);
       // Sort entries
       if (sortColumn !== null) {
-        entries.sort( function(a,b) {return (parseInt(a.rows[0][sortColumn])||999) - (parseInt(b.rows[0][sortColumn])||999);} ); // Sort by position, ascending then blanks (non-finishers)
+        entries.sort(sortFn); // Sort by position, ascending then blanks (non-finishers)
       }
       // Add entries into the table
-      entries.forEach(function(a) {
-        values.push(objUnzip(a.rows[0], columnNames, false, ''));
-        if (a.rows.length > 1) {
-          values.push(objUnzip(a.rows[1], columnNames, false, ''));
-        }
-      });
+      entries.forEach(entriesIter);
       var targetRange = newSheet.getRange(1, 1, values.length, values[0].length);
       targetRange.setValues(values);
       targetRange.setFontFamily(SHEET_FONT_FAMILY);
@@ -3566,6 +3585,35 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
     }
   }
   var clubCounts = {};
+  var rowIter = function(b) {
+    currClub = b['Club'];
+    if (currClub) {
+      currClubValues = clubValues[currClub] || [columnNames];
+      // Make sure race number is repeated for second K2 partner if both not from same club
+      b['Number'] = b['Number'] || lastRaceNum;
+      b['Race'] = raceName;
+      currClubValues.push(objUnzip(b, columnNames, false, ''));
+      clubValues[currClub] = currClubValues;
+      lastRaceNum = b['Number'];
+
+      // Keep a count of all paddlers entered
+      clubCounts[currClub] = clubCounts[currClub] || { seniors: 0, juniors: 0, lightnings: 0 };
+      if (isLightningRaceName_(b['Race'])) {
+        clubCounts[currClub].lightnings ++;
+      } else {
+        if (b['Class']) {
+          if (b['Class'].indexOf('J') > -1) {
+            clubCounts[currClub].juniors ++;
+          } else {
+            clubCounts[currClub].seniors ++;
+          }
+        }
+      }
+    }
+  };
+  var entriesIter = function(a) {
+    a.rows.forEach(rowIter);
+  };
   // Copy existing sheets
   for (var j = 0; j < srcSheets.length; j++) {
     if (srcSheets[j].isSheetHidden()) {
@@ -3575,34 +3623,7 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
     if (lastRow > 1) {
       var raceName = srcSheets[j].getName(), srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()),
           entries = getEntryRowData(srcRange, true);
-      entries.forEach(function(a) {
-        a.rows.forEach(function(b) {
-          currClub = b['Club'];
-          if (currClub) {
-            currClubValues = clubValues[currClub] || [columnNames];
-            // Make sure race number is repeated for second K2 partner if both not from same club
-            b['Number'] = b['Number'] || lastRaceNum;
-            b['Race'] = raceName;
-            currClubValues.push(objUnzip(b, columnNames, false, ''));
-            clubValues[currClub] = currClubValues;
-            lastRaceNum = b['Number'];
-
-            // Keep a count of all paddlers entered
-            clubCounts[currClub] = clubCounts[currClub] || { seniors: 0, juniors: 0, lightnings: 0 };
-            if (isLightningRaceName_(b['Race'])) {
-              clubCounts[currClub].lightnings ++;
-            } else {
-              if (b['Class']) {
-                if (b['Class'].indexOf('J') > -1) {
-                  clubCounts[currClub].juniors ++;
-                } else {
-                  clubCounts[currClub].seniors ++;
-                }
-              }
-            }
-          }
-        });
-      });
+      entries.forEach(entriesIter);
     }
   }
   Logger.log(clubCounts);
@@ -3665,6 +3686,11 @@ function createNumberBoards_(name, truncateEmpty) {
     body.appendParagraph(num).setAttributes(style);
   }
   // Copy existing sheets
+  var entryIter = function(a) {
+    // Add the boat, twice
+    appendNumber(body, a.boatNumber);
+    lastbn = a.boatNumber;
+  };
   for (var i = 0; i < srcSheets.length; i++) {
     if (srcSheets[i].isSheetHidden() || srcSheets[i].getSheetProtection().isProtected()) {
       continue;
@@ -3677,11 +3703,7 @@ function createNumberBoards_(name, truncateEmpty) {
     if (lastRow > 1) {
       var srcRange = srcSheets[i].getRange(1, 1, lastRow, srcSheets[i].getLastColumn()), entries = getEntryRowData(srcRange, !truncateEmpty);
       // Add entries into the document
-      entries.forEach(function(a) {
-        // Add the boat, twice
-        appendNumber(body, a.boatNumber);
-        lastbn = a.boatNumber;
-      });
+      entries.forEach(entryIter);
       // Add 10 more onto the end (or 5 for K2s)
       var numToAdd = sheetName.match(/Div\d_\d/) ? 5 : 10;
       for (var j = lastbn + 1; j <= lastbn + numToAdd; j++) {

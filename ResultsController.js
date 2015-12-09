@@ -51,7 +51,7 @@ function saveResultsHTML(scriptProps) {
     "<p>Race results published to Google Drive:</p>",
     "https://googledrive.com/host/" + htmlFile.getId()
   );
-  return {fileId: htmlFile.getId()}
+  return {fileId: htmlFile.getId()};
 }
 
 /**
@@ -76,7 +76,7 @@ function saveEntriesHTML(scriptProps) {
     "<p>Race entries published to Google Drive:</p>",
     "https://googledrive.com/host/" + htmlFile.getId()
   );
-  return {fileId: htmlFile.getId()}
+  return {fileId: htmlFile.getId()};
 }
 
 /**
@@ -159,7 +159,7 @@ function findSpreadsheetRankings(ssKey, val) {
     return Object.keys(row).map(function(k) {
       return row[k] instanceof Date ? row[k].toDateString() : row[k];
     });
-  })
+  });
 }
 
 function onHTMLAddEntryClick(ssKey, items1, items2, selectedClass) {
@@ -205,7 +205,7 @@ function getRaceResultsFromSpreadsheet(ss) {
     var results = [], lastbn = 0, rows = getTableRows(sheets[i]);
     for (var j=0; j<rows.length; j++) {
       var row = rows[j];
-      if (parseInt(row['Number']) && row['Surname'] == "") {
+      if (parseInt(row['Number']) && row['Surname'] === "") {
         break;
       }
       var bn = row['Number'],
@@ -219,14 +219,14 @@ function getRaceResultsFromSpreadsheet(ss) {
           points = row['Points'],
           pd = row['P/D'],
           notes = row['Notes'];
-      if (name.trim() != "") {
+      if (name.trim() !== "") {
         if (bn) {
-          if (time) {
+          //if (time) {
             results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [raceClass], divs: [div], time: time, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
-          }
+          //}
         } else if (results.length > 0) {
           var last = results.pop();
-          if (lastbn != 0 && lastbn == last.num) { // Check it is the same boat as we may have skipped some if missing a time
+          if (lastbn !== 0 && lastbn == last.num) { // Check it is the same boat as we may have skipped some if missing a time
             last.names.push(name);
             last.clubs.push(club);
             last.classes.push(raceClass);
@@ -240,24 +240,24 @@ function getRaceResultsFromSpreadsheet(ss) {
       }
       lastbn = bn;
     }
-    classes.push({name: sheets[i].getName(), results: results.sort(sortResults) })
+    classes.push({name: sheets[i].getName(), results: results.sort(sortResults) });
   }
   var pdSheet = ss.getSheetByName("PandD"), pdTimes = null, coursePdTimes = [], lastCourse = "", thisCourse = "";
   if (pdSheet && pdSheet.getLastRow() > 1) {
     pdTimes = [];
     Logger.log("Reading PD times");
     var pdValues = pdSheet.getRange(2, 12, pdSheet.getLastRow()-1, 2).getValues();
-    for (var i=0; i<pdValues.length; i++) {
-      if (pdValues[i][0] && pdValues[i][1] && pdValues[i][1] instanceof Date) {
-        Logger.log("Found time " + pdValues[i][0]);
-        thisCourse = pdValues[i][0].split(/K\d/)[0];
+    for (var k=0; k<pdValues.length; k++) {
+      if (pdValues[k][0] && pdValues[k][1] && pdValues[k][1] instanceof Date) {
+        Logger.log("Found time " + pdValues[k][0]);
+        thisCourse = pdValues[k][0].split(/K\d/)[0];
         if (lastCourse != thisCourse) {
           coursePdTimes = []; // Reset the list of times
           pdTimes.push({title: thisCourse, times: coursePdTimes});
         }
-        var d = pdValues[i][1];
+        var d = pdValues[k][1];
         coursePdTimes.push({
-          name: pdValues[i][0].split(/K\d/)[1],
+          name: pdValues[k][0].split(/K\d/)[1],
           time: formatTime(d) + "." + formatTimePart(Math.floor(d.getUTCMilliseconds()/10))
         });
         lastCourse = thisCourse;
@@ -268,24 +268,24 @@ function getRaceResultsFromSpreadsheet(ss) {
   if (clubsSheet && clubsSheet.getLastRow() > 1) {
     Logger.log("Reading club points");
     var clubRows = clubsSheet.getRange(2, 8, clubsSheet.getLastRow()-1, 4).getValues();
-    for (var i=0; i<clubRows.length; i++) {
-      if (clubRows[i][0]) {
+    for (var l=0; l<clubRows.length; l++) {
+      if (clubRows[l][0]) {
         clubPoints.push({
-          name: clubRows[i][0],
-          code: clubRows[i][1],
-          totalPoints: clubRows[i][2],
-          haslerPoints: clubRows[i][3]
+          name: clubRows[l][0],
+          code: clubRows[l][1],
+          totalPoints: clubRows[l][2],
+          haslerPoints: clubRows[l][3]
         });
       }
     }
     Logger.log("Reading lightning points");
     var lightningRows = clubsSheet.getRange(2, 13, clubsSheet.getLastRow()-1, 3).getValues();
-    for (var i=0; i<lightningRows.length; i++) {
-      if (lightningRows[i][0]) {
+    for (var m=0; m<lightningRows.length; m++) {
+      if (lightningRows[m][0]) {
         lightningPoints.push({
-          name: lightningRows[i][0],
-          code: lightningRows[i][1],
-          totalPoints: lightningRows[i][2]
+          name: lightningRows[m][0],
+          code: lightningRows[m][1],
+          totalPoints: lightningRows[m][2]
         });
       }
     }
@@ -318,7 +318,7 @@ function getRaceStarters(key) {
 function getRaceStartersFromSpreadsheet(ss) {
   var entries = getRaceEntriesFromSpreadsheet(ss);
   for (var i = 0; i < entries.races.length; i++) {
-    entries.races[i].results = entries.races[i].results.filter(function(val, index, arr) { return val.startTime.toLowerCase() != 'dns' });
+    entries.races[i].results = entries.races[i].results.filter(function(val, index, arr) { return val.startTime.toLowerCase() != 'dns'; });
   }
   return entries;
 }
@@ -332,7 +332,7 @@ function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
     var raceDate = raceDateStr ? parseDate(raceDateStr) : new Date();
     for (var j=0; j<rows.length; j++) {
       var row = rows[j];
-      if (parseInt(row['Number']) && row['Surname'] == "") {
+      if (parseInt(row['Number']) && row['Surname'] === "") {
         break;
       }
       var name = "" + row['First name'] + " " + row['Surname'],
@@ -345,7 +345,7 @@ function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
         div = "" + row['Div'],
         paid = "" + row['Paid'],
         startTime = "" + row['Start'];
-      if (name.trim() != "") {
+      if (name.trim() !== "") {
         if (row['Number']) {
           results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [raceClass], divs: [div], paid: [paid], startTime: startTime });
         } else {
@@ -373,7 +373,7 @@ function getLastEntryRow(sheet) {
     // Find the latest row with a number but without a name in the sheet
     var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 2), values = range.getValues();
     for (var i=0; i<values.length; i++) {
-      if (parseInt(values[i][0]) && values[i][1] == "") {
+      if (parseInt(values[i][0]) && values[i][1] === "") {
         return i;
       }
     }
