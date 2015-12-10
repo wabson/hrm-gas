@@ -178,35 +178,35 @@ function showResultsSummary(data) {
   var summaryItems = [];
   div.empty();
   for (var i = 0; i < races.length; i++) {
-    var first = null,
+    var starters, finishers, complete, finishTimes, startTime = null,
+      first = null,
       last = null,
-      numEntries = 0,
-      numFinishers = 0,
       numStarters = 0;
-    var lastFinisher = races[i].results.filter(function(result) {
+    starters = races[i].results.filter(function(result) {
+      return timeRe.test(result.startTime);
+    });
+    finishers = starters.filter(function(result) {
       return timeRe.test(result.finishTime);
-    }).map(function(result) {
+    });
+    complete = starters.filter(function(result) {
+      return result.time;
+    });
+    finishTimes = finishers.map(function(result) {
       return result.finishTime;
-    }).sort().reverse()[0];
-    for (var j = 0; j < races[i].results.length; j++) {
-      numEntries ++;
-      first = first || races[i].results[j].finishTime;
-      last = races[i].results[j].finishTime;
-      if (timeRe.test(races[i].results[j].startTime)) {
-        numStarters ++;
-      }
-      if (races[i].results[j].time && races[i].results[j].time !== 'dns') {
-        numFinishers ++;
-      }
-    }
+    }).sort();
+    first = finishTimes[0];
+    last = finishTimes.reverse()[0];
+    numStarters = starters.length;
     if (numStarters === 0) {
       continue;
     }
+    startTime = starters[0].startTime;
     summaryItems.push({
       name: races[i].name,
-      completeness: '' + numFinishers + '/' + numStarters,
+      completeness: '' + complete.length + '/' + numStarters,
+      start: startTime,
       first: first || '-',
-      last: lastFinisher || '-'
+      last: last || '-'
     });
   }
   function compareSummary(a, b) {
@@ -222,6 +222,7 @@ function showResultsSummary(data) {
   html += ('  <tr>');
   html += ('     <th>Race Name</th>');
   html += ('     <th>Complete</th>');
+  html += ('     <th>Start</th>');
   html += ('     <th>First</th>');
   html += ('     <th>Last</th>');
   html += ('  </tr>');
@@ -229,6 +230,7 @@ function showResultsSummary(data) {
     return '  <tr>' +
       '     <td>' + item.name + '</td>' +
       '     <td>' + item.completeness + '</td>' +
+      '     <td>' + item.start + '</td>' +
       '     <td>' + item.first + '</td>' +
       '     <td>' + item.last + '</td>' +
       '  </tr>';
