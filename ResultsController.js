@@ -282,6 +282,7 @@ function getResultsFromSpreadsheet(ss) {
   data.lightningPoints = lightningPoints;
   data.races = classes;
   data.lastUpdated = getLastUpdated(ss.getId());
+  data.allowPd = pdSheet !== null;
   Logger.log("Return " + classes.length + " races");
   return data;
 }

@@ -138,7 +138,9 @@ function showData(data) {
 
 function showSummaryData(data) {
   if (data.races) {
-    showResultsSummary(data.races);
+    showResultsSummary(data.races, {
+      allowPd: data.allowPd
+    });
   }
   if (data.pdTimes) {
     showPdTimes(data.pdTimes);
@@ -208,7 +210,8 @@ function formatRaceResults(race, options) {
   return html;
 }
 
-function showResultsSummary(races) {
+function showResultsSummary(races, options) {
+  options = options || {};
   var div = $('#results-summary'), html = '';
   var ssKey = key;
   var timeRe = /\d{1,2}:\d{2}:\d{2}/;
@@ -273,25 +276,29 @@ function showResultsSummary(races) {
       '  </tr>';
   }).join('\n');
   html += ('</table>');
-  html += ('<p><button id="pd-div1">Div 1-3 Promotions</button></p>');
-  html += ('<p><button id="pd-div4">Div 4-6 Promotions</button></p>');
-  html += ('<p><button id="pd-div7">Div 7-9 Promotions</button></p>');
+  if (options.allowPd === true) {
+    html += ('<p><button id="pd-div1">Div 1-3 Promotions</button></p>');
+    html += ('<p><button id="pd-div4">Div 4-6 Promotions</button></p>');
+    html += ('<p><button id="pd-div7">Div 7-9 Promotions</button></p>');
+  }
   div.append(html);
-  $("#pd-div1").button().on("click", function() {
-    google.script.run.withSuccessHandler(function(data) {
-      $("#pd-result").html('Applied ' + data.length + ' promotions/demotions for Divs 1-3');
-    }).setPromotionsDiv123(ssKey, false);
-  });
-  $("#pd-div4").button().on("click", function() {
-    google.script.run.withSuccessHandler(function(data) {
-      $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 4-6');
-    }).setPromotionsDiv456(ssKey, false);
-  });
-  $("#pd-div7").button().on("click", function() {
-    google.script.run.withSuccessHandler(function(data) {
-      $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 7-9');
-    }).setPromotionsDiv789(ssKey, false);
-  });
+  if (options.allowPd === true) {
+    $("#pd-div1").button().on("click", function () {
+      google.script.run.withSuccessHandler(function (data) {
+        $("#pd-result").html('Applied ' + data.length + ' promotions/demotions for Divs 1-3');
+      }).setPromotionsDiv123(ssKey, false);
+    });
+    $("#pd-div4").button().on("click", function () {
+      google.script.run.withSuccessHandler(function (data) {
+        $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 4-6');
+      }).setPromotionsDiv456(ssKey, false);
+    });
+    $("#pd-div7").button().on("click", function () {
+      google.script.run.withSuccessHandler(function (data) {
+        $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 7-9');
+      }).setPromotionsDiv789(ssKey, false);
+    });
+  }
 }
 
 function showPdTimes(pdTimes) {
