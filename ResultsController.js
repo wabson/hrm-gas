@@ -36,7 +36,7 @@ function saveResultsHTML(scriptProps) {
   var title = ss.getName();
   template.showNotes = false;
   template.title = title;
-  var data = getRaceResultsFromSpreadsheet(ss);
+  var data = getResultsFromSpreadsheet(ss);
   for (var k in data) {
     template[k] = data[k];
     template.isHaslerFinal = scriptProps.haslerRegion == "HF";
@@ -127,6 +127,7 @@ function printResults(e) {
   var title = ss.getName();
   template.show = e.parameter.show || "results";
   template.key = key;
+  template.race = e.parameter.race || '';
   template.title = title;
   template.hasEditPermission = spreadsheetHasEditPermission_(ss);
   template.scroll = scroll;
@@ -179,68 +180,54 @@ function getScriptUrl() {
 }
 
 /**
- * Get results for display
+ * Get results of a specific race for display
  *
  * @function getRaceResults
  */
-function getRaceResults(key) {
+function getRaceResults(key, raceName) {
   if (!key) {
     throw "You must specify a document";
   }
   var ss = SpreadsheetApp.openById(key);
-  return getRaceResultsFromSpreadsheet(ss);
+  var raceSheet = ss.getSheetByName(raceName);
+  if (!raceSheet) {
+    throw "The specified race was not found";
+  }
+  return {
+    races: [
+      {
+        name: raceName,
+        results: _getRaceResultsFromSpreadsheet(raceSheet)
+      }
+    ]
+  }
+}
+
+/**
+ * Get results summary for display
+ *
+ * @function getRaceResultsSummary
+ */
+function getRaceResultsSummary(key, options) {
+  if (!key) {
+    throw "You must specify a document";
+  }
+  var ss = SpreadsheetApp.openById(key);
+  return getResultsFromSpreadsheet(ss);
 }
 
 /**
  * Get results for display
  *
- * @function getRaceResultsFromSpreadsheet
+ * @function getResultsFromSpreadsheet
  */
-function getRaceResultsFromSpreadsheet(ss) {
+function getResultsFromSpreadsheet(ss) {
   var data = {},
       classes = [],
       sheets = getRaceSheets(ss);
 
   for (var i=0; i<sheets.length; i++) {
-    var results = [], lastbn = 0, rows = getTableRows(sheets[i]);
-    for (var j=0; j<rows.length; j++) {
-      var row = rows[j];
-      if (parseInt(row['Number']) && row['Surname'] === "") {
-        break;
-      }
-      var bn = row['Number'],
-          name = "" + row['First name'] + " " + row['Surname'],
-          club = "" + row['Club'],
-          raceClass = "" + row['Class'],
-          div = "" + row['Div'],
-          time = formatTime(row['Elapsed']),
-          startTime = formatTime(row['Start']),
-          finishTime = formatTime(row['Finish']),
-          points = row['Points'],
-          pd = row['P/D'],
-          notes = row['Notes'];
-      if (name.trim() !== "") {
-        if (bn) {
-          //if (time) {
-            results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [raceClass], divs: [div], time: time, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
-          //}
-        } else if (results.length > 0) {
-          var last = results.pop();
-          if (lastbn !== 0 && lastbn == last.num) { // Check it is the same boat as we may have skipped some if missing a time
-            last.names.push(name);
-            last.clubs.push(club);
-            last.classes.push(raceClass);
-            last.divs.push(div);
-            last.points.push(points);
-            last.pd.push(pd);
-            last.notes.push(notes);
-          }
-          results.push(last);
-        }
-      }
-      lastbn = bn;
-    }
-    classes.push({name: sheets[i].getName(), results: results.sort(sortResults) });
+    classes.push({name: sheets[i].getName(), results: _getRaceResultsFromSpreadsheet(sheets[i]) });
   }
   var pdSheet = ss.getSheetByName("PandD"), pdTimes = null, coursePdTimes = [], lastCourse = "", thisCourse = "";
   if (pdSheet && pdSheet.getLastRow() > 1) {
@@ -297,6 +284,49 @@ function getRaceResultsFromSpreadsheet(ss) {
   data.lastUpdated = getLastUpdated(ss.getId());
   Logger.log("Return " + classes.length + " races");
   return data;
+}
+
+function _getRaceResultsFromSpreadsheet(sheet) {
+  var results = [], lastbn = 0, rows = getTableRows(sheet);
+  for (var j=0; j<rows.length; j++) {
+    var row = rows[j];
+    if (parseInt(row['Number']) && row['Surname'] === "") {
+      break;
+    }
+    var bn = row['Number'],
+        name = "" + row['First name'] + " " + row['Surname'],
+        club = "" + row['Club'],
+        raceClass = "" + row['Class'],
+        div = "" + row['Div'],
+        time = formatTime(row['Elapsed']),
+        startTime = formatTime(row['Start']),
+        finishTime = formatTime(row['Finish']),
+        points = row['Points'],
+        pd = row['P/D'],
+        notes = row['Notes'];
+    if (name.trim() !== "") {
+      if (bn) {
+        //if (time) {
+        results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [raceClass], divs: [div], time: time, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
+        //}
+      } else if (results.length > 0) {
+        var last = results.pop();
+        if (lastbn !== 0 && lastbn == last.num) { // Check it is the same boat as we may have skipped some if missing a time
+          last.names.push(name);
+          last.clubs.push(club);
+          last.classes.push(raceClass);
+          last.divs.push(div);
+          last.points.push(points);
+          last.pd.push(pd);
+          last.notes.push(notes);
+        }
+        results.push(last);
+      }
+    }
+    lastbn = bn;
+  }
+  results.sort(sortResults);
+  return results;
 }
 
 function getRaceEntries(key) {

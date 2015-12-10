@@ -9,7 +9,11 @@ $(function() {
   } else if (show == 'starters') {
     google.script.run.withSuccessHandler(onDataLoaded).getRaceStarters(key);
   } else {
-    google.script.run.withSuccessHandler(onDataLoaded).getRaceResults(key);
+    if (race === '') {
+      google.script.run.withSuccessHandler(onDataLoaded).getRaceResultsSummary(key);
+    } else {
+      google.script.run.withSuccessHandler(onDataLoaded).getRaceResults(key, race);
+    }
   }
 });
 
@@ -24,7 +28,11 @@ function onDataLoaded(data) {
   } else if (show == 'starters') {
     showEntries(data.races, false);
   } else {
-    showData(data);
+    if (race === '') {
+      showSummaryData(data);
+    } else {
+      showData(data);
+    }
   }
   if (isScrollingEnabled()) {
     console.log("Starting animation");
@@ -52,7 +60,7 @@ function onLastUpdatedSuccess(updated) {
 
 function reloadData() {
   console.log("Reload data");
-  google.script.run.withSuccessHandler(onDataReloaded).getRaceResults(key);
+  google.script.run.withSuccessHandler(onDataReloaded).getRaceResultsSummary(key);
 }
 
 function onDataReloaded(data) {
@@ -70,7 +78,11 @@ function onDataReloaded(data) {
   } else if (show == 'starters') {
     showEntries(data.races, false);
   } else {
-    showData(data);
+      if (race === '') {
+        showSummaryData(data);
+      } else {
+        showData(data);
+      }
   }
   }
   if (data.lastUpdated) {
@@ -107,8 +119,11 @@ function stopAnimation() {
 
 function showData(data) {
   if (data.races) {
-    showResults(data);
-    showResultsSummary(data);
+    showResults(data.races, {
+      showClubPoints: data.clubPoints && data.clubPoints.length,
+      showPdTimes: data.pdTimes && data.pdTimes.length,
+      showNotes: showNotes == "1" || showNotes == "true"
+    });
   }
   if (data.pdTimes) {
     showPdTimes(data.pdTimes);
@@ -121,49 +136,26 @@ function showData(data) {
   }
 }
 
-function showResults(data) {
-  var races = data.races, div = $('#results-races'), html = '';
+function showSummaryData(data) {
+  if (data.races) {
+    showResultsSummary(data.races);
+  }
+  if (data.pdTimes) {
+    showPdTimes(data.pdTimes);
+  }
+  if (data.clubPoints) {
+    showClubPoints(data.clubPoints);
+  }
+  if (data.lightningPoints) {
+    showLightningPoints(data.lightningPoints);
+  }
+}
+
+function showResults(races, options) {
+  var div = $('#results-races'), html = '';
   div.empty();
   for (var i = 0; i < races.length; i++) {
-    if (races[i].results && races[i].results.length > 0) {
-      html += ('<table>');
-      html += ('<caption>' + races[i].name + '</caption>');
-      html += ('  <tr>');
-      html += ('     <th>Position</th>');
-      html += ('     <th>Name</th>');
-      html += ('     <th>Club</th>');
-      html += ('     <th>Class</th>');
-      html += ('     <th>Div</th>');
-      html += ('     <th>Time</th>');
-      if (data.clubPoints && data.clubPoints.length)
-        html += ('     <th>Points</th>');
-      if (data.pdTimes && data.pdTimes.length)
-        html += ('     <th>P/D</th>');
-      if (showNotes == "1" || showNotes == "true") {
-        html += ('     <th>Notes</th>');
-      }
-      html += ('  </tr>')
-      for (var j = 0; j < races[i].results.length; ++j) {
-        if (races[i].results[j].time) {
-          html += ('  <tr>');
-          html += ('     <td>' + races[i].results[j].posn + '</td>');
-          html += ('     <td>' + races[i].results[j].names.join("<br />").toUpperCase() + '</td>');
-          html += ('     <td>' + races[i].results[j].clubs.join("<br />").toUpperCase() + '</td>');
-          html += ('     <td>' + races[i].results[j].classes.join("<br />").toUpperCase() + '</td>');
-          html += ('     <td>' + races[i].results[j].divs.join("<br />") + '</td>');
-          html += ('     <td>' + races[i].results[j].time + '</td>');
-          if (data.clubPoints && data.clubPoints.length)
-            html += ('     <td>' + races[i].results[j].points.join("<br />") + '</td>');
-          if (data.pdTimes && data.pdTimes.length)
-            html += ('     <td>' + races[i].results[j].pd.join("<br />") + '</td>');
-          if (showNotes == "1" || showNotes == "true") {
-            html += ('     <td>' + races[i].results[j].notes.join("<br />") + '</td>');
-          }
-          html += ('       </tr>');
-        }
-      }
-      html += ('</table>');
-    }
+    html += formatRaceResults(races[i], options);
   }
   if (html == '') {
     html = isScrollingEnabled() ? '<p>Results will be displayed here as they become available</p>' : '<p>No results to display</p>';
@@ -171,8 +163,53 @@ function showResults(data) {
   div.append(html);
 }
 
-function showResultsSummary(data) {
-  var races = data.races, div = $('#results-summary'), html = '';
+function formatRaceResults(race, options) {
+  options = options || {};
+  var html = '';
+  if (race.results && race.results.length > 0) {
+    html += ('<table>');
+    html += ('<caption>' + race.name + '</caption>');
+    html += ('  <tr>');
+    html += ('     <th>Position</th>');
+    html += ('     <th>Name</th>');
+    html += ('     <th>Club</th>');
+    html += ('     <th>Class</th>');
+    html += ('     <th>Div</th>');
+    html += ('     <th>Time</th>');
+    if (options.showClubPoints)
+      html += ('     <th>Points</th>');
+    if (options.showPdTimes)
+      html += ('     <th>P/D</th>');
+    if (options.showNotes) {
+      html += ('     <th>Notes</th>');
+    }
+    html += ('  </tr>');
+    for (var j = 0; j < race.results.length; ++j) {
+      if (race.results[j].time) {
+        html += ('  <tr>');
+        html += ('     <td>' + race.results[j].posn + '</td>');
+        html += ('     <td>' + race.results[j].names.join("<br />").toUpperCase() + '</td>');
+        html += ('     <td>' + race.results[j].clubs.join("<br />").toUpperCase() + '</td>');
+        html += ('     <td>' + race.results[j].classes.join("<br />").toUpperCase() + '</td>');
+        html += ('     <td>' + race.results[j].divs.join("<br />") + '</td>');
+        html += ('     <td>' + race.results[j].time + '</td>');
+        if (options.showClubPoints)
+          html += ('     <td>' + race.results[j].points.join("<br />") + '</td>');;
+        if (options.showPdTimes)
+          html += ('     <td>' + race.results[j].pd.join("<br />") + '</td>');
+        if (options.showNotes) {
+          html += ('     <td>' + races[i].results[j].notes.join("<br />") + '</td>');
+        }
+        html += ('       </tr>');
+      }
+    }
+    html += ('</table>');
+  }
+  return html;
+}
+
+function showResultsSummary(races) {
+  var div = $('#results-summary'), html = '';
   var ssKey = key;
   var timeRe = /\d{1,2}:\d{2}:\d{2}/;
   var summaryItems = [];
@@ -228,7 +265,7 @@ function showResultsSummary(data) {
   html += ('  </tr>');
   html += summaryItems.map(function(item) {
     return '  <tr>' +
-      '     <td>' + item.name + '</td>' +
+      '     <td><a href="' + url + '?show=results&amp;key=' + key + '&amp;race=' + item.name + '" target="_top">' + item.name + '</a></td>' +
       '     <td>' + item.completeness + '</td>' +
       '     <td>' + item.start + '</td>' +
       '     <td>' + item.first + '</td>' +

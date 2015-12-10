@@ -293,8 +293,9 @@ $(function() {
   });
 });
 </script>
+<? var url = getScriptUrl(); ?>
 <script>
-var key = "<?= key ?>", show = "<?= show ?>", showNotes = "<?= showNotes ?>", scroll = "<?= scroll ?>", checkInterval = "<?= checkInterval ?>";
+var key = "<?= key ?>", race="<?= race ?>", show = "<?= show ?>", showNotes = "<?= showNotes ?>", scroll = "<?= scroll ?>", checkInterval = "<?= checkInterval ?>", url = "<?= url ?>";
 </script>
 <?!= include('ResultsScript'); ?>
 </body>
