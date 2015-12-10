@@ -13,7 +13,7 @@
 <? var url = getScriptUrl();
   while (files.hasNext()) {
     var file = files.next(); ?>
-<div><a href="<?= url ?>?key=<?= file.getId() ?>&amp;show=entries"><?= file.getName() ?></a></div>
+<div><a href="<?= url ?>?key=<?= file.getId() ?>&amp;show=entries" target="_top"><?= file.getName() ?></a></div>
 <? } ?>
 </div> <!-- end #results-container -->
 </div> <!-- end #page -->

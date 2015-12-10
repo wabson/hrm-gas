@@ -96,7 +96,7 @@ function listFiles(e) {
   template.files = DriveApp.searchFiles(
      "properties has { key='hrmType' and value='HRM' and visibility='PUBLIC' }");
   var output = template.evaluate();
-  output.setSandboxMode(HtmlService.SandboxMode.NATIVE);
+  output.setSandboxMode(HtmlService.SandboxMode.IFRAME);
   output.setTitle(title);
   return output;
 }
@@ -135,7 +135,7 @@ function printResults(e) {
   template.showNotes = showNotes;
   var output = template.evaluate();
   Logger.log(template.getCode());
-  output.setSandboxMode(HtmlService.SandboxMode.NATIVE);
+  output.setSandboxMode(HtmlService.SandboxMode.IFRAME);
   output.setTitle(title);
   return output;
 }
