@@ -12,12 +12,14 @@ $(function() {
     }
   } else if (show == 'starters') {
     google.script.run.withSuccessHandler(onDataLoaded).getRaceStarters(key);
-  } else {
+  } else if (show == 'results') {
     if (race === '') {
       google.script.run.withSuccessHandler(onDataLoaded).getRaceResultsSummary(key);
     } else {
       google.script.run.withSuccessHandler(onDataLoaded).getRaceResults(key, race);
     }
+  } else {
+    showLinks(key);
   }
 });
 
@@ -163,6 +165,8 @@ function showSummaryData(data) {
 
 function showResults(races, options) {
   var div = $('#results-races'), html = '';
+  var ssKey = key;
+  $('#file-links').html('<p><a href="' + url + '?show=results&amp;key=' + ssKey + '" target="_top"><< Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     html += formatRaceResults(races[i], options);
@@ -224,6 +228,7 @@ function showResultsSummary(races, options) {
   var ssKey = key;
   var timeRe = /\d{1,2}:\d{2}:\d{2}/;
   var summaryItems = [];
+  $('#file-links').html('<p><a href="' + url + '?key=' + ssKey + '" target="_top"><< Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     var starters, finishers, complete, finishTimes, startTime = null,
@@ -380,7 +385,7 @@ function showEntries(entries, showBCUDetails) {
   var div = $('#entries-data'), html = '';
   var ssKey = key;
   div.empty();
-  html += '<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top">Back to entries</a></p>';
+  $('#file-links').html('<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top"><< Back up</a></p>');
   for (var i = 0; i < entries.length; ++i) {
     if (entries[i].results && entries[i].results.length > 0) {
       html += '<table>';
@@ -425,6 +430,7 @@ function showEntriesSummary(races, options) {
   var summaryItems = [];
   var m = 0;
   var entries, numPaid;
+  $('#file-links').html('<p><a href="' + url + '?key=' + ssKey + '" target="_top"><< Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     entries = races[i].results;
@@ -458,5 +464,15 @@ function showEntriesSummary(races, options) {
   html += ('</table>');
   html += '<p>Total ' + m + ' entries</p>';
   div.append(html);
+}
+
+function showLinks(ssKey) {
+  var div = $('#file-links'), html = '';
+  div.empty();
+  html += '<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top">Show Entries</a></p>';
+  html += '<p><a href="' + url + '?show=results&amp;key=' + ssKey + '" target="_top">Show Results</a></p>';
+  html += '<p><a href="https://docs.google.com/spreadsheets/d/' + ssKey + '/edit">Edit Full Spreadsheet</a></p>';
+  div.append(html);
+  $('#messages').hide();
 }
 </script>

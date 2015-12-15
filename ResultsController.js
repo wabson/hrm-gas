@@ -10,18 +10,22 @@ var RESULTS_SS_FILENAME_TMPL = "%s Printable Results";
  * @param {object} e Event information
  */
 function doGet(e) {
-  var action = e.parameter.show || "list";
-  switch (action) {
-    case "list":
-      return listFiles(e);
-    case "results":
-      return printResults(e);
-    case "entries":
-      return printResults(e);
-    case "starters":
-      return printResults(e);
-    default:
-      throw "Unsupported action " + action;
+  var key = e.parameter.key, action = e.parameter.show || "links";
+  if (key) {
+    switch (action) {
+      case "results":
+        return printResults(e);
+      case "entries":
+        return printResults(e);
+      case "starters":
+        return printResults(e);
+      case "links":
+        return printResults(e);
+      default:
+        throw "Unsupported action " + action;
+    }
+  } else {
+    return listFiles(e);
   }
 }
 
@@ -125,7 +129,7 @@ function printResults(e) {
   var template = HtmlService.createTemplateFromFile('Results');
   var ss = SpreadsheetApp.openById(key);
   var title = ss.getName();
-  template.show = e.parameter.show || "results";
+  template.show = e.parameter.show || 'links';
   template.key = key;
   template.race = e.parameter.race || '';
   template.title = title;
