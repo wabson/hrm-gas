@@ -459,13 +459,17 @@ function showEntriesSummary(races, options) {
     numPaid = entries.filter(function(entry) {
       return entry.paid.filter(function(amount) { return /\£?\d+\.?\d*/.test(amount); }).length > 0;
     }).length;
+    numBcuOk = entries.filter(function(entry) {
+      return entry.bcuNum.filter(function(bcuNum) { return bcuNum === '' }).length == 0 && entry.expiry.filter(function(bcuExp) { return bcuExp === '' }).length == 0;
+    }).length;
     if (entries.length === 0) {
       continue;
     }
     summaryItems.push({
       name: races[i].name,
       entries: entries.length,
-      paid: numPaid
+      paid: numPaid,
+      bcu: numBcuOk
     });
     m += entries.length;
   }
@@ -473,14 +477,16 @@ function showEntriesSummary(races, options) {
   html += ('<table>');
   html += ('  <tr>');
   html += ('     <th>Race Name</th>');
-  html += ('     <th>Entries</th>');
+  html += ('     <th>Entered</th>');
   html += ('     <th>Paid</th>');
+  html += ('     <th>Membership</th>');
   html += ('  </tr>');
   html += summaryItems.map(function(item) {
     return '  <tr>' +
       '     <td><a href="' + url + '?show=entries&amp;key=' + ssKey + '&amp;race=' + item.name + '" target="_top">' + item.name + '</a></td>' +
       '     <td>' + item.entries + '</td>' +
-      '     <td>' + item.paid + '</td>'
+      '     <td>' + item.paid + '</td>' +
+      '     <td>' + item.bcu + '</td>'
       '  </tr>';
   }).join('\n');
   html += ('</table>');
