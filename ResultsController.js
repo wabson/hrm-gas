@@ -330,12 +330,31 @@ function _getRaceResultsFromSpreadsheet(sheet) {
   return results;
 }
 
-function getRaceEntries(key) {
+function getRaceEntriesSummary(key) {
   if (!key) {
     throw "You must specify a document";
   }
   var ss = SpreadsheetApp.openById(key);
   return getRaceEntriesFromSpreadsheet(ss);
+}
+
+function getRaceEntries(key, raceName) {
+  if (!key) {
+    throw "You must specify a document";
+  }
+  var ss = SpreadsheetApp.openById(key);
+  var raceSheet = ss.getSheetByName(raceName);
+  if (!raceSheet) {
+    throw "The specified race " + raceName + " was not found";
+  }
+  return {
+    races: [
+      {
+        name: raceName,
+        results: _getRaceEntriesFromSheet(raceSheet)
+      }
+    ]
+  };
 }
 
 function getRaceStarters(key) {
@@ -359,45 +378,49 @@ function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
     sheets = getRaceSheets(ss);
 
   for (var i=0; i<sheets.length; i++) {
-    var results = [], rows = getTableRows(sheets[i]);
-    var raceDate = raceDateStr ? parseDate(raceDateStr) : new Date();
-    for (var j=0; j<rows.length; j++) {
-      var row = rows[j];
-      if (parseInt(row['Number']) && row['Surname'] === "") {
-        break;
-      }
-      var name = "" + row['First name'] + " " + row['Surname'],
-        num = "" + row['Number'],
-        bcuNum = "" + row['BCU Number'],
-        expiry = "" + formatDate(row['Expiry']),
-        expired = row['Expiry'] < raceDate,
-        club = "" + row['Club'],
-        raceClass = "" + row['Class'],
-        div = "" + row['Div'],
-        paid = "" + row['Paid'],
-        startTime = "" + row['Start'];
-      if (name.trim() !== "") {
-        if (row['Number']) {
-          results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [raceClass], divs: [div], paid: [paid], startTime: startTime });
-        } else {
-          var last = results.pop();
-          last.names.push(name);
-          last.bcuNum.push(bcuNum);
-          last.expiry.push(expiry);
-          last.expired = last.expired || expired;
-          last.clubs.push(club);
-          last.classes.push(raceClass);
-          last.divs.push(div);
-          last.paid.push(paid);
-          results.push(last);
-        }
-      }
-    }
-    classes.push({name: sheets[i].getName(), results: results });
+    classes.push({name: sheets[i].getName(), results: _getRaceEntriesFromSheet(sheets[i], raceDateStr) });
   }
   data.races = classes;
   data.lastUpdated = getLastUpdated(ss.getId());
   return data;
+}
+
+function _getRaceEntriesFromSheet(sheet, raceDateStr) {
+  var results = [], rows = getTableRows(sheet);
+  var raceDate = raceDateStr ? parseDate(raceDateStr) : new Date();
+  for (var j=0; j<rows.length; j++) {
+    var row = rows[j];
+    if (parseInt(row['Number']) && row['Surname'] === "") {
+      break;
+    }
+    var name = "" + row['First name'] + " " + row['Surname'],
+      num = "" + row['Number'],
+      bcuNum = "" + row['BCU Number'],
+      expiry = "" + formatDate(row['Expiry']),
+      expired = row['Expiry'] < raceDate,
+      club = "" + row['Club'],
+      raceClass = "" + row['Class'],
+      div = "" + row['Div'],
+      paid = "" + row['Paid'],
+      startTime = "" + row['Start'];
+    if (name.trim() !== "") {
+      if (row['Number']) {
+        results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [raceClass], divs: [div], paid: [paid], startTime: startTime });
+      } else {
+        var last = results.pop();
+        last.names.push(name);
+        last.bcuNum.push(bcuNum);
+        last.expiry.push(expiry);
+        last.expired = last.expired || expired;
+        last.clubs.push(club);
+        last.classes.push(raceClass);
+        last.divs.push(div);
+        last.paid.push(paid);
+        results.push(last);
+      }
+    }
+  }
+  return results;
 }
 
 function getLastEntryRow(sheet) {

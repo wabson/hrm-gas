@@ -5,7 +5,11 @@ var newData = null, lastUpdated = null;
 $(function() {
   // Initial data load
   if (show == 'entries') {
-    google.script.run.withSuccessHandler(onDataLoaded).getRaceEntries(key);
+    if (race === '') {
+      google.script.run.withSuccessHandler(onDataLoaded).getRaceEntriesSummary(key);
+    } else {
+      google.script.run.withSuccessHandler(onDataLoaded).getRaceEntries(key, race);
+    }
   } else if (show == 'starters') {
     google.script.run.withSuccessHandler(onDataLoaded).getRaceStarters(key);
   } else {
@@ -24,7 +28,11 @@ function isScrollingEnabled() {
 function onDataLoaded(data) {
   $('#messages').hide();
   if (show == 'entries') {
-    showEntries(data.races, true);
+    if (race === '') {
+      showEntriesSummary(data.races);
+    } else {
+      showEntries(data.races, true);
+    }
   } else if (show == 'starters') {
     showEntries(data.races, false);
   } else {
@@ -369,9 +377,10 @@ function showLightningPoints(lightningPoints) {
 }
 
 function showEntries(entries, showBCUDetails) {
-  var div = $('#entries-data'), html = "";
+  var div = $('#entries-data'), html = '';
+  var ssKey = key;
   div.empty();
-  var m = 0;
+  html += '<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top">Back to entries</a></p>';
   for (var i = 0; i < entries.length; ++i) {
     if (entries[i].results && entries[i].results.length > 0) {
       html += '<table>';
@@ -402,12 +411,52 @@ function showEntries(entries, showBCUDetails) {
         html += '     <td>' + entries[i].results[j].divs.join("<br />") + '</td>';
         html += '  </tr>';
       }
-      m += n;
       html += '</tbody></table>';
       html += '<p>Total ' + n + ' entries</p>';
     }
   }
-  html += '<p>Grand total ' + m + ' entries</p>';
+  div.append(html);
+}
+
+function showEntriesSummary(races, options) {
+  options = options || {};
+  var div = $('#entries-summary'), html = '';
+  var ssKey = key;
+  var summaryItems = [];
+  var m = 0;
+  var entries, numPaid;
+  div.empty();
+  for (var i = 0; i < races.length; i++) {
+    entries = races[i].results;
+    numPaid = entries.filter(function(entry) {
+      return entry.paid.length > 0;
+    }).length;
+    if (entries.length === 0) {
+      continue;
+    }
+    summaryItems.push({
+      name: races[i].name,
+      entries: entries.length,
+      paid: numPaid
+    });
+    m += entries.length;
+  }
+  html += ('<div id="pd-result"></div>');
+  html += ('<table>');
+  html += ('  <tr>');
+  html += ('     <th>Race Name</th>');
+  html += ('     <th>Entries</th>');
+  html += ('     <th>Paid</th>');
+  html += ('  </tr>');
+  html += summaryItems.map(function(item) {
+    return '  <tr>' +
+      '     <td><a href="' + url + '?show=entries&amp;key=' + ssKey + '&amp;race=' + item.name + '" target="_top">' + item.name + '</a></td>' +
+      '     <td>' + item.entries + '</td>' +
+      '     <td>' + item.paid + '</td>'
+      '  </tr>';
+  }).join('\n');
+  html += ('</table>');
+  html += '<p>Total ' + m + ' entries</p>';
   div.append(html);
 }
 </script>
