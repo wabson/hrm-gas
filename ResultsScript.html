@@ -381,6 +381,22 @@ function showLightningPoints(lightningPoints) {
   div.append(html);
 }
 
+function toUpper(str) {
+  return str.toUpperCase();
+}
+
+function toCurrency(amount) {
+  try {
+    return amount ? '£' + parseFloat(amount).toFixed(2) : amount;
+  } catch(e) {
+    return amount;
+  }
+}
+
+function emptyStringToSpace(str) {
+  return (''+str).length > 0 ? str : '&nbsp;';
+}
+
 function showEntries(entries, showBCUDetails) {
   var div = $('#entries-data'), html = '';
   var ssKey = key;
@@ -400,20 +416,26 @@ function showEntries(entries, showBCUDetails) {
       html += '     <th>Club</th>';
       html += '     <th>Class</th>';
       html += '     <th>Div</th>';
+      if (showBCUDetails) {
+      html += '     <th>Paid</th>';
+      }
       html += '  </tr>';
       var n = 0;
       for (var j = 0; j < entries[i].results.length; ++j) {
         n ++;
         html += '  <tr>';
         html += '     <td>' + entries[i].results[j].num + '</td>';
-        html += '     <td>' + entries[i].results[j].names.join("<br />").toUpperCase() + '</td>';
+        html += '     <td>' + entries[i].results[j].names.map(toUpper).map(emptyStringToSpace).join("<br />") + '</td>';
         if (showBCUDetails) {
-          html += '     <td>' + entries[i].results[j].bcuNum.join("<br />").toUpperCase() + '</td>';
-          html += '     <td>' + entries[i].results[j].expiry.join("<br />").toUpperCase() + '</td>';
+          html += '     <td>' + entries[i].results[j].bcuNum.map(toUpper).map(emptyStringToSpace).join("<br />") + '</td>';
+          html += '     <td>' + entries[i].results[j].expiry.map(toUpper).map(emptyStringToSpace).join("<br />") + '</td>';
         }
-        html += '     <td>' + entries[i].results[j].clubs.join("<br />").toUpperCase() + '</td>';
-        html += '     <td>' + entries[i].results[j].classes.join("<br />").toUpperCase() + '</td>';
-        html += '     <td>' + entries[i].results[j].divs.join("<br />") + '</td>';
+        html += '     <td>' + entries[i].results[j].clubs.map(toUpper).map(emptyStringToSpace).join("<br />") + '</td>';
+        html += '     <td>' + entries[i].results[j].classes.map(toUpper).map(emptyStringToSpace).join("<br />") + '</td>';
+        html += '     <td>' + entries[i].results[j].divs.map(emptyStringToSpace).join("<br />") + '</td>';
+        if (showBCUDetails) {
+          html += '     <td>' + entries[i].results[j].paid.map(toCurrency).map(emptyStringToSpace).join("<br />") + '</td>';
+        }
         html += '  </tr>';
       }
       html += '</tbody></table>';
@@ -435,7 +457,7 @@ function showEntriesSummary(races, options) {
   for (var i = 0; i < races.length; i++) {
     entries = races[i].results;
     numPaid = entries.filter(function(entry) {
-      return entry.paid.length > 0;
+      return entry.paid.filter(function(amount) { return /\£?\d+\.?\d*/.test(amount); }).length > 0;
     }).length;
     if (entries.length === 0) {
       continue;
