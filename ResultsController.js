@@ -200,7 +200,7 @@ function getRaceResults(key, raceName) {
         results: _getRaceResultsFromSpreadsheet(raceSheet)
       }
     ]
-  }
+  };
 }
 
 /**
