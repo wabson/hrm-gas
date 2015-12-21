@@ -1,0 +1,29 @@
+{
+  "name": "hrm-gas",
+  "version": "0.0.1",
+  "description": "HRM clone built on top of Google Apps Script",
+  "main": "Code.js",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha $(find src/* -path *test* -name \\\\*.js -type f)",
+    "lint": "./node_modules/eslint/bin/eslint.js *.js",
+    "hint": "./node_modules/jshint/bin/jshint *.js",
+    "upload": "./node_modules/node-google-apps-script/bin/gapps upload"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gist.github.com/8196167.git"
+  },
+  "author": "Will Abson",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://gist.github.com/8196167"
+  },
+  "homepage": "https://gist.github.com/8196167",
+  "devDependencies": {
+    "browserify": "^12.0.1",
+    "eslint": "^1.10.3",
+    "jshint": "^2.9.1-rc1",
+    "mocha": "^2.3.4",
+    "node-google-apps-script": "^1.1.4"
+  }
+}
