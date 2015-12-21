@@ -287,7 +287,7 @@ $(function() {
     checkDuplicatesDialog.dialog("open");
     $("#dialog-check-duplicates div").html("Checking...");
     google.script.run.withSuccessHandler(function(warnings) {
-      $("#dialog-check-duplicates div").html(warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>')
+      $("#dialog-check-duplicates div").html(warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>');
     }).checkEntryDuplicateWarningsHTML(key);
   });
 });

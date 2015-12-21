@@ -1,5 +1,6 @@
 <script>
 var newData = null, lastUpdated = null;
+var timeRe = /\d{1,2}:\d{2}:\d{2}/;
 
 // The code in this function runs when the page is loaded.
 $(function() {
@@ -171,7 +172,7 @@ function showResults(races, options) {
   for (var i = 0; i < races.length; i++) {
     html += formatRaceResults(races[i], options);
   }
-  if (html == '') {
+  if (html === '') {
     html = isScrollingEnabled() ? '<p>Results will be displayed here as they become available</p>' : '<p>No results to display</p>';
   }
   div.append(html);
@@ -208,7 +209,7 @@ function formatRaceResults(race, options) {
         html += ('     <td>' + race.results[j].divs.join("<br />") + '</td>');
         html += ('     <td>' + race.results[j].time + '</td>');
         if (options.showClubPoints)
-          html += ('     <td>' + race.results[j].points.join("<br />") + '</td>');;
+          html += ('     <td>' + race.results[j].points.join("<br />") + '</td>');
         if (options.showPdTimes)
           html += ('     <td>' + race.results[j].pd.join("<br />") + '</td>');
         if (options.showNotes) {
@@ -222,11 +223,26 @@ function formatRaceResults(race, options) {
   return html;
 }
 
+function _testDidStart(result) {
+  return timeRe.test(result.startTime);
+}
+
+function _testDidFinish(result) {
+  return timeRe.test(result.finishTime);
+}
+
+function _testIsComplete(result) {
+  return result.time;
+}
+
+function _getFinishTime(result) {
+  return result.finishTime;
+}
+
 function showResultsSummary(races, options) {
   options = options || {};
   var div = $('#results-summary'), html = '';
   var ssKey = key;
-  var timeRe = /\d{1,2}:\d{2}:\d{2}/;
   var summaryItems = [];
   $('#file-links').html('<p><a href="' + url + '?key=' + ssKey + '" target="_top"><< Back up</a></p>');
   div.empty();
@@ -235,18 +251,10 @@ function showResultsSummary(races, options) {
       first = null,
       last = null,
       numStarters = 0;
-    starters = races[i].results.filter(function(result) {
-      return timeRe.test(result.startTime);
-    });
-    finishers = starters.filter(function(result) {
-      return timeRe.test(result.finishTime);
-    });
-    complete = starters.filter(function(result) {
-      return result.time;
-    });
-    finishTimes = finishers.map(function(result) {
-      return result.finishTime;
-    }).sort();
+    starters = races[i].results.filter(_testDidStart);
+    finishers = starters.filter(_testDidFinish);
+    complete = starters.filter(_testIsComplete);
+    finishTimes = finishers.map(_getFinishTime).sort();
     first = finishTimes[0];
     last = finishTimes.reverse()[0];
     numStarters = starters.length;
@@ -460,7 +468,7 @@ function showEntriesSummary(races, options) {
       return entry.paid.filter(function(amount) { return /\£?\d+\.?\d*/.test(amount); }).length > 0;
     }).length;
     numBcuOk = entries.filter(function(entry) {
-      return entry.bcuNum.filter(function(bcuNum) { return bcuNum === '' }).length == 0 && entry.expiry.filter(function(bcuExp) { return bcuExp === '' }).length == 0;
+      return entry.bcuNum.filter(function(bcuNum) { return bcuNum === ''; }).length === 0 && entry.expiry.filter(function(bcuExp) { return bcuExp === ''; }).length === 0;
     }).length;
     if (entries.length === 0) {
       continue;
@@ -486,7 +494,7 @@ function showEntriesSummary(races, options) {
       '     <td><a href="' + url + '?show=entries&amp;key=' + ssKey + '&amp;race=' + item.name + '" target="_top">' + item.name + '</a></td>' +
       '     <td>' + item.entries + '</td>' +
       '     <td>' + item.paid + '</td>' +
-      '     <td>' + item.bcu + '</td>'
+      '     <td>' + item.bcu + '</td>' +
       '  </tr>';
   }).join('\n');
   html += ('</table>');
