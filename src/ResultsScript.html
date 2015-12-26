@@ -39,7 +39,7 @@ function onDataLoaded(data) {
   } else if (show == 'starters') {
     showEntries(data.races, false);
   } else {
-    if (race === '') {
+    if (race === '' && !isScrollingEnabled()) {
       showSummaryData(data);
     } else {
       showData(data);
@@ -506,7 +506,7 @@ function showLinks(ssKey) {
   var div = $('#file-links'), html = '';
   div.empty();
   html += '<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top">Show Entries</a></p>';
-  html += '<p><a href="' + url + '?show=results&amp;key=' + ssKey + '" target="_top">Show Results</a></p>';
+  html += '<p><a href="' + url + '?show=results&amp;key=' + ssKey + '" target="_top">Show Results</a> or <a href="' + url + '?show=results&amp;key=' + ssKey + '&amp;scroll=1" target="_top">Scrolling Results</a></p>';
   html += '<p><a href="https://docs.google.com/spreadsheets/d/' + ssKey + '/edit">Edit Full Spreadsheet</a></p>';
   div.append(html);
   $('#messages').hide();
