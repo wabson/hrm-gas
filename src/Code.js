@@ -3175,7 +3175,7 @@ function setSheetFormatting_(sheet, numRows, numColumns) {
  * Set formatting on a race sheet
  */
 function setRaceSheetFormatting_(sheet) {
-  var lastRow = sheet.getMaxRows();
+  var lastRow = sheet.getMaxRows(), dueIndex = getRaceColumnNumber("Due");
   setSheetFormatting_(sheet, null, lastRow);
   // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
   if (lastRow > 1) {
@@ -3185,6 +3185,9 @@ function setRaceSheetFormatting_(sheet) {
     }
     sheet.getRange(2, getRaceColumnNumber("Div"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
     sheet.getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+    if (dueIndex > 0) {
+      sheet.getRange(2, getRaceColumnNumber("Due"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+    }
     sheet.getRange(2, getRaceColumnNumber("Time+/-"), lastRow-1, 4).setNumberFormat(NUMBER_FORMAT_TIME);
   }
 }
