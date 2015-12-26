@@ -34,6 +34,9 @@ th {
 td.expired {
          background-color:   #ffcccc;
 }
+span.expired {
+    color:   #d00000;
+}
 </style>
 </head>
 <body>
@@ -50,17 +53,19 @@ if (races[i].results && races[i].results.length > 0) { ?>
      <th>Club</th>
      <th>Class</th>
      <th>Div</th>
+     <th>Due</th>
      <th>Paid</th>
   </tr>
 <? for (var j = 0; j < races[i].results.length; ++j) { ?>
-  <tr>
+  <span>
      <td><?= races[i].results[j].num ?></td>
      <td><?!= races[i].results[j].names.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <td><?!= races[i].results[j].bcuNum.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
-     <td<? if (races[i].results[j].expired) { ?> class="expired"<? } ?>><?!= races[i].results[j].expiry.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+     <td<? if (races[i].results[j].expired.reduce(function (prev, val) { return prev || val; }, false)) { ?> class="expired"<? } ?>><?!= races[i].results[j].expiry.map(function(val, idx) {return (races[i].results[j].expired[idx] ? "<span class=\"expired\">" : "") + (val ? (""+val).toUpperCase() : "&nbsp;") + (races[i].results[j].expired[idx] ? "</span>" : "");}).join("<br />") ?></td>
      <td><?!= races[i].results[j].clubs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <td><?!= races[i].results[j].classes.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <td><?!= races[i].results[j].divs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
+     <td><?!= races[i].results[j].due.map(function(val) {return val ? Utilities.formatString("£%.2f", parseFloat(val)) : "&nbsp;"}).join("<br />") ?></td>
      <td><?!= races[i].results[j].paid.map(function(val) {return val ? Utilities.formatString("£%.2f", parseFloat(val)) : "&nbsp;"}).join("<br />") ?></td>
   </tr>
   <? } ?>

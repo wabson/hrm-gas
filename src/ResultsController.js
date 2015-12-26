@@ -401,25 +401,27 @@ function _getRaceEntriesFromSheet(sheet, raceDateStr) {
       num = "" + row['Number'],
       bcuNum = "" + row['BCU Number'],
       expiry = "" + formatDate(row['Expiry']),
-      expired = row['Expiry'] < raceDate,
+      expired = row['Expiry'] === '' || row['Expiry'] < raceDate,
       club = "" + row['Club'],
       raceClass = "" + row['Class'],
       div = "" + row['Div'],
+      due = "" + row['Due'],
       paid = "" + row['Paid'],
       startTime = "" + row['Start'];
     if (name.trim() !== "") {
       if (row['Number']) {
-        results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: expired, clubs: [club], classes: [raceClass], divs: [div], paid: [paid], startTime: startTime });
+        results.push({ num: num, names: [name], bcuNum: [bcuNum], expiry: [expiry], expired: [expired], clubs: [club], classes: [raceClass], divs: [div], paid: [paid], due: [due], startTime: startTime });
       } else {
         var last = results.pop();
         last.names.push(name);
         last.bcuNum.push(bcuNum);
         last.expiry.push(expiry);
-        last.expired = last.expired || expired;
+        last.expired.push(expired);
         last.clubs.push(club);
         last.classes.push(raceClass);
         last.divs.push(div);
         last.paid.push(paid);
+        last.due.push(due);
         results.push(last);
       }
     }
