@@ -3254,6 +3254,7 @@ function setProtection_(protection) {
   if (protection.canDomainEdit()) {
     protection.setDomainEdit(false);
   }
+  protection.setWarningOnly(true);
 }
 
 /**
