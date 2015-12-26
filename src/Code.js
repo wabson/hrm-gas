@@ -471,7 +471,9 @@ function importEntries(eventInfo) {
             "BCU Number": csvRow["BCU Number (1)"].toUpperCase(), 
             "Club": csvRow["Club (1)"], 
             "Class": csvRow["Class (1)"], 
-            "Div": csvRow["Ranking (1)"]
+            "Div": csvRow["Ranking (1)"],
+            "Due": csvRow["Payment Amount"],
+            "Paid": csvRow["Paid"]
           },{
             "Surname": csvRow["Last Name (2)"].toUpperCase(), 
             "First name": csvRow["First Name (2)"].toUpperCase(), 
