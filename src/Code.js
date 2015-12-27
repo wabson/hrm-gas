@@ -964,7 +964,7 @@ function rankingToEntryData(ranking) {
   var entry = {};
   for (var k in ranking) {
     if (ranking.hasOwnProperty(k)) {
-      entry[k == "Division" ? "Div" : k] = ranking[k];
+      entry[k.toLowerCase() == "division" ? k.substr(0, 3) : k] = ranking[k];
     }
   }
   return entry;
@@ -977,7 +977,7 @@ function lookupInTable(rows, matchValues) {
     for (var p in matchValues) {
       if (matchValues.hasOwnProperty(p)) {
         if (matchValues[p] instanceof RegExp) {
-          if (!matchValues[p].test(rows[i][p])) {
+          if (!matchValues[p].test(''+rows[i][p])) {
             match = false;
           }
         } else {
@@ -997,23 +997,23 @@ function lookupInTable(rows, matchValues) {
 /**
  * Look through all the current entries and update with any new data from the rankings sheet
  */
-function updateEntriesFromRankings() {
+function updateEntriesFromRankings(replaceExisting) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = getRaceSheets(ss);
   var rankingData = getTableRows(rankingsSheet, true), sheet;
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
-    var raceData = getTableRows(sheet);
+    var raceData = getTableRows(sheet, true);
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
-        var bcuNum = raceData[j]['BCU Number'];
+        var bcuNum = raceData[j]['bcu number'], classAbbr = raceData[j]['class'];
         if (bcuNum && /\d+/.exec(bcuNum)) {
           Logger.log("BCU Number: " + bcuNum);
-          var matches = lookupInTable(rankingData, {'bcu number': new RegExp("" + bcuNum + "/?[A-Za-z]?")});
+          var matches = lookupInTable(rankingData, {'bcu number': new RegExp("^" + bcuNum + "/?[A-Za-z]?$"), 'class': classAbbr});
           if (matches.length == 1) {
             Logger.log("Found match: " + matches[0]);
             var update = rankingToEntryData(matches[0]);
             for (var p in update) {
-              if (update.hasOwnProperty(p)) {
+              if (update.hasOwnProperty(p) && (raceData[j][p] === '' || replaceExisting === true)) {
                 Logger.log("Set " + p + ": " + update[p]);
                 raceData[j][p] = update[p];
               }
