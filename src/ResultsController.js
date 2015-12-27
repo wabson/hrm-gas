@@ -34,28 +34,57 @@ function doGet(e) {
  *
  * @param {object} e Event information
  */
-function saveResultsHTML(scriptProps) {
-  var template = HtmlService.createTemplateFromFile('ResultsStatic');
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var title = ss.getName();
+function saveResultsHTML(scriptProps, ss) {
+  var template = HtmlService.createTemplateFromFile('ResultsStatic'), title, data, outputHtml;
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  title = ss.getName();
   template.showNotes = false;
   template.title = title;
-  var data = getResultsFromSpreadsheet(ss);
+  data = getResultsFromSpreadsheet(ss);
   for (var k in data) {
     template[k] = data[k];
     template.isHaslerFinal = scriptProps.haslerRegion == "HF";
   }
-  var outputHtml = template.evaluate().getContent();
+  outputHtml = template.evaluate().getContent();
   var htmlFile = scriptProps.publishedResultsId ? DriveApp.getFileById(scriptProps.publishedResultsId) : DriveApp.createFile(Utilities.formatString(RESULTS_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
   if (scriptProps.publishedResultsId) {
     htmlFile.setContent(outputHtml);
   }
+  try {
+    Drive.Properties.insert({
+      key: 'publishedResultsId',
+      value: htmlFile.getId(),
+      visibility: 'PUBLIC'
+    }, ss.getId());
+  }
+  catch (ex) {
+    Logger.log('Caught exception ', ex);
+  }
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
-  showLinkDialog('Publish HTML',
-    "<p>Race results published to Google Drive:</p>",
-    "https://googledrive.com/host/" + htmlFile.getId()
-  );
+  if (SpreadsheetApp.getActiveSpreadsheet()) {
+    showLinkDialog('Publish HTML',
+        "<p>Race results published to Google Drive:</p>",
+        "https://googledrive.com/host/" + htmlFile.getId()
+    );
+  }
   return {fileId: htmlFile.getId()};
+}
+
+/**
+ * Print results summary
+ *
+ * @param {object} e Event information
+ */
+function saveResultsHTMLForSpreadsheet(ssKey) {
+  var fileId = Drive.Properties.get(ssKey, 'publishedResultsId', {
+    visibility: 'PUBLIC'
+  }).value;
+  saveResultsHTML({
+    publishedResultsId: fileId
+  }, SpreadsheetApp.openById(ssKey));
+  return {
+    fileId: fileId
+  }
 }
 
 /**

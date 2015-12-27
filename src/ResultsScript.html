@@ -302,6 +302,9 @@ function showResultsSummary(races, options) {
     html += ('<p><button id="pd-div4">Div 4-6 Promotions</button></p>');
     html += ('<p><button id="pd-div7">Div 7-9 Promotions</button></p>');
   }
+  if (hasEditPermission) {
+    html += ('<p><button id="publish-results">Publish Results</button></p>');
+  }
   div.append(html);
   if (options.allowPd === true) {
     $("#pd-div1").button().on("click", function () {
@@ -318,6 +321,14 @@ function showResultsSummary(races, options) {
       google.script.run.withSuccessHandler(function (data) {
         $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 7-9');
       }).setPromotionsDiv789(ssKey, false);
+    });
+  }
+  if (hasEditPermission) {
+    $("#publish-results").button().on("click", function () {
+      $("#pd-result").html('Publishing results...');
+      google.script.run.withSuccessHandler(function (data) {
+        $("#pd-result").html('Published results to <a href="https://googledrive.com/host/' + data.fileId + '">web page</a>');
+      }).saveResultsHTMLForSpreadsheet(ssKey, false);
     });
   }
 }
