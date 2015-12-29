@@ -492,7 +492,10 @@ function showEntriesSummary(races, options) {
     });
     m += entries.length;
   }
-  html += ('<div id="pd-result"></div>');
+  if (hasEditPermission) {
+    html += ('<p><button id="publish-entries">Publish Entries</button></p>');
+  }
+  html += ('<div id="entries-result"></div>');
   html += ('<table>');
   html += ('  <tr>');
   html += ('     <th>Race Name</th>');
@@ -511,6 +514,14 @@ function showEntriesSummary(races, options) {
   html += ('</table>');
   html += '<p>Total ' + m + ' entries</p>';
   div.append(html);
+  if (hasEditPermission) {
+    $("#publish-entries").button().on("click", function () {
+      $("#entries-result").html('Publishing entries...');
+      google.script.run.withSuccessHandler(function (data) {
+        $("#entries-result").html('Published entries to <a href="https://googledrive.com/host/' + data.fileId + '">web page</a>');
+      }).saveEntriesHTMLForSpreadsheet(ssKey, false);
+    });
+  }
 }
 
 function showLinks(ssKey) {

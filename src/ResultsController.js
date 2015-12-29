@@ -90,12 +90,12 @@ function saveResultsHTMLForSpreadsheet(ssKey) {
 /**
  * Print entries summary
  */
-function saveEntriesHTML(scriptProps) {
-  var template = HtmlService.createTemplateFromFile('EntriesStatic');
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var title = ss.getName();
+function saveEntriesHTML(scriptProps, ss) {
+  var template = HtmlService.createTemplateFromFile('EntriesStatic'), ss, title, data;
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  title = ss.getName();
   template.title = title;
-  var data = getRaceEntriesFromSpreadsheet(ss, scriptProps.raceDate);
+  data = getRaceEntriesFromSpreadsheet(ss, scriptProps.raceDate);
   for (var k in data) {
     template[k] = data[k];
   }
@@ -104,12 +104,43 @@ function saveEntriesHTML(scriptProps) {
   if (scriptProps.publishedEntriesId) {
     htmlFile.setContent(outputHtml);
   }
+  try {
+    Drive.Properties.insert({
+      key: 'publishedEntriesId',
+      value: htmlFile.getId(),
+      visibility: 'PUBLIC'
+    }, ss.getId());
+    Logger.log("Set drive publishedEntriesId property to: " + htmlFile.getId());
+  }
+  catch (ex) {
+    Logger.log('Caught exception ', ex);
+  }
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
-  showLinkDialog('Publish HTML',
-    "<p>Race entries published to Google Drive:</p>",
-    "https://googledrive.com/host/" + htmlFile.getId()
-  );
+  if (SpreadsheetApp.getActiveSpreadsheet()) {
+    showLinkDialog('Publish HTML',
+        "<p>Race entries published to Google Drive:</p>",
+        "https://googledrive.com/host/" + htmlFile.getId()
+    );
+  }
   return {fileId: htmlFile.getId()};
+}
+
+/**
+ * Print entries summary
+ *
+ * @param {String} ssKey Spreadsheet key
+ */
+function saveEntriesHTMLForSpreadsheet(ssKey) {
+  var fileId = Drive.Properties.get(ssKey, 'publishedEntriesId', {
+    visibility: 'PUBLIC'
+  }).value;
+  Logger.log("Looking for existing properties file: " + fileId);
+  saveEntriesHTML({
+    publishedResultsId: fileId
+  }, SpreadsheetApp.openById(ssKey));
+  return {
+    fileId: fileId
+  }
 }
 
 /**
