@@ -303,6 +303,7 @@ function showResultsSummary(races, options) {
     html += ('<p><button id="pd-div7">Div 7-9 Promotions</button></p>');
   }
   if (hasEditPermission) {
+    html += ('<p><button id="check-finish-times">Check Finish Times</button></p>');
     html += ('<p><button id="publish-results">Publish Results</button></p>');
   }
   div.append(html);
@@ -329,6 +330,27 @@ function showResultsSummary(races, options) {
       google.script.run.withSuccessHandler(function (data) {
         $("#pd-result").html('Published results to <a href="https://googledrive.com/host/' + data.fileId + '">web page</a>');
       }).saveResultsHTMLForSpreadsheet(ssKey, false);
+    });
+    $("#check-finish-times").button().on("click", function () {
+      $("#pd-result").html('Checking finish times...');
+      google.script.run.withSuccessHandler(function (data) {
+        var duplicates = data.duplicates, strangeTimes = data.strangeTimes;
+        if (duplicates.length === 0) {
+          $("#pd-result").html('No duplicate finish times found');
+        } else {
+          $("#pd-result").html('Found ' + duplicates.length + ' duplicated boats:<br />' + duplicates.map(function(dup) {
+            var timesHtml = dup.times.map(function(time) {
+              return (time.number ? ('(' + time.number + ') ') : '') + time.time;
+            }).join(', ');
+            return 'Boat ' + dup.boatNumber + ': found times ' + timesHtml;
+          }).join('<br />'));
+        }
+        if (strangeTimes.length > 0) {
+          $("#pd-result").html($("#pd-result").html() + '<br />Found ' + strangeTimes.length + ' strange times:<br />' + strangeTimes.map(function(row) {
+            return '' + row.number + ' boat ' + row.boatNumber + ', time ' + row.time;
+          }).join('<br />'));
+        }
+      }).checkFinishDuplicatesForSpreadsheet(ssKey, false);
     });
   }
 }
