@@ -135,12 +135,9 @@ function saveEntriesHTMLForSpreadsheet(ssKey) {
     visibility: 'PUBLIC'
   }).value;
   Logger.log("Looking for existing properties file: " + fileId);
-  saveEntriesHTML({
-    publishedResultsId: fileId
-  }, SpreadsheetApp.openById(ssKey));
-  return {
-    fileId: fileId
-  }
+  return saveEntriesHTML({
+    publishedEntriesId: fileId
+  }, SpreadsheetApp.openById(ssKey)).fileId;
 }
 
 /**
