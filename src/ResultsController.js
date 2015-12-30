@@ -137,7 +137,7 @@ function saveEntriesHTMLForSpreadsheet(ssKey) {
   Logger.log("Looking for existing properties file: " + fileId);
   return saveEntriesHTML({
     publishedEntriesId: fileId
-  }, SpreadsheetApp.openById(ssKey)).fileId;
+  }, SpreadsheetApp.openById(ssKey));
 }
 
 /**
