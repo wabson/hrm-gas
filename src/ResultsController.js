@@ -1,3 +1,5 @@
+/*jshint sub:true*/
+
 var rankingsSheetName = "Rankings";
 var ENTRIES_HTML_FILENAME_TMPL = "%s Entries";
 var ENTRIES_SS_FILENAME_TMPL = "%s Printable Entries";
@@ -84,14 +86,14 @@ function saveResultsHTMLForSpreadsheet(ssKey) {
   }, SpreadsheetApp.openById(ssKey));
   return {
     fileId: fileId
-  }
+  };
 }
 
 /**
  * Print entries summary
  */
 function saveEntriesHTML(scriptProps, ss) {
-  var template = HtmlService.createTemplateFromFile('EntriesStatic'), ss, title, data;
+  var template = HtmlService.createTemplateFromFile('EntriesStatic'), title, data;
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   title = ss.getName();
   template.title = title;

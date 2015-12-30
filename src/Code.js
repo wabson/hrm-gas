@@ -1,3 +1,4 @@
+/*jshint sub:true*/
 /*
  * Hasler Race Management Spreadsheet functions
  *
