@@ -503,7 +503,7 @@ function getRaceType() {
  * Menu hook for creating printable entries sheets
  */
 function createPrintableEntries() {
-  var result = HRM.createPrintableEntries(ScriptProperties.getProperty('printableEntriesId'));
+  var result = HRM.createPrintableEntries(ScriptProperties.getProperties());
   if (result) {
     ScriptProperties.setProperty('printableEntriesId', result.getId());
   }
@@ -521,7 +521,7 @@ function createClubEntries() {
  * Menu hook for creating printable results sheets
  */
 function createPrintableResults() {
-  var result = HRM.createPrintableResults(ScriptProperties.getProperty('printableResultsId'));
+  var result = HRM.createPrintableResults(ScriptProperties.getProperties());
   if (result) {
     ScriptProperties.setProperty('printableResultsId', result.getId());
   }

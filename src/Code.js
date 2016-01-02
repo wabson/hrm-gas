@@ -3036,8 +3036,8 @@ function clearColumnCache_() {
 /**
  * Return the number (starting from 1, not zero) of the column with the specified header, or -1 if not found
  */
-function getRaceColumnNumber(colName) {
-  return getTableColumnIndex(colName) + 1;
+function getRaceColumnNumber(colName, sheet) {
+  return getTableColumnIndex(colName, sheet) + 1;
 }
 
 /**
@@ -3128,30 +3128,32 @@ function setSheetValidation_(sheet, ss, scriptProps) {
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
     expiryRule = scriptProps && scriptProps.raceDate ? SpreadsheetApp.newDataValidation().requireDateOnOrAfter(parseDate(scriptProps.raceDate)).build() : null;
 
-  var lastRow = sheet.getMaxRows(), r;
+  var lastRow = sheet.getMaxRows(), r, expiryCol = getRaceColumnNumber("Expiry", sheet);
   if (lastRow > 1) {
     Logger.log("Setting validation for sheet " + sheet.getName());
     if (clubRule !== null) {
-      r = sheet.getRange(2, getRaceColumnNumber("Club"), lastRow-1);
+      r = sheet.getRange(2, getRaceColumnNumber("Club", sheet), lastRow-1);
       if (r) {
         r.clearDataValidations();
         r.setDataValidation(clubRule);
       }
     }
-    r = sheet.getRange(2, getRaceColumnNumber("Class"), lastRow-1);
+    r = sheet.getRange(2, getRaceColumnNumber("Class", sheet), lastRow-1);
     if (r) {
       r.clearDataValidations();
       r.setDataValidation(classRule);
     }
-    r = sheet.getRange(2, getRaceColumnNumber("Div"), lastRow-1);
+    r = sheet.getRange(2, getRaceColumnNumber("Div", sheet), lastRow-1);
     if (r) {
       r.clearDataValidations();
       r.setDataValidation(divRule);
     }
-    r = sheet.getRange(2, getRaceColumnNumber("Expiry"), lastRow-1);
-    if (r) {
-      r.clearDataValidations();
-      r.setDataValidation(expiryRule);
+    if (expiryCol > 0) {
+      r = sheet.getRange(2, expiryCol, lastRow-1);
+      if (r) {
+        r.clearDataValidations();
+        r.setDataValidation(expiryRule);
+      }
     }
   }
 }
@@ -3539,21 +3541,21 @@ function autoResizeColumns(sheet) {
   }
 }
 
-function createPrintableEntries(fileId) {
-  var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, fileId);
+function createPrintableEntries(scriptProps) {
+  var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, false, scriptProps.printableEntriesId, scriptProps);
   showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Entries", "_blank");
   return ss;
 }
 
-function createPrintableResults(fileId) {
+function createPrintableResults(scriptProps) {
   // 'autoResizeColumn' is not available yet in the new version of Google Sheets
   var columnNames = isHaslerRace() ? printableResultColumnNamesHasler : printableResultColumnNames,
-    ss = createPrintableSpreadsheet(null, columnNames, "Posn", true, false, fileId);
+    ss = createPrintableSpreadsheet(null, columnNames, "Posn", true, false, scriptProps.printableResultsId, scriptProps);
   showLinkDialog("Print Results", "Click here to access the results", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Results", "_blank");
   return ss;
 }
 
-function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize, fileId) {
+function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize, fileId, scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   name = name || ss.getName() + " (Printable)";
   autoResize = typeof autoResize != "undefined" ? autoResize : false;
@@ -3609,6 +3611,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       if (autoResize === true) {
         autoResizeColumns(newSheet);
       }
+      setSheetValidation_(newSheet, newss, scriptProps);
     }
   }
   // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
@@ -3708,6 +3711,7 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
       if (columnNames.indexOf("Expiry") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Expiry") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_DATE);
       }
+      setSheetValidation_(newSheet, newss, scriptProps);
 
       var extraValues = [];
       extraValues.push(['', '', '', '']);
