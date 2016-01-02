@@ -3562,7 +3562,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
   var newss = fileId ? SpreadsheetApp.openById(fileId) : SpreadsheetApp.create(name), 
     srcSheets = getRaceSheets(ss);
   if (fileId) {
-    newss.insertSheet("Temp", 0);
+    newss.insertSheet("Temp" + Math.floor(Date.now() / 1000), 0);
     // Delete preexisting sheets
     var oldSheets = newss.getSheets();
     for (var i = 1; i < oldSheets.length; i++) {
@@ -3631,7 +3631,7 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
   name = name || ss.getName() + " (Clubs)";
   var newss = scriptProps && scriptProps.clubEntriesId ? SpreadsheetApp.openById(scriptProps.clubEntriesId) : SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss), clubValues = {}, currClub, currDue, currPaid, currClubValues;
   if (scriptProps && scriptProps.clubEntriesId) {
-    newss.insertSheet("Temp", 0);
+    newss.insertSheet("Temp" + Math.floor(Date.now() / 1000), 0);
     // Delete preexisting sheets
     var oldSheets = newss.getSheets();
     for (var i = 1; i < oldSheets.length; i++) {
