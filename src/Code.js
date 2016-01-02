@@ -26,8 +26,9 @@ if (SpreadsheetApp.getActiveSpreadsheet() && isHaslerRace()) {
   raceSheetColumnNames.splice(raceSheetColumnNames.length - 1, 0, "P/D", "Points");
   raceSheetColumnAlignments.splice(raceSheetColumnAlignments.length - 1, 0, "center", "center");
 }
-var printableResultColumnNames = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn", "P/D", "Points"];
-var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid"];
+var printableResultColumnNames = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn"];
+var printableResultColumnNamesHasler = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn", "P/D", "Points"];
+var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"];
 
 /**
  * ID assigned to this library
@@ -3546,7 +3547,8 @@ function createPrintableEntries(fileId) {
 
 function createPrintableResults(fileId) {
   // 'autoResizeColumn' is not available yet in the new version of Google Sheets
-  var ss = createPrintableSpreadsheet(null, printableResultColumnNames, "Posn", true, false, fileId);
+  var columnNames = isHaslerRace() ? printableResultColumnNamesHasler : printableResultColumnNames,
+    ss = createPrintableSpreadsheet(null, columnNames, "Posn", true, false, fileId);
   showLinkDialog("Print Results", "Click here to access the results", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Results", "_blank");
   return ss;
 }
@@ -3598,6 +3600,9 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       if (columnNames.indexOf("Paid") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Paid") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
       }
+      if (columnNames.indexOf("Due") > -1) {
+        newSheet.getRange(1, columnNames.indexOf("Due") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+      }
       if (columnNames.indexOf("Expiry") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Expiry") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_DATE);
       }
@@ -3621,7 +3626,7 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var truncateEmpty = true;
   name = name || ss.getName() + " (Clubs)";
-  var newss = scriptProps && scriptProps.clubEntriesId ? SpreadsheetApp.openById(scriptProps.clubEntriesId) : SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss), clubValues = {}, currClub, currClubValues;
+  var newss = scriptProps && scriptProps.clubEntriesId ? SpreadsheetApp.openById(scriptProps.clubEntriesId) : SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss), clubValues = {}, currClub, currDue, currPaid, currClubValues;
   if (scriptProps && scriptProps.clubEntriesId) {
     newss.insertSheet("Temp", 0);
     // Delete preexisting sheets
@@ -3630,9 +3635,12 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
       newss.deleteSheet(oldSheets[i]);
     }
   }
-  var clubCounts = {};
+  var clubCounts = {}, clubDue = {}, clubPaid = {}, paddlerType,
+    fees = { seniors: scriptProps.entrySenior, juniors: scriptProps.entryJunior, lightnings: scriptProps.entryLightning };
   var rowIter = function(b) {
     currClub = b['Club'];
+    currDue = b['Due'];
+    currPaid = b['Paid'] || 0;
     if (currClub) {
       currClubValues = clubValues[currClub] || [columnNames];
       // Make sure race number is repeated for second K2 partner if both not from same club
@@ -3644,17 +3652,25 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
 
       // Keep a count of all paddlers entered
       clubCounts[currClub] = clubCounts[currClub] || { seniors: 0, juniors: 0, lightnings: 0 };
+      clubDue[currClub] = clubDue[currClub] || { seniors: 0, juniors: 0, lightnings: 0 };
+      clubPaid[currClub] = clubPaid[currClub] || { seniors: 0, juniors: 0, lightnings: 0 };
       if (isLightningRaceName_(b['Race'])) {
-        clubCounts[currClub].lightnings ++;
+        paddlerType = 'lightnings';
       } else {
         if (b['Class']) {
           if (b['Class'].indexOf('J') > -1) {
-            clubCounts[currClub].juniors ++;
+            paddlerType = 'juniors';
           } else {
-            clubCounts[currClub].seniors ++;
+            paddlerType = 'seniors';
           }
         }
       }
+      if (currDue === undefined) {
+        currDue = fees[paddlerType];
+      }
+      clubCounts[currClub][paddlerType] ++;
+      clubDue[currClub][paddlerType] += +currDue;
+      clubPaid[currClub][paddlerType] += +currPaid;
     }
   };
   var entriesIter = function(a) {
@@ -3679,9 +3695,12 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
       targetRange.setValues(values);
       targetRange.setFontFamily(SHEET_FONT_FAMILY);
       newSheet.getRange(1, 1, 1, values[0].length).setBorder(true, true, true, true, true, true).setFontWeight("bold").setBackground("#ccffff"); // 1st row
-      newSheet.getRange(2, 1, values.length-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
+      newSheet.getRange(2, 1, values.lengthth-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
       if (columnNames.indexOf("Elapsed") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Elapsed") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_TIME);
+      }
+      if (columnNames.indexOf("Due") > -1) {
+        newSheet.getRange(1, columnNames.indexOf("Due") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
       }
       if (columnNames.indexOf("Paid") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Paid") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
@@ -3691,14 +3710,13 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
       }
 
       var extraValues = [];
-      var totalSeniors = clubCounts[c].seniors * scriptProps.entrySenior, totalJuniors = clubCounts[c].juniors * scriptProps.entryJunior, totalLightnings = clubCounts[c].lightnings * scriptProps.entryLightning;
-      extraValues.push(['', '', '']);
-      extraValues.push(['Seniors', clubCounts[c].seniors, totalSeniors]);
-      extraValues.push(['Juniors', clubCounts[c].juniors, totalJuniors]);
-      extraValues.push(['Lightnings', clubCounts[c].lightnings, totalLightnings]);
-      extraValues.push(['', '', totalSeniors + totalJuniors + totalLightnings]);
+      extraValues.push(['', '', '', '']);
+      extraValues.push(['Seniors', clubCounts[c].seniors, clubDue[c].seniors, clubPaid[c].seniors]);
+      extraValues.push(['Juniors', clubCounts[c].juniors, clubDue[c].juniors, clubPaid[c].juniors]);
+      extraValues.push(['Lightnings', clubCounts[c].lightnings, clubDue[c].lightnings, clubPaid[c].lightnings]);
+      extraValues.push(['', '', clubDue[c].seniors + clubDue[c].juniors + clubDue[c].lightnings, clubPaid[c].seniors + clubPaid[c].juniors + clubPaid[c].lightnings]);
       newSheet.getRange(values.length + 1, values[0].length - extraValues[0].length + 1, extraValues.length, extraValues[0].length).setValues(extraValues).setFontFamily(SHEET_FONT_FAMILY);
-      newSheet.getRange(values.length + 1, values[0].length, extraValues.length, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+      newSheet.getRange(values.length + 1, values[0].length - 1, extraValues.length, 2).setNumberFormat(NUMBER_FORMAT_CURRENCY);
     }
   }
   // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
