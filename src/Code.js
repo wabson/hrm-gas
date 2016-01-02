@@ -3612,7 +3612,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
 }
 
 function createClubEntries(scriptProps) {
-  var ss = createClubSpreadsheet_(null, ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid"], scriptProps);
+  var ss = createClubSpreadsheet_(null, ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"], scriptProps);
   showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Club Entries", "_blank");
   return ss;
 }
