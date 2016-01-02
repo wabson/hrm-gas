@@ -1006,10 +1006,10 @@ function updateEntriesFromRankings(replaceExisting) {
     var raceData = getTableRows(sheet, true);
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
-        var bcuNum = raceData[j]['bcu number'], classAbbr = raceData[j]['class'];
-        if (bcuNum && /\d+/.exec(bcuNum)) {
-          Logger.log("BCU Number: " + bcuNum);
-          var matches = lookupInTable(rankingData, {'bcu number': new RegExp("^" + bcuNum + "/?[A-Za-z]?$"), 'class': classAbbr});
+        var bcuNum = raceData[j]['bcu number'], classAbbr = raceData[j]['class'], bcuMatch = /(\d+)/.exec(bcuNum);
+        if (bcuMatch) {
+          Logger.log("BCU Number: " + bcuMatch[1]);
+          var matches = lookupInTable(rankingData, {'bcu number': new RegExp("^" + bcuMatch[1] + "/?[A-Za-z]?$"), 'class': classAbbr});
           if (matches.length == 1) {
             Logger.log("Found match: " + matches[0]);
             var update = rankingToEntryData(matches[0]);
