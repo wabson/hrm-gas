@@ -3695,7 +3695,7 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
       targetRange.setValues(values);
       targetRange.setFontFamily(SHEET_FONT_FAMILY);
       newSheet.getRange(1, 1, 1, values[0].length).setBorder(true, true, true, true, true, true).setFontWeight("bold").setBackground("#ccffff"); // 1st row
-      newSheet.getRange(2, 1, values.lengthth-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
+      newSheet.getRange(2, 1, values.length-1, 1).setBorder(null, null, null, true, null, null).setFontWeight("bold").setBackground("#ffff99"); // border right of 1st col, yellow BG
       if (columnNames.indexOf("Elapsed") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Elapsed") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_TIME);
       }
