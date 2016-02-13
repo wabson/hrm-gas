@@ -2191,17 +2191,18 @@ function setFinishTimes(eventInfo) {
   var finishesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Finishes");
   if (finishesSheet) {
     drawTable_(finishesSheet, {
-      column: 2, 
+      column: 2,
       headings: [
         {name: 'Finish Number', color: COLOR_YELLOW},
-        {name: 'Finish Time'},
+        {name: 'Finish Time', color: COLOR_BLUE},
         {name: 'Notes', color: 'white', weight: 'normal', fontStyle: 'italic'},
         {name: 'Strange Number', color: COLOR_YELLOW}, 
-        {name: 'Time'},
+        {name: 'Time', color: COLOR_BLUE},
         {name: 'Duplicate Number', color: COLOR_YELLOW},
-        {name: 'Time'},
+        {name: 'Time', color: COLOR_BLUE},
         {name: 'No Finish Time', color: COLOR_YELLOW},
-        {name: 'No Start Time'}, {name: 'No Division', color: COLOR_YELLOW}
+        {name: 'No Start Time', color: COLOR_BLUE},
+        {name: 'No Division', color: COLOR_YELLOW}
       ]
     });
     finishValues = times.map(function(t) { return [t.boatNumber, t.time, t.allowance, t.notes]; });
