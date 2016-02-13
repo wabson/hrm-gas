@@ -413,6 +413,7 @@ function _getRaceResultsFromSpreadsheet(sheet) {
         raceClass = "" + row['Class'],
         div = "" + row['Div'],
         time = formatTime(row['Elapsed']),
+        timePenalty = formatTimeAbs(row['Time+/-']),
         startTime = formatTime(row['Start']),
         finishTime = formatTime(row['Finish']),
         points = row['Points'],
@@ -421,7 +422,7 @@ function _getRaceResultsFromSpreadsheet(sheet) {
     if (name.trim() !== "") {
       if (bn) {
         //if (time) {
-        results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [raceClass], divs: [div], time: time, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
+        results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [raceClass], divs: [div], time: time, timePenalty: timePenalty, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
         //}
       } else if (results.length > 0) {
         var last = results.pop();
@@ -593,6 +594,24 @@ function formatDate(val) {
  */
 function formatTimePart(p) {
   return (p < 10 ? "0" : "") + p;
+}
+
+function formatTimeAbs(t) {
+  if (t === '') {
+    return '';
+  }
+  var diffMs, absTime, baseTime = new Date('1899/12/30 00:00:00');
+  diffMs = t - baseTime;
+  absTime = new Date(baseTime.getTime() + Math.abs(diffMs));
+  return (diffMs < 0 ? '-' : '') + formatTime(absTime);
+}
+
+function formatTimePenalty(t) {
+  if (t !== '') {
+    return 'includes ' + (t.indexOf('-') === 0 ? 'allowance of ' : 'penalty of ') + t.replace(/^\-/, '');
+  } else {
+    return '';
+  }
 }
 
 /**

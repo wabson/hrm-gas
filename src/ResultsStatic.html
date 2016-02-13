@@ -32,6 +32,12 @@ th,td {
          border:             thin solid gray;
          padding:            5px;
 }
+td span {
+  display: block;
+}
+td span.notes {
+  font-size:          80%;
+}
 th {
     background-color:   #eeeeee;
 }
@@ -67,7 +73,7 @@ if (races[i].results && races[i].results.length > 0) { ?>
      <td><?!= races[i].results[j].clubs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].classes.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />").toUpperCase() ?></td>
      <td><?!= races[i].results[j].divs.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
-     <td><?= formatTime(races[i].results[j].time) ?></td>
+     <td><span class="time"><?= formatTime(races[i].results[j].time) ?></span><span class="notes"><?= formatTimePenalty(races[i].results[j].timePenalty) ?></span></td>
 <? if (pdTimes !== null) { ?>
      <td><?!= races[i].results[j].points.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <td><?!= races[i].results[j].pd.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
