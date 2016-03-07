@@ -136,6 +136,8 @@ function loadRankings(eventInfo) {
 
 /**
  * Display the load rankings dialog
+ *
+ * @public
  */
 function showLoadRankings() {
   // Dialog height in pixels
@@ -281,6 +283,8 @@ function clearAllEntries() {
 
 /**
  * Display the dialog used to add Hasler rankings from a spreadsheet stored in Google Docs
+ *
+ * @public
  */
 function showAddLocalRankings() {
   // Dialog height in pixels
@@ -337,6 +341,8 @@ function addLocalRankings(eventInfo) {
 
 /**
  * Display the dialog used to add Hasler rankings from a spreadsheet stored in Google Docs
+ *
+ * @public
  */
 function showAddLocalEntries() {
   // Dialog height in pixels
@@ -384,6 +390,8 @@ function showAddLocalEntries() {
 
 /**
  * Display the dialog used to import entries from a CSV file stored in Google Docs
+ *
+ * @public
  */
 function showImportEntries() {
   // Dialog height in pixels
@@ -516,6 +524,11 @@ function importEntries(eventInfo) {
   return app;
 }
 
+/**
+ * @param sheet
+ *
+ * @public
+ */
 function importClubsCsv(sheet) {
   var csvData = DriveApp.getFileById(CLUBS_CSV_FILE_ID).getBlob().getDataAsString();
   var parsedCsv = Utilities.parseCsv(csvData);
@@ -636,6 +649,8 @@ function addLocalEntries(eventInfo) {
 
 /**
  * Display the dialog for adding race entries
+ *
+ * @public
  */
 function showAddEntries() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(rankingsSheetName);
@@ -848,6 +863,7 @@ function objUnzip(obj, keys, ignoreMissing, defaultValue) {
  * Find ranked competitors with the given name or BCU number. Returns an array of records each being a seven-element array containing the following string values:
  * Surname, First name, Club, Class, BCU Number, BCU Expiration, Division
  *
+ * @public
  * @param {string} name Search for paddlers whose names match the given string
  * @param {string} spreadsheet Spreadsheet in which to look up ranking data, defaults to the active spreadsheet if not specified
  * @return {array} Two-dimensional array containing matching rows from the Rankings sheet
@@ -998,6 +1014,8 @@ function lookupInTable(rows, matchValues) {
 
 /**
  * Look through all the current entries and update with any new data from the rankings sheet
+ *
+ * @public
  */
 function updateEntriesFromRankings(replaceExisting) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = getRaceSheets(ss);
@@ -1030,6 +1048,8 @@ function updateEntriesFromRankings(replaceExisting) {
 }
 
 /**
+ * @public
+ *
  * Look through all the current entries and flag any where data is not consistent with the rankings sheet
  */
 function checkEntriesFromRankings_() {
@@ -1104,6 +1124,8 @@ function appendTableRowValues(sheet, values) {
 
 /**
  * Return an array containing the list of table heading cells taken from row 1 in the given sheet
+ *
+ * @public
  *
  * Return {array} Array containing the heading cell values, which may be empty if there were no values in row 1
  */
@@ -1470,6 +1492,8 @@ function isHaslerRace() {
 
 /**
  * Return the xRM race type as a string, all uppercase
+ *
+ * @public
  */
 function getRaceType(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
@@ -1499,6 +1523,8 @@ function close() {
 
 /**
  * Display the URL for accessing results
+ *
+ * @public
  */
 function showResultsURL() {
   showWebURL("results");
@@ -1506,6 +1532,8 @@ function showResultsURL() {
 
 /**
  * Display the URL for accessing results
+ *
+ * @public
  */
 function showEntriesURL() {
   showWebURL("entries");
@@ -1582,6 +1610,8 @@ function isLightningRaceName_(raceName) {
 
 /**
  * Display the total sum owed in race levies (£2 per senior, £1 per junior)
+ *
+ * @public
  */
 function showRaceLevies(scriptProps) {
   var totalJnr = 0, totalSnr = 0, totalLightning = 0, totalUnknown = 0, totalReceived = 0;
@@ -1690,6 +1720,8 @@ function confirmClearEntries() {
 
 /**
  * Display the confirmation dialog used to clear all entries
+ *
+ * @public
  */
 function showClearEntries() {
   showPrompt('Clear Entries', '<p>Are you sure you want to clear all existing entries/results?</p>', 'confirmClearEntries', 80);
@@ -1708,6 +1740,8 @@ function confirmClearRankings() {
 
 /**
  * Display the confirmation dialog used to clear all rankings
+ *
+ * @public
  */
 function showClearRankings() {
   showPrompt('Clear Rankings', '<p>Are you sure you want to clear all Hasler rankings? You will need to re-import some rankings before you can add any further race entries.</p>', 'confirmClearRankings', 80);
@@ -1733,6 +1767,8 @@ function getSelectedEntryRows(sheet) {
 
 /**
  * Display the modify crews dialog
+ *
+ * @public
  */
 function showModifyCrews() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet();
@@ -1914,6 +1950,8 @@ function deleteCrews(eventInfo) {
 
 /**
  * Display the set start times dialog
+ *
+ * @public
  */
 function showSetStartTimes() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet();
@@ -2086,6 +2124,8 @@ function setStartTimeValues_(sheet, values) {
 
 /**
  * Display the set finish times dialog
+ *
+ * @public
  */
 function showSetFinishTimes() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -2645,6 +2685,10 @@ function setPromotionsDiv789(ss, isHaslerFinal) {
   }
 }
 
+/**
+ * @public
+ * @param scriptProps
+ */
 function calculatePromotions(scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
       pdSheet = ss.getSheetByName("PandD");
@@ -2753,6 +2797,10 @@ function sumPoints(values, count) {
   return total;
 }
 
+/**
+ * @public
+ * @param scriptProps
+ */
 function calculatePoints(scriptProps) {
   var skipNonComplete = true, raceRegion;
   if (scriptProps.haslerRegion) {
@@ -3051,6 +3099,8 @@ function getRaceColumnA1(colName) {
 
 /**
  * Set forumalas for all race sheets
+ *
+ * @public
  */
 function setFormulas() {
   var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") !== null;
@@ -3096,6 +3146,8 @@ function setSheetFormulas_(sheet, useVLookup) {
 
 /**
  * Set validation
+ *
+ * @public
  */
 function setValidation(scriptProps) {
   var sheets = getRaceSheets();
@@ -3161,6 +3213,8 @@ function setSheetValidation_(sheet, ss, scriptProps) {
 
 /**
  * Set formatting on all sheets
+ *
+ * @public
  */
 function setFormatting() {
   var sheets = getRaceSheets();
@@ -3214,6 +3268,8 @@ function setRaceSheetHeadings_(sheet, columnNames, columnAlignments) {
 
 /**
  * Re-set the column names on all race sheets, including contents and formats
+ *
+ * @public
  */
 function setAllRaceSheetHeadings(columnNames, columnAlignments) {
   var sheets = getRaceSheets();
@@ -3251,6 +3307,8 @@ function setRaceSheetProtection_(sheet) {
 
 /**
  * Configure the given Protection instance so that only the current editor has write permission
+ *
+ * @public
  */
 function setProtection_(protection) {
   var me = Session.getEffectiveUser();
@@ -3282,6 +3340,8 @@ function setRaceSheetFreezes_(sheet) {
 
 /**
  * Set frozen rows and columns for all sheets
+ *
+ * @public
  */
 function setFreezes() {
   var sheets = getRaceSheets();
@@ -3381,6 +3441,8 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
 
 /**
  * Create a new spreadsheet to manage a K4 race
+ *
+ * @public
  */
 function createK4Sheet() {
   var raceName = Browser.inputBox(
@@ -3393,6 +3455,8 @@ function createK4Sheet() {
 
 /**
  * Create a new spreadsheet to manage a K2 race, i.e. Luzmore
+ *
+ * @public
  */
 function createK2Sheet() {
   var raceName = Browser.inputBox(
@@ -3405,6 +3469,8 @@ function createK2Sheet() {
 
 /**
  * Create a new spreadsheet to manage a HRM race
+ *
+ * @public
  */
 function createHRMSheet() {
   var raceName = Browser.inputBox(
@@ -3417,6 +3483,8 @@ function createHRMSheet() {
 
 /**
  * Create a new spreadsheet to manage an assessment race
+ *
+ * @public
  */
 function createARMSheet() {
   var raceName = Browser.inputBox(
@@ -3429,6 +3497,8 @@ function createARMSheet() {
 
 /**
  * Create a new spreadsheet to manage a National Marathon Champs race
+ *
+ * @public
  */
 function createNRMSheet() {
   var raceName = Browser.inputBox(
@@ -3452,6 +3522,9 @@ function getElementsByTagName(element, tagName) {
   return data;
 }
 
+/**
+ * @public
+ */
 function populateFromHtmlResults() {
   var raceUrl = Browser.inputBox(
     'Enter results URL:',
@@ -3542,6 +3615,10 @@ function autoResizeColumns(sheet) {
   }
 }
 
+/**
+ * @public
+ * @param scriptProps
+ */
 function createPrintableEntries(scriptProps) {
   var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, false, scriptProps.printableEntriesId, scriptProps);
   showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Entries", "_blank");
@@ -3620,6 +3697,10 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
   return newss;
 }
 
+/**
+ * @public
+ * @param scriptProps
+ */
 function createClubEntries(scriptProps) {
   var ss = createClubSpreadsheet_(null, ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"], scriptProps);
   showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Club Entries", "_blank");
@@ -3731,6 +3812,8 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
 
 /**
  * Create printable number board inserts for all entries
+ *
+ * @public
  */
 function createNumberBoards() {
   createNumberBoards_(null, true);
@@ -3816,12 +3899,17 @@ function checkEntryDuplicateWarnings(spreadsheet) {
 
 /**
  * Look through all the current entries and flag duplicates
+ *
+ * @public
  */
 function checkEntryDuplicates(spreadsheet) {
   var warnings = checkEntryDuplicateWarnings(spreadsheet);
   showDialog('Duplicate Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>');
 }
 
+/**
+ * @public
+ */
 function checkEntriesFromRankings() {
   checkEntriesFromRankings_();
 }

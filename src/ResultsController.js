@@ -34,6 +34,7 @@ function doGet(e) {
 /**
  * Print results summary
  *
+ * @public
  * @param {object} e Event information
  */
 function saveResultsHTML(scriptProps, ss) {
@@ -130,6 +131,7 @@ function saveEntriesHTML(scriptProps, ss) {
 /**
  * Print entries summary
  *
+ * @public
  * @param {String} ssKey Spreadsheet key
  */
 function saveEntriesHTMLForSpreadsheet(ssKey) {
