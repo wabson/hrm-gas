@@ -1,0 +1,17 @@
+// For testing - broadens the OAuth scope to allow opening any
+// Spreadsheet on the current user's Drive
+/** @NotOnlyCurrentDoc */
+
+/**
+ * @param {myproj.json.Configuration} configuration
+ *     The current configuration settings.
+ * @return {myproj.json.Configuration} configuration
+ *     The current configuration settings, updated with test settings.
+ */
+function provideEnvironmentConfiguration_(configuration) {
+    //TODO: (blog post reader) Change ID below to a Spreadsheet ID you can read
+    configuration.sheets.debugSpreadsheetId =
+        '1uLT2QyiqKdCRGLNuG0X0QU97c0OQiEWtiQHHGaBDWA0';
+    configuration.debug = true;
+    return configuration;
+}
