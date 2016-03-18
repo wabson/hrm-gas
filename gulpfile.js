@@ -41,12 +41,13 @@ var dstRoot = 'build/' + options.env + '/src';
 gulp.task('upload-latest', ['copy-latest'], shell.task(['../../node_modules/node-google-apps-script/bin/gapps upload'],
     {cwd: 'build/' + options.env}));
 
+
 // Copies all files based on the current target environment.
 // Completion of "clean-deployment" is a prerequisite for starting the copy
 // process.
 gulp.task('copy-latest', ['clean-deployment'], function() {
     copyEnvironmentSpecific();
-    //copyServerCode();
+    copyServerCode();
     copyClientCode();
 });
 

@@ -1,4 +1,3 @@
-<script>
 var newData = null, lastUpdated = null;
 var timeRe = /\d{1,2}:\d{2}:\d{2}/;
 
@@ -555,4 +554,3 @@ function showLinks(ssKey) {
   div.append(html);
   $('#messages').hide();
 }
-</script>
