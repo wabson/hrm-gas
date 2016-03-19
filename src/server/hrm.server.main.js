@@ -185,7 +185,7 @@ function showLoadRankings() {
  */
 function loadRankingsXLS() {
   var pageResp = UrlFetchApp.fetch("http://canoeracing.org.uk/marathon/index.php/latest-marathon-ranking-list/"), pageSrc = pageResp.getContentText(),
-    reMatch = /<a href="([\w\/\-_:\.]+.xls)"[\w\s="]*>RankingList<\/a>/ig.exec(pageSrc);
+    reMatch = /<a href="([\w\/\-_:\.]+.xlsx?)"[\w_\s="]*>RankingList<\/a>/ig.exec(pageSrc);
   if (!reMatch) {
     throw("Ranking list URL not found");
   }
