@@ -2762,10 +2762,10 @@ function calculatePointsBoundary(entries, raceName, isHaslerFinal) {
 
 function getClubRows(sheet) {
   sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Clubs");
-  if (sheet.getLastRow() > 0) {
+  if (sheet !== null && sheet.getLastRow() > 0) {
     return sheet.getRange(1, 1, sheet.getLastRow(), 3).getValues();
   } else {
-    return null;
+    return [];
   }
 }
 
