@@ -127,7 +127,7 @@ function loadRankings(eventInfo) {
   Logger.log("Clear checkbox: " + (clear == 'true'));
   if (clear == 'true') {
     Logger.log("Clearing existing rankings");
-    clearRankings(false);
+    clearRankingsIfSheetExists_(false);
   }
   loadRankingsXLS(clubId);
   app.close();
@@ -259,6 +259,12 @@ function clearRankings(p_addColumns) {
   }
 }
 
+function clearRankingsIfSheetExists_(p_addColumns) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(rankingsSheetName);
+  if (sheet !== null) {
+    clearRankings(p_addColumns);
+  }
+}
 /**
  * Clear all entries in the specified sheet
  */
