@@ -38,6 +38,7 @@ function onOpen(e) {
       .addItem('Live Entries', 'showEntriesURL')
       .addItem('Publish Entries', 'saveEntriesHTML')
       .addItem('Club Entries', 'createClubEntries')
+      .addSeparator()
       .addItem('Finance Summary', 'showRaceLevies'))
     // .addSubMenu(ui.createMenu('Results')
     //   .addItem('Set Start Times', 'showSetStartTimes')
