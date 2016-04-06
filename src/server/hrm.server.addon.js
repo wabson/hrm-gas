@@ -16,6 +16,7 @@ function onOpen(e) {
   var addonMenu = ui.createAddonMenu();
 
   addonMenu
+    .addItem('Start', 'openStartDialog')
     .addSubMenu(ui.createMenu('New')
       .addItem('HRM Sheet', 'createHRMSheet')
       .addItem('ARM Sheet', 'createARMSheet')

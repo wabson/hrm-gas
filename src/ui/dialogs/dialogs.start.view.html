@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <base target="_top">
+        <?!= include('dialogs.head.include'); ?>
+    </head>
+    <body>
+        <div class="block form-group">
+            <label for="input-race-name">Race name</label>
+            <input type="text" id="input-race-name" style="width: 250px;">
+        </div>
+        <div class="block">
+            <div class="inline form-group">
+                <label for="select-race-type">Race type</label>
+                <select id="select-race-type" disabled>
+                    <option value="" selected>Select</option>
+                </select>
+            </div>
+            <div class="inline form-group">
+                <label for="select-race-region">Region</label>
+                <select id="select-race-region" disabled>
+                    <option value="" selected>Select</option>
+                </select>
+            </div>
+        </div>
+        <div class="block form-group">
+            <input type="checkbox" id="checkbox-rankings" checked>
+            <label for="checkbox-rankings">Import rankings automatically</label>
+        </div>
+        <div class="block form-group">
+            <input id="btn-start" type="button" value="Start" class="action" disabled />
+            <input id="btn-cancel" type="button" value="Close" />
+        </div>
+        <?!= include('dialogs.start.client.js'); ?>
+    </body>
+</html>

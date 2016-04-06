@@ -13,5 +13,8 @@ function provideEnvironmentConfiguration_(configuration) {
     configuration.sheets.debugSpreadsheetId =
         '1uLT2QyiqKdCRGLNuG0X0QU97c0OQiEWtiQHHGaBDWA0';
     configuration.debug = true;
+
+    configuration.app.raceTemplatesFolderId = '0B8A0SXNo_BkZYkIzZnNiTzRGNms';
+
     return configuration;
 }

@@ -56,7 +56,7 @@ function copyServerCode() {
     return gulp.src([
             srcRoot + '/server/*.js',
             srcRoot + '/libs/*.js',
-            srcRoot + '/ui/*.server.js'])
+            srcRoot + '/ui/**/*.server.js'])
         .pipe(gulp.dest(dstRoot));
 }
 
@@ -64,9 +64,9 @@ function copyServerCode() {
 // Then copies those .html files to the upload staging folder.
 function copyClientCode() {
     return gulp.src([
-            srcRoot + '/ui/*.html',
-            srcRoot + '/ui/*.css',
-            srcRoot + '/ui/*.client.js'])
+            srcRoot + '/ui/**/*.html',
+            srcRoot + '/ui/**/*.css',
+            srcRoot + '/ui/**/*.client.js'])
         .pipe(
             rename(function(path) {
                 if (path.extname !== '.html') {

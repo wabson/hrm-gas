@@ -503,8 +503,3 @@ function getLastUpdated(key) {
     return null;
   }
 }
-
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename)
-      .getContent();
-}

@@ -3935,3 +3935,19 @@ function parseDate(dateStr) {
         throw "Unsuppored date format for '" + dateStr + "' - must be YYYY-MM-DD or DD/MM/YY[YY]";
     }
 }
+
+/**
+ * Passed into the configuration factory constructor
+ * @return {myproj.json.Configuration} Default configuration settings.
+ */
+function getDefaultConfiguration_() {
+  return {
+    debug: false,
+    sheets: {
+      debugSpreadsheetId: null
+    },
+    app: {
+      raceTemplatesFolderId: null
+    }
+  };
+}
