@@ -21,11 +21,6 @@ var FINISHES_SHEET_COLUMNS = [[1, 2], ['Boat Num', 'Time', 'Notes', 'Time+/-']];
  */
 var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Posn", "Notes"];
 var raceSheetColumnAlignments = ["left", "left", "left", "left", "center", "left", "left", "center", "right", "right", "center", "center", "center", "center", "left"];
-// For Hasler races, add the Promotion and Points columns before Notes
-if (SpreadsheetApp.getActiveSpreadsheet() && isHaslerRace()) {
-  raceSheetColumnNames.splice(raceSheetColumnNames.length - 1, 0, "P/D", "Points");
-  raceSheetColumnAlignments.splice(raceSheetColumnAlignments.length - 1, 0, "center", "center");
-}
 var printableResultColumnNames = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn"];
 var printableResultColumnNamesHasler = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn", "P/D", "Points"];
 var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"];
@@ -1144,6 +1139,8 @@ function getTableHeaders(sheet) {
       headers.pop();
     }
     return headers;
+  } else {
+    return [];
   }
 }
 
@@ -1492,8 +1489,9 @@ function combineDivs(div1, div2) {
 /**
  * Return true if the current spreadsheet represents a race within the Hasler system, false otherwise
  */
-function isHaslerRace() {
-  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName("PandD") !== null;
+function isHaslerRace(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName("PandD") !== null;
 }
 
 /**
@@ -3031,6 +3029,32 @@ function calculatePoints(scriptProps) {
   }
 }
 
+// For Hasler races, add the Promotion and Points columns before Notes
+function getRaceColumns(allowsPromotions, allowsPoints) {
+  var columns = raceSheetColumnNames.map(function(name, index) {
+    return {
+      name: name,
+      alignment: raceSheetColumnAlignments[index],
+      width: raceSheetColumnWidths[index]
+    };
+  });
+  if (allowsPromotions) {
+    columns.splice(columns.length - 1, 0, {
+      name: 'P/D',
+      alignment: 'center',
+      width: 39
+    });
+  }
+  if (allowsPoints) {
+    columns.splice(columns.length - 1, 0, {
+      name: 'Points',
+      alignment: 'center',
+      width: 68
+    });
+  }
+  return columns;
+}
+
 function drawTable_(sheet, config) {
   var row = config.row || 1, col = config.column || 1;
   var headings = config.headings;
@@ -3098,8 +3122,8 @@ function getRaceColumnNumber(colName, sheet) {
 /**
  * Return the letter denoting of the column with the specified header in A1 notation, or '' if not found
  */
-function getRaceColumnA1(colName) {
-  var index = getTableColumnIndex(colName);
+function getRaceColumnA1(colName, sheet) {
+  var index = getTableColumnIndex(colName, sheet);
   return index > -1 ? String.fromCharCode(65 + index) : '';
 }
 
@@ -3119,10 +3143,10 @@ function setFormulas() {
  * Set forumalas for a single sheet
  */
 function setSheetFormulas_(sheet, useVLookup) {
-  var timePlusMinusColA1 = getRaceColumnA1("Time+/-"), startColA1 = getRaceColumnA1("Start"), finishColA1 = getRaceColumnA1("Finish"), elapsedColA1 = getRaceColumnA1("Elapsed"), 
-    notesColA1 = getRaceColumnA1("Notes"),
-    startCol = getRaceColumnNumber("Start"), finishCol = getRaceColumnNumber("Finish"), elapsedCol = getRaceColumnNumber("Elapsed"), posnCol = getRaceColumnNumber("Posn"),
-    notesCol = getRaceColumnNumber("Notes"), offsetCol = getRaceColumnNumber("Time+/-");
+  var timePlusMinusColA1 = getRaceColumnA1("Time+/-", sheet), startColA1 = getRaceColumnA1("Start", sheet), finishColA1 = getRaceColumnA1("Finish", sheet), elapsedColA1 = getRaceColumnA1("Elapsed", sheet),
+    notesColA1 = getRaceColumnA1("Notes", sheet),
+    startCol = getRaceColumnNumber("Start", sheet), finishCol = getRaceColumnNumber("Finish", sheet), elapsedCol = getRaceColumnNumber("Elapsed", sheet), posnCol = getRaceColumnNumber("Posn", sheet),
+    notesCol = getRaceColumnNumber("Notes", sheet), offsetCol = getRaceColumnNumber("Time+/-", sheet);
   var lastRow = sheet.getMaxRows();
   if (lastRow > 1) {
     // Elapsed time
@@ -3240,8 +3264,9 @@ function setSheetFormatting_(sheet, numRows, numColumns) {
  * Set formatting on a race sheet
  */
 function setRaceSheetFormatting_(sheet) {
-  var lastRow = sheet.getMaxRows(), dueIndex = getRaceColumnNumber("Due");
-  setSheetFormatting_(sheet, null, lastRow);
+  var lastRow = sheet.getMaxRows(),
+      dueIndex = getRaceColumnNumber("Due", sheet);
+  setSheetFormatting_(sheet, lastRow);
   // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
   if (lastRow > 1) {
     sheet.getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
@@ -3260,10 +3285,11 @@ function setRaceSheetFormatting_(sheet) {
 /**
  * Re-set the column names on a specific race sheet, including contents and formats
  */
-function setRaceSheetHeadings_(sheet, columnNames, columnAlignments) {
-  columnNames = columnNames || raceSheetColumnNames;
-  columnAlignments = columnAlignments || raceSheetColumnAlignments;
-  var headersRange = sheet.getRange(1, 1, 1, columnNames.length);
+function setRaceSheetHeadings_(sheet, columns) {
+  columns = columns || getRaceColumns();
+  columnNames = columns.map(function(c) { return c.name; });
+  columnAlignments = columns.map(function(c) { return c.alignment; });
+  var headersRange = sheet.getRange(1, 1, 1, columns.length);
   // Clear existing header
   sheet.getRange(1, 1, 1, sheet.getLastColumn()).clear().setBorder(false, false, false, false, false, false);
   // Set the new values and format
@@ -3277,10 +3303,10 @@ function setRaceSheetHeadings_(sheet, columnNames, columnAlignments) {
  *
  * @public
  */
-function setAllRaceSheetHeadings(columnNames, columnAlignments) {
-  var sheets = getRaceSheets();
+function setAllRaceSheetHeadings(columns) {
+  var sheets = getRaceSheets(), ss = SpreadsheetApp.getActiveSpreadsheet();
   for (var i=0; i<sheets.length; i++) {
-    setRaceSheetHeadings_(sheets[i], columnNames, columnAlignments);
+    setRaceSheetHeadings_(sheets[i], columns);
   }
 }
 
@@ -3298,10 +3324,10 @@ function setRaceSheetProtection_(sheet) {
   }
     // Now set up new protections
   var lastRow = sheet.getMaxRows();
-  var offsetCol = getRaceColumnNumber("Time+/-"),
-    posnCol = getRaceColumnNumber("Posn"), notesCol = getRaceColumnNumber("Notes");
+  var offsetCol = getRaceColumnNumber("Time+/-", sheet),
+    posnCol = getRaceColumnNumber("Posn", sheet), notesCol = getRaceColumnNumber("Notes", sheet);
   if (posnCol < 1) {
-    posnCol = getRaceColumnNumber("Pos"); // NRM uses different name!
+    posnCol = getRaceColumnNumber("Pos", sheet); // NRM uses different name!
   }
   var resultsRange = sheet.getRange(2, offsetCol, lastRow-1, posnCol - offsetCol + 1);
   setProtection_(resultsRange.protect().setDescription(sheet.getName() + ' results'));
@@ -3356,55 +3382,111 @@ function setFreezes() {
   }
 }
 
+function RaceSheet(sheetArr) {
+  this.sheetName = sheetArr[0];
+  this.numRanges = sheetArr[1];
+  this.crewSize = sheetArr[2] || 1;
+  this.isHidden = sheetArr[3] === true;
+  this.isProtected = sheetArr[4] === true || PROTECTED_SHEETS.indexOf(this.sheetName) > -1;
+  // Display attributes - TODO move these to another class
+  this.headerSize = 1;
+}
+
+RaceSheet.prototype.getNumDataRows = function() {
+  var numPlaces = 0;
+  for (var k = 0; k < this.numRanges.length; k++) {
+    numPlaces += this.numRanges[k][1];
+  }
+  return numPlaces * this.crewSize;
+};
+
+RaceSheet.prototype.getNumHeaderRows = function() {
+  return this.headerSize;
+};
+
+RaceSheet.prototype.getTotalNumRows = function() {
+  return this.getNumHeaderRows() + this.getNumDataRows();
+};
+
+RaceSheet.prototype.generateRaceNumbers = function() {
+  var values = [], startNum, numPlaces, prefix, suffix, numRows;
+  for (var k = 0; k < this.numRanges.length; k++) {
+    startNum = this.numRanges[k][0];
+    numPlaces = this.numRanges[k][1];
+    prefix = this.numRanges[k][2] || '';
+    suffix = this.numRanges[k][3] || '';
+    numRows = numPlaces * this.crewSize; // Number of places * crew size
+    for (var l = 0; l < numRows; l++) {
+      values.push([l % this.crewSize === 0 ? (prefix + (startNum + l / this.crewSize) + suffix) : '']);
+    }
+  }
+  return values;
+};
+
+function getMaxSpreadsheetSize_(raceSheets) {
+  return Math.max.apply(null, raceSheets.map(function(sheet) {
+    return sheet.getTotalNumRows();
+  }));
+}
+
+function getRaceSheetsInfo(sheetInfoArr) {
+  return sheetInfoArr.map(function(arrItem) {
+    return new RaceSheet(arrItem);
+  });
+}
+
+function createRaceTemplateSheet_(ss, sheetsInfo, columns) {
+  var sheet = ss.insertSheet('RaceTemplate'), headerSize = sheetsInfo[0].headerSize, startRow = headerSize + 1,
+      maxRows = getMaxSpreadsheetSize_(sheetsInfo);
+  // Add a temp value which will be removed at the end to force formatting to apply to the biggest sheet row space
+  sheet.getRange(maxRows, columns.length).setValue('temp');
+  sheet.getRange(startRow, 1, maxRows, 1).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
+  setRaceSheetHeadings_(sheet, columns);
+  setRaceSheetFormatting_(sheet);
+  setSheetValidation_(sheet, ss, null);
+  setSheetFormulas_(sheet);
+  setRaceSheetProtection_(sheet, true);
+  setRaceSheetFreezes_(sheet);
+  return sheet;
+}
+
+function customiseRaceSheet_(sheetInfo, sheet) {
+
+  var headerSize = sheetInfo.headerSize, startRow = headerSize + 1, numValues = sheetInfo.generateRaceNumbers(),
+      bodySize = Math.max(numValues.length, 10 * sheetInfo.crewSize), // Always leave 10 spaces minimum
+      totalRows = headerSize + bodySize, existingRows = sheet.getMaxRows();
+
+  if (existingRows > totalRows) {
+    sheet.deleteRows(totalRows + 1, existingRows - totalRows);
+  }
+
+  // Populate race numbers
+  if (numValues.length > 0) {
+    sheet.getRange(startRow, 1, numValues.length, 1).setValues(numValues);
+  }
+
+  if (sheetInfo.isHidden) {
+    sheet.hideSheet();
+  }
+
+  if (sheetInfo.isProtected) {
+    setProtection_(sheet.protect().setDescription(sheetName + ' sheet protection'));
+  }
+
+}
+
 /**
  * Create a new spreadsheet to manage a race
  */
-function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, columnAlignments) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet().copy(name), sheets = ss.getSheets(), tempSheet = ss.insertSheet("Temp");
+function createRaceSpreadsheet(name, raceSheets, extraSheets, columns) {
+
+  var ss = SpreadsheetApp.create(name), sheets = ss.getSheets(), tempSheet = ss.insertSheet('Temp');
+
   // Delete preexisting sheets
   for (var i = 0; i < sheets.length; i++) {
     ss.deleteSheet(sheets[i]);
   }
-  clearColumnCache_();
-  var sheetName, numRanges, crewSize, sheet, isHidden, isProtected, numRows, startRow, values, totalRows, startNum;
-  var numPlaces, prefix, suffix;
-  // Add new race sheets
-  for (var j = 0; j < raceSheets.length; j++) {
-    sheetName = raceSheets[j][0];
-    numRanges = raceSheets[j][1];
-    crewSize = raceSheets[j][2] || 1;
-    isHidden = raceSheets[j][3] === true;
-    isProtected = raceSheets[j][4] === true || PROTECTED_SHEETS.indexOf(sheetName) > -1;
-    sheet = ss.insertSheet(sheetName);
-    startRow = 2;
-    values = [];
-    totalRows = 0;
-    for (var k = 0; k < numRanges.length; k++) {
-      startNum = numRanges[k][0];
-      numPlaces = numRanges[k][1];
-      prefix = numRanges[k][2] || '';
-      suffix = numRanges[k][3] || '';
-      numRows = numPlaces * crewSize; // Number of places * crew size
-      for (var l = 0; l < numRows; l++) {
-        values.push([l % crewSize === 0 ? (prefix + (startNum + l/crewSize) + suffix) : '']);
-      }
-      totalRows += numRows;
-    }
-    sheet.deleteRows(totalRows + 1, sheet.getMaxRows() - totalRows);
-    sheet.getRange(startRow, 1, values.length, 1).setValues(values).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_YELLOW).setBorder(true, false, false, true, false, false).setHorizontalAlignment("left");
-    setRaceSheetHeadings_(sheet, columnNames, columnAlignments);
-    setRaceSheetFormatting_(sheet);
-    //setSheetValidation_(sheet, ss, null);
-    setSheetFormulas_(sheet);
-    if (isHidden) {
-      sheet.hideSheet();
-    }
-    if (isProtected) {
-       setProtection_(sheet.protect().setDescription(sheetName + ' sheet protection'));
-    }
-    setRaceSheetProtection_(sheet, true);
-    setRaceSheetFreezes_(sheet);
-  }
+
   for (var m = 0; m < extraSheets.length; m++) {
     var sheetNameExtra = extraSheets[m];
     sheet = ss.insertSheet(sheetNameExtra);
@@ -3428,12 +3510,22 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columnNames, colum
       importClubsCsv(sheet);
     }
   }
-  // Now remove the temp sheet (we need this as we're not allowed to delete all sheets up-front)
-  ss.deleteSheet(tempSheet);
-  // Go back to the race sheets and set up validation (now that we have the clubs list populated, hopefully)
-  for (var n = 0; n < raceSheets.length; n++) {
-    setSheetValidation_(ss.getSheetByName(raceSheets[n][0]), ss, null);
+
+  // Add template sheet
+  var templateSheet = createRaceTemplateSheet_(ss, raceSheets, columns);
+
+  // Add new race sheets
+  for (var j = 0; j < raceSheets.length; j++) {
+    sheet = ss.insertSheet(raceSheets[j].sheetName, j, {
+      template: templateSheet
+    });
+    customiseRaceSheet_(raceSheets[j], sheet);
   }
+
+  // Now remove the template and temp sheets
+  ss.deleteSheet(templateSheet);
+  ss.deleteSheet(tempSheet);
+
   // Set race type custom property
   var raceType = getRaceType(ss);
   if (raceType) {
@@ -3455,7 +3547,7 @@ function createK4Sheet() {
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
-    createRaceSpreadsheet(raceName, RACE_SHEETS_K4, EXTRA_SHEETS_NON_HASLER);
+    createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_K4), EXTRA_SHEETS_NON_HASLER, getRaceColumns(false, false));
   }
 }
 
@@ -3469,7 +3561,7 @@ function createK2Sheet() {
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
-    createRaceSpreadsheet(raceName, RACE_SHEETS_K2, EXTRA_SHEETS_NON_HASLER);
+    createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_K2), EXTRA_SHEETS_NON_HASLER, getRaceColumns(true, false));
   }
 }
 
@@ -3483,7 +3575,7 @@ function createHRMSheet() {
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
-    createRaceSpreadsheet(raceName, RACE_SHEETS_HASLER, EXTRA_SHEETS_HASLER);
+    createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_HASLER), EXTRA_SHEETS_HASLER, getRaceColumns(true, true));
   }
 }
 
@@ -3497,7 +3589,7 @@ function createARMSheet() {
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
-    createRaceSpreadsheet(raceName, RACE_SHEETS_ASS, EXTRA_SHEETS_NON_HASLER);
+    createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_ASS), EXTRA_SHEETS_NON_HASLER, getRaceColumns(true, true));
   }
 }
 
