@@ -19,10 +19,10 @@ var FINISHES_SHEET_COLUMNS = [[1, 2], ['Boat Num', 'Time', 'Notes', 'Time+/-']];
 /**
  * Race sheet column names
  */
-var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Posn", "Notes"];
-var raceSheetColumnAlignments = ["left", "left", "left", "left", "center", "left", "left", "center", "right", "right", "center", "center", "center", "center", "left"];
+var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Posn", "Notes"];
+var raceSheetColumnAlignments = ["left", "left", "left", "left", "center", "left", "left", "center", "right", "right", "right", "center", "center", "center", "center", "left"];
 
-var raceSheetColumnWidths = [68, 127, 111, 111, 93, 47, 57, 39, 56, 75, 111, 111, 111, 47, 71];
+var raceSheetColumnWidths = [68, 127, 111, 111, 93, 47, 57, 39, 56, 56, 75, 111, 111, 111, 47, 71];
 var printableResultColumnNames = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn"];
 var printableResultColumnNamesHasler = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn", "P/D", "Points"];
 var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"];
@@ -3197,47 +3197,64 @@ function setValidation(scriptProps) {
   }
 }
 
+function buildBCUNumberValidationRule_(sheet, rowNum, regex) {
+  var bcuColA1 = getRaceColumnA1("BCU Number", sheet);
+  return SpreadsheetApp.newDataValidation()
+      .requireFormulaSatisfied('=REGEXMATCH(TEXT(' + bcuColA1 + rowNum + ', "0"), "' + regex + '")')
+      .setHelpText(VALIDATION_MSG_BCU)
+      .build();
+}
+
 /**
  * Set validation
  */
 function setSheetValidation_(sheet, ss, scriptProps) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var clubsSheet = ss.getSheetByName('Clubs'), allowedDivs = DIVS_ALL, startRow = 2;
-  var classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
+  var paidColA1 = getRaceColumnA1("Paid", sheet), dueColA1 = getRaceColumnA1("Due", sheet),
+    paidRule = SpreadsheetApp.newDataValidation().requireFormulaSatisfied('=EQ(' + paidColA1 + startRow + ', ' + dueColA1 + startRow + ')'),
+    classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
     divRule = allowedDivs !== null ? SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build() : null,
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
     expiryRule = scriptProps && scriptProps.raceDate ? SpreadsheetApp.newDataValidation().requireDateOnOrAfter(parseDate(scriptProps.raceDate)).build() : null;
 
-  var lastRow = sheet.getMaxRows(), r, expiryCol = getRaceColumnNumber("Expiry", sheet);
+  var lastRow = sheet.getMaxRows(), r, expiryCol = getRaceColumnNumber("Expiry", sheet), paidCol = getRaceColumnNumber("Paid", sheet);
   if (lastRow > 1) {
     Logger.log("Setting validation for sheet " + sheet.getName());
     if (clubRule !== null) {
-      r = sheet.getRange(2, getRaceColumnNumber("Club", sheet), lastRow-1);
+      r = sheet.getRange(startRow, getRaceColumnNumber("Club", sheet), lastRow-startRow+1);
       if (r) {
         r.clearDataValidations();
         r.setDataValidation(clubRule);
       }
     }
-    r = sheet.getRange(2, getRaceColumnNumber("Class", sheet), lastRow-1);
+    r = sheet.getRange(startRow, getRaceColumnNumber("BCU Number", sheet), lastRow-startRow+1);
     if (r) {
       r.clearDataValidations();
       r.setDataValidation(classRule);
     }
-    r = sheet.getRange(2, getRaceColumnNumber("Class", sheet), lastRow-1);
+    r = sheet.getRange(startRow, getRaceColumnNumber("Class", sheet), lastRow-startRow+1);
     if (r) {
       r.clearDataValidations();
       r.setDataValidation(classRule);
     }
-    r = sheet.getRange(2, getRaceColumnNumber("Div", sheet), lastRow-1);
+    r = sheet.getRange(startRow, getRaceColumnNumber("Div", sheet), lastRow-startRow+1);
     if (r) {
       r.clearDataValidations();
       r.setDataValidation(divRule);
     }
     if (expiryCol > 0) {
-      r = sheet.getRange(2, expiryCol, lastRow-1);
+      r = sheet.getRange(startRow, expiryCol, lastRow-startRow+1);
       if (r) {
         r.clearDataValidations();
         r.setDataValidation(expiryRule);
+      }
+    }
+    if (paidCol > 0) {
+      r = sheet.getRange(startRow, paidCol, lastRow-startRow+1);
+      if (r) {
+        r.clearDataValidations();
+        r.setDataValidation(paidRule);
       }
     }
   }
