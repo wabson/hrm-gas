@@ -3135,17 +3135,18 @@ function getRaceColumnA1(colName, sheet) {
 function setFormulas() {
   var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") !== null;
   for (var i=0; i<sheets.length; i++) {
-    setSheetFormulas_(sheets[i], useVLookup);
+    setSheetFormulas_(sheets[i]);
+    setSheetSpecificFormulas_(sheets[i]);
   }
 }
 
 /**
  * Set forumalas for a single sheet
  */
-function setSheetFormulas_(sheet, useVLookup) {
+function setSheetFormulas_(sheet) {
   var timePlusMinusColA1 = getRaceColumnA1("Time+/-", sheet), startColA1 = getRaceColumnA1("Start", sheet), finishColA1 = getRaceColumnA1("Finish", sheet), elapsedColA1 = getRaceColumnA1("Elapsed", sheet),
     notesColA1 = getRaceColumnA1("Notes", sheet),
-    startCol = getRaceColumnNumber("Start", sheet), finishCol = getRaceColumnNumber("Finish", sheet), elapsedCol = getRaceColumnNumber("Elapsed", sheet), posnCol = getRaceColumnNumber("Posn", sheet),
+    finishCol = getRaceColumnNumber("Finish", sheet), elapsedCol = getRaceColumnNumber("Elapsed", sheet), posnCol = getRaceColumnNumber("Posn", sheet),
     notesCol = getRaceColumnNumber("Notes", sheet), offsetCol = getRaceColumnNumber("Time+/-", sheet);
   var lastRow = sheet.getMaxRows();
   if (lastRow > 1) {
@@ -3159,18 +3160,27 @@ function setSheetFormulas_(sheet, useVLookup) {
       sheet.getRange(2, posnCol).setFormula('=IFERROR(RANK('+elapsedColA1+'2,'+elapsedColA1+'$2:'+elapsedColA1+'$' + lastRow + ', 1))');
       sheet.getRange(2, posnCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, posnCol).getFormulaR1C1());
     }
-    // Start and Finish times
-    if (useVLookup) {
-      var sheetName = sheet.getName();
-      sheet.getRange(2, startCol).setFormula('=IF(IFERROR(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0), "")="dns","dns",IF(A2<>"",IFERROR(VLOOKUP("'+sheetName+'",Starts!$A$1:$B$20, 2, 0), ""), ""))'); // Lookup against sheet name for rows where there is a boat number
-      sheet.getRange(2, startCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, startCol).getFormulaR1C1());
-      sheet.getRange(2, finishCol).setFormula('=IFERROR(IF(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0)="dns","",VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0)))'); // Lookup against boat number
-      sheet.getRange(2, notesCol).setFormula('=IFERROR(IF(A2<>"",VLOOKUP(A2,Finishes!$B$2:$D$1000, 3, 0), '+notesColA1+'1))'); // Lookup against boat number
-      sheet.getRange(2, offsetCol).setFormula('=IFERROR(VLOOKUP(A2,Finishes!$B$2:$E$1000, 4, 0))'); // Lookup against boat number
-      sheet.getRange(2, finishCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, finishCol).getFormulaR1C1());
-      sheet.getRange(2, notesCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, notesCol).getFormulaR1C1());
-      sheet.getRange(2, offsetCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, offsetCol).getFormulaR1C1());
-    }
+    sheet.getRange(2, finishCol).setFormula('=IFERROR(IF(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0)="dns","",VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0)))'); // Lookup against boat number
+    sheet.getRange(2, notesCol).setFormula('=IFERROR(IF(A2<>"",VLOOKUP(A2,Finishes!$B$2:$D$1000, 3, 0), '+notesColA1+'1))'); // Lookup against boat number
+    sheet.getRange(2, offsetCol).setFormula('=IFERROR(VLOOKUP(A2,Finishes!$B$2:$E$1000, 4, 0))'); // Lookup against boat number
+    sheet.getRange(2, finishCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, finishCol).getFormulaR1C1());
+    sheet.getRange(2, notesCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, notesCol).getFormulaR1C1());
+    sheet.getRange(2, offsetCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, offsetCol).getFormulaR1C1());
+  }
+}
+
+/**
+ * Set sheet-specific formulae
+ */
+function setSheetSpecificFormulas_(sheet) {
+
+  var startCol = getRaceColumnNumber("Start", sheet),
+      lastRow = sheet.getMaxRows(), sheetName = sheet.getName();
+
+  if (lastRow > 1) {
+    // Lookup against sheet name for rows where there is a boat number
+    sheet.getRange(2, startCol).setFormula('=IF(IFERROR(VLOOKUP(A2,Finishes!$B$2:$C$1000, 2, 0), "")="dns","dns",IF(A2<>"",IFERROR(VLOOKUP("'+sheetName+'",Starts!$A$1:$B$20, 2, 0), ""), ""))');
+    sheet.getRange(2, startCol, lastRow-1).setFormulaR1C1(sheet.getRange(2, startCol).getFormulaR1C1());
   }
 }
 
@@ -3183,6 +3193,7 @@ function setValidation(scriptProps) {
   var sheets = getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     setSheetValidation_(sheets[i], null, scriptProps);
+    setSheetSpecificValidation_(sheets[i]);
   }
 }
 
@@ -3191,21 +3202,7 @@ function setValidation(scriptProps) {
  */
 function setSheetValidation_(sheet, ss, scriptProps) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var clubsSheet = ss.getSheetByName('Clubs'), sheetName = sheet.getName(), allowedDivs = DIVS_ALL;
-  if (sheetName.indexOf('Div') === 0) {
-    if (sheetName >= 'Div7') {
-      allowedDivs = DIVS_4_MILE;
-    }
-    else if (sheetName >= 'Div4') {
-      allowedDivs = DIVS_8_MILE;
-    }
-    else {
-      allowedDivs = DIVS_12_MILE;
-    }
-  }
-  if (sheetName.indexOf('U10 ') === 0 || sheetName.indexOf('U12 ') === 0) {
-    allowedDivs = DIVS_LIGHTNING;
-  }
+  var clubsSheet = ss.getSheetByName('Clubs'), allowedDivs = DIVS_ALL, startRow = 2;
   var classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
     divRule = allowedDivs !== null ? SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build() : null,
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
@@ -3226,6 +3223,11 @@ function setSheetValidation_(sheet, ss, scriptProps) {
       r.clearDataValidations();
       r.setDataValidation(classRule);
     }
+    r = sheet.getRange(2, getRaceColumnNumber("Class", sheet), lastRow-1);
+    if (r) {
+      r.clearDataValidations();
+      r.setDataValidation(classRule);
+    }
     r = sheet.getRange(2, getRaceColumnNumber("Div", sheet), lastRow-1);
     if (r) {
       r.clearDataValidations();
@@ -3238,6 +3240,39 @@ function setSheetValidation_(sheet, ss, scriptProps) {
         r.setDataValidation(expiryRule);
       }
     }
+  }
+}
+
+/**
+ * Set sheet-specific validation
+ */
+function setSheetSpecificValidation_(sheet) {
+  var sheetName = sheet.getName(), allowedDivs = DIVS_ALL, lastRow = sheet.getMaxRows(), startRow = 2, r;
+  // Allow a range of Divs for k2s and a single div for k1
+  var divMatch = /^Div([1-9])_?([1-9])?$/.exec(sheetName);
+  if (divMatch !== null) {
+    if (divMatch[1] >= '7') {
+      allowedDivs = DIVS_4_MILE;
+    }
+    else if (divMatch[1] >= '4') {
+      allowedDivs = DIVS_8_MILE;
+    }
+    else {
+      allowedDivs = DIVS_12_MILE;
+    }
+    // For K1s we can only have paddlers in the exact division or a lower div (higher number)
+    if (!divMatch[2] && allowedDivs.indexOf(divMatch[1]) > 0) {
+      allowedDivs = allowedDivs.slice(allowedDivs.indexOf(divMatch[1]));
+    }
+  }
+  if (sheetName.indexOf('U10 ') === 0 || sheetName.indexOf('U12 ') === 0) {
+    allowedDivs = DIVS_LIGHTNING;
+  }
+  var divRule = SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build();
+  r = sheet.getRange(startRow, getRaceColumnNumber("Div", sheet), lastRow-1);
+  if (r) {
+    r.clearDataValidations();
+    r.setDataValidation(divRule);
   }
 }
 
@@ -3469,6 +3504,9 @@ function customiseRaceSheet_(sheetInfo, sheet) {
   if (numValues.length > 0) {
     sheet.getRange(startRow, 1, numValues.length, 1).setValues(numValues);
   }
+
+  setSheetSpecificValidation_(sheet);
+  setSheetSpecificFormulas_(sheet);
 
   if (sheetInfo.isHidden) {
     sheet.hideSheet();
