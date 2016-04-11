@@ -104,7 +104,7 @@ var RACE_SHEETS_NATIONALS = [
     ['O34_VMK2', [[600, 50, 'Y']], 2], ['O34_VLK2', [[650, 50, 'Y']], 2],
     ['O44_VMK2', [[700, 50, 'Y']], 2], ['O44_VLK2', [[750, 20, 'Y']], 2],
     ['O54_VMK2', [[800, 50, 'Y']], 2], ['O54_VLK2', [[850, 10, 'Y']], 2],
-    ['O59_VLK2', [[900, 20, 'Y']], 2], ['O59_VLK2', [[920, 20, 'Y']], 2],
+    ['O59_VMK2', [[900, 20, 'Y']], 2], ['O59_VLK2', [[920, 20, 'Y']], 2],
     ['Mixed', [[940, 60, 'Y']], 2]
 ];
 var EXTRA_SHEETS_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
