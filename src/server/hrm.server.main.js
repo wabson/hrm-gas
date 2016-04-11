@@ -3300,20 +3300,33 @@ function setSheetFormatting_(sheet, numRows, numColumns) {
  */
 function setRaceSheetFormatting_(sheet) {
   var lastRow = sheet.getMaxRows(),
-      dueIndex = getRaceColumnNumber("Due", sheet);
+      bcuIndex = getRaceColumnNumber("BCU Number", sheet),
+      expiryIndex = getRaceColumnNumber("Expiry", sheet),
+      divIndex = getRaceColumnNumber("Div", sheet),
+      paidIndex = getRaceColumnNumber("Paid", sheet),
+      dueIndex = getRaceColumnNumber("Due", sheet),
+      timeIndex = getRaceColumnNumber("Time+/-", sheet);
   setSheetFormatting_(sheet, lastRow);
   // Set Start, Finish and Elapsed columns to show as times, Paid as pounds and Div as integer
   if (lastRow > 1) {
-    sheet.getRange(2, getRaceColumnNumber("BCU Number"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
-    if (getRaceColumnNumber("Expiry")) {
-      sheet.getRange(2, getRaceColumnNumber("Expiry"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
+    if (bcuIndex > 0) {
+      sheet.getRange(2, bcuIndex, lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
     }
-    sheet.getRange(2, getRaceColumnNumber("Div"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
-    sheet.getRange(2, getRaceColumnNumber("Paid"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+    if (expiryIndex > 0) {
+      sheet.getRange(2, expiryIndex, lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
+    }
+    if (divIndex > 0) {
+      sheet.getRange(2, divIndex, lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
+    }
+    if (paidIndex > 0) {
+      sheet.getRange(2, paidIndex, lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+    }
     if (dueIndex > 0) {
-      sheet.getRange(2, getRaceColumnNumber("Due"), lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+      sheet.getRange(2, dueIndex, lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
     }
-    sheet.getRange(2, getRaceColumnNumber("Time+/-"), lastRow-1, 4).setNumberFormat(NUMBER_FORMAT_TIME);
+    if (timeIndex > 0) {
+      sheet.getRange(2, timeIndex, lastRow-1, 4).setNumberFormat(NUMBER_FORMAT_TIME);
+    }
   }
 }
 
