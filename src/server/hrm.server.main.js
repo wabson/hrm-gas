@@ -104,8 +104,6 @@ var RACE_SHEETS_NATIONALS = [
 var EXTRA_SHEETS_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
 var EXTRA_SHEETS_NON_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
 var EXTRA_SHEETS_NATIONALS = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Divisional Results', 'Singles Results', 'Doubles Results', 'Summary'];
-var COLUMNS_NATIONALS = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Pos", "Points", "Notes"];
-var COLUMN_ALIGNMENTS_NATIONALS = ["left", "left", "left", "left", "center", "left", "center", "center", "right", "right", "center", "center", "center", "center", "center", "center"];
 
 var PROTECTED_SHEETS = ['Rankings'];
 
@@ -3603,7 +3601,7 @@ function createNRMSheet() {
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
-    createRaceSpreadsheet(raceName, RACE_SHEETS_NATIONALS, EXTRA_SHEETS_NATIONALS, COLUMNS_NATIONALS, COLUMN_ALIGNMENTS_NATIONALS);
+    createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_NATIONALS), EXTRA_SHEETS_NATIONALS, getRaceColumns(true, true));
   }
 }
 
