@@ -21,6 +21,8 @@ var FINISHES_SHEET_COLUMNS = [[1, 2], ['Boat Num', 'Time', 'Notes', 'Time+/-']];
  */
 var raceSheetColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Paid", "Time+/-", "Start", "Finish", "Elapsed", "Posn", "Notes"];
 var raceSheetColumnAlignments = ["left", "left", "left", "left", "center", "left", "left", "center", "right", "right", "center", "center", "center", "center", "left"];
+
+var raceSheetColumnWidths = [68, 127, 111, 111, 93, 47, 57, 39, 56, 75, 111, 111, 111, 47, 71];
 var printableResultColumnNames = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn"];
 var printableResultColumnNamesHasler = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn", "P/D", "Points"];
 var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"];
@@ -3286,6 +3288,7 @@ function setRaceSheetFormatting_(sheet) {
 function setRaceSheetHeadings_(sheet, columns) {
   columns = columns || getRaceColumns();
   columnNames = columns.map(function(c) { return c.name; });
+  columnWidths = columns.map(function(c) { return c.width; });
   columnAlignments = columns.map(function(c) { return c.alignment; });
   var headersRange = sheet.getRange(1, 1, 1, columns.length);
   // Clear existing header
@@ -3294,6 +3297,10 @@ function setRaceSheetHeadings_(sheet, columns) {
   headersRange.setValues([columnNames]).setHorizontalAlignments([columnAlignments]).setFontFamily(SHEET_FONT_FAMILY).setFontWeight("bold").setBackground(COLOR_BLUE).setBorder(true, true, true, true, true, true);
   // Set the last column header (Notes) to be italicised
   sheet.getRange(1, columnNames.length).setFontStyle("italic");
+
+  for (var i = 0; i < columnWidths.length; i++) {
+    sheet.setColumnWidth(i + 1, columnWidths[i]);
+  }
 }
 
 /**
