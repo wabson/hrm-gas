@@ -65,13 +65,6 @@ function onShowSidebar() {
 }
 
 /**
- * Menu hook for loading club list from CSV data
- */
-function loadClubsCsv() {
-  importClubsCsv();
-}
-
-/**
  * Automatically invoked whenever a cell is edited
  */
 function onEdit(e) {

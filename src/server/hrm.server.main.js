@@ -32,11 +32,6 @@ var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Numbe
  */
 var PROJECT_ID = "AKfycbzymqCQ6rUDYiNeG63i9vYeXaSE1YtiHDEgRHFQ0TdXaBSwkLs";
 
-/**
- * CSV file to load club data from - maintained externally
- */
-var CLUBS_CSV_FILE_ID = "0B8A0SXNo_BkZb2hGUFphV1V3NWc";
-
 var NUMBER_FORMAT_DATE = "dd/MM/yyyy";
 var NUMBER_FORMAT_TIME = "[h]:mm:ss";
 var NUMBER_FORMAT_CURRENCY = "£0.00";
@@ -531,21 +526,56 @@ function importEntries(eventInfo) {
 
 /**
  * @param sheet
+ */
+function importClubs_(sheet) {
+  var config = Configuration.getCurrent(), clubsFileId = config.app ? config.app.clubsFileId : null, clubsValues;
+  if (clubsFileId) {
+    var clubsFile = DriveApp.getFileById(clubsFileId);
+    if (clubsFile) {
+      var mimeType = clubsFile.getMimeType();
+      if (mimeType == MimeType.GOOGLE_SHEETS) {
+        clubsValues = getClubsFromGoogleSheet_(clubsFile);
+      } else if (mimeType == MimeType.CSV) {
+        clubsValues = getClubsFromCsv_(clubsFile);
+      }
+    } else {
+      throw "Could not find Clubs sheet in file " + clubsFileId;
+    }
+  } else {
+    throw "No clubs file was specified";
+  }
+  var clubsSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Clubs");
+  if (clubsSheet) {
+    clubsSheet.clear();
+    clubsSheet.getRange(1, 1, clubsValues.length, clubsValues[0].length).setValues(clubsValues);
+    setSheetFormatting_(clubsSheet);
+  } else {
+    throw "Could not find Clubs sheet";
+  }
+}
+
+function getClubsFromGoogleSheet_(clubsFile) {
+  var clubSs = SpreadsheetApp.openById(clubsFile.getId()),
+      values = clubSs.getSheets()[0].getDataRange().getValues();
+  if (values.length > 0) {
+    return values;
+  } else {
+    throw "Could not find any clubs listed";
+  }
+}
+
+/**
+ * @param sheet
  *
  * @public
  */
-function importClubsCsv(sheet) {
-  var csvData = DriveApp.getFileById(CLUBS_CSV_FILE_ID).getBlob().getDataAsString();
+function getClubsFromCsv_(clubsFile) {
+  var csvData = clubsFile.getBlob().getDataAsString();
   var parsedCsv = Utilities.parseCsv(csvData);
   if (parsedCsv && parsedCsv.length > 0) {
-    var clubsSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Clubs");
-    if (clubsSheet) {
-      clubsSheet.clear();
-      clubsSheet.getRange(1, 1, parsedCsv.length, parsedCsv[0].length).setValues(parsedCsv);
-      setSheetFormatting_(clubsSheet);
-    } else {
-      throw "Could not find Clubs sheet";
-    }
+    return parsedCsv;
+  } else {
+      throw "Could not find any clubs listed";
   }
 }
 
@@ -3598,7 +3628,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columns) {
     }
     else if (sheetNameExtra == "Clubs") {
       // Import clubs
-      importClubsCsv(sheet);
+      importClubs_(sheet);
     }
   }
 
