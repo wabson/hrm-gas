@@ -42,6 +42,10 @@ var NUMBER_FORMAT_TIME = "[h]:mm:ss";
 var NUMBER_FORMAT_CURRENCY = "£0.00";
 var NUMBER_FORMAT_INTEGER = "0";
 
+var BCU_NUMBER_REGEXP = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+)$';
+var BCU_NUMBER_FULL_REGEXP = '^(\\d+|(SCA|WCA) ?\\d+|INT)$';
+var VALIDATION_MSG_BCU = 'BCU Number must be in the correct format';
+
 var CLASSES_ALL = ["S","V","J","F","VF","JF","C","VC","JC","FC","VFC","JFC"];
 
 var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
@@ -3213,6 +3217,7 @@ function setSheetValidation_(sheet, ss, scriptProps) {
   var clubsSheet = ss.getSheetByName('Clubs'), allowedDivs = DIVS_ALL, startRow = 2;
   var paidColA1 = getRaceColumnA1("Paid", sheet), dueColA1 = getRaceColumnA1("Due", sheet),
     paidRule = SpreadsheetApp.newDataValidation().requireFormulaSatisfied('=EQ(' + paidColA1 + startRow + ', ' + dueColA1 + startRow + ')'),
+    bcuNumberRule = buildBCUNumberValidationRule_(sheet, startRow, BCU_NUMBER_REGEXP),
     classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
     divRule = allowedDivs !== null ? SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build() : null,
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
@@ -3242,6 +3247,11 @@ function setSheetValidation_(sheet, ss, scriptProps) {
     if (r) {
       r.clearDataValidations();
       r.setDataValidation(divRule);
+    }
+    r = sheet.getRange(startRow, getRaceColumnNumber("BCU Number", sheet), lastRow-startRow+1);
+    if (r) {
+      r.clearDataValidations();
+      r.setDataValidation(bcuNumberRule);
     }
     if (expiryCol > 0) {
       r = sheet.getRange(startRow, expiryCol, lastRow-startRow+1);
@@ -3290,6 +3300,14 @@ function setSheetSpecificValidation_(sheet) {
   if (r) {
     r.clearDataValidations();
     r.setDataValidation(divRule);
+  }
+  if (/^Div[1-6]$/.exec(sheetName) !== null) {
+    var bcuNumberRule = buildBCUNumberValidationRule_(sheet, startRow, BCU_NUMBER_FULL_REGEXP);
+    r = sheet.getRange(startRow, getRaceColumnNumber("BCU Number", sheet), lastRow-startRow+1);
+    if (r) {
+      r.clearDataValidations();
+      r.setDataValidation(bcuNumberRule);
+    }
   }
 }
 
