@@ -21,6 +21,10 @@ var minimist = require('minimist');
 var rename = require('gulp-rename');
 var debug = require('gulp-debug');
 var del = require('del');
+var replace = require('gulp-replace');
+var path = require('path');
+var include = require('gulp-include');
+var webserver = require('gulp-webserver');
 
 // minimist structure and defaults for this task configuration
 var knownOptions = {
@@ -33,6 +37,7 @@ var options = minimist(process.argv.slice(2), knownOptions);
 
 // The root working directory where code is edited
 var srcRoot = 'src';
+var testRoot = 'test';
 // The root staging folder for gapps configurations
 var dstRoot = 'build/' + options.env + '/src';
 
@@ -123,3 +128,40 @@ gulp.task('lint', function() {
         .pipe(jshint())
         .pipe(jshint.reporter('jshint-stylish'));
 });
+
+gulp.task('lint-ui-server', function() {
+    return gulp.src(['build/ui-test' + '/**/*.js', 'build/ui-test' + '/**/*.html'])
+        .pipe(jshint.extract())
+        .pipe(jshint())
+        .pipe(jshint.reporter('jshint-stylish'));
+});
+
+gulp.task('copy-ui', function() {
+    return gulp.src([srcRoot + '/ui/**/*.html', testRoot + '/ui/**/*.html'])
+        .pipe(gulp.dest('build/ui-test'));
+});
+
+gulp.task('includes', ['copy-ui'], function() {
+    return gulp.src('build/ui-test/**/*.html')
+        .pipe(replace(/<\?!= ?include\('([\.\w]+)'\); ?\?>/, '<!--=include $1.html -->'))
+        .pipe(include())
+        .pipe(gulp.dest('build/ui-test-includes'));
+});
+
+gulp.task('ui-server', ['lint-ui-server', 'includes'], function() {
+    return gulp.src('build/ui-test-includes')
+        .pipe(webserver({
+            livereload: true,
+            directoryListing: {
+                enable: true,
+                path: 'build/ui-test-includes'
+            },
+            open: false
+        }));
+});
+
+gulp.task('watch', ['includes'], function() {
+    gulp.watch([srcRoot + '/ui/**/*.html', testRoot + '/ui/**/*.html'], ['includes']);
+});
+
+gulp.task('ui-server-watch', ['ui-server', 'watch']);

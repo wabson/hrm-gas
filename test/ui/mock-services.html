@@ -1,0 +1,35 @@
+<script>
+    var Runner = function () {
+    };
+    Runner.prototype.withSuccessHandler = function(successHandler) {
+        this.successHandler = successHandler;
+        return this;
+    };
+    Runner.prototype.addData = function(fnName, data) {
+        this[fnName] = function() {
+            this.successHandler(data);
+        }.bind(this);
+    };
+
+    var runner = new Runner();
+    runner.addData('dialog_start_getRaceTemplates', [{
+        id: '1',
+        name: 'Hasler Race'
+    }]);
+
+    var google = {
+        script: {
+            run: runner,
+            host: {
+                close: function() {
+                    alert('Dialog closed');
+                }
+            }
+        }
+    };
+</script>
+<style type="text/css">
+    body {
+        margin: 10px;
+    }
+</style>

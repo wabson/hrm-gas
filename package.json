@@ -24,15 +24,19 @@
     "eslint": "^1.10.3",
     "gulp": "^3.9.1",
     "gulp-debug": "^2.1.2",
+    "gulp-include": "^2.1.0",
     "gulp-jshint": "^1.12.0",
     "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.5.4",
+    "gulp-replace-path": "^0.4.0",
     "gulp-shell": "^0.5.1",
     "gulp-util": "^3.0.7",
+    "gulp-webserver": "^0.9.1",
     "jshint": "^2.9.1-rc1",
     "jshint-stylish": "^2.0.1",
     "minimist": "^1.2.0",
     "mocha": "^2.3.4",
     "node-google-apps-script": "^1.1.4",
-    "through2": "^2.0.1",
+    "through2": "^2.0.1"
   }
 }
