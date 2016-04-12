@@ -5,20 +5,21 @@
         <?!= include('dialogs.head.include'); ?>
     </head>
     <body>
+        <form>
         <div class="block form-group">
             <label for="input-race-name">Race name</label>
-            <input type="text" id="input-race-name" style="width: 250px;">
+            <input type="text" id="input-race-name" name="name" required style="width: 250px;">
         </div>
         <div class="block">
             <div class="inline form-group">
                 <label for="select-race-type">Race type</label>
-                <select id="select-race-type" disabled>
+                <select id="select-race-type" name="type" disabled required>
                     <option value="" selected>Select</option>
                 </select>
             </div>
             <div class="inline form-group">
                 <label for="select-race-region">Region</label>
-                <select id="select-race-region" disabled>
+                <select id="select-race-region" name="region" disabled>
                     <option value="" selected>Select</option>
                     <option value="EA">Eastern</option>
                     <option value="LS">London & South East</option>
@@ -36,13 +37,14 @@
             </div>
         </div>
         <div class="block form-group">
-            <input type="checkbox" id="checkbox-rankings" checked>
+            <input type="checkbox" id="checkbox-rankings" name="importRankings" checked>
             <label for="checkbox-rankings">Import rankings automatically</label>
         </div>
         <div class="block form-group">
-            <input id="btn-start" type="button" value="Start" class="action" disabled />
+            <input id="btn-start" type="submit" value="Start" class="action" disabled />
             <input id="btn-cancel" type="button" value="Close" />
         </div>
+        </form>
 
         <script>
             function onRaceTemplatesLoaded(data) {
@@ -60,15 +62,25 @@
                         raceTypeName = raceTypeSelectEl.text(),
                         regionInUse = raceTypeName == 'Hasler Race';
                 regionSelectEl.prop('disabled', !regionInUse);
+                regionSelectEl.prop('required', regionInUse);
             }
 
             $(function() {
 
-                $('#btn-start').click(function(event) {
+                $('#input-race-name').focus();
+
+                $('form').submit(function(event) {
                     event.preventDefault();
-                    google.script.run.withSuccessHandler(function() {
-                        google.script.host.close();
-                    }).dialog_start_submit();
+                    var $form = $(this);
+                    $form.addClass('validate');
+                    var failedFields = $form.invalidFields();
+                    if (failedFields.length > 0) {
+                        console.log('Validation failed for some fields', failedFields);
+                    } else {
+                        google.script.run.withSuccessHandler(function() {
+                            google.script.host.close();
+                        }).dialog_start_submit();
+                    }
                 });
 
                 $('#btn-cancel').click(function(event) {

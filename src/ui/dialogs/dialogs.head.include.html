@@ -1,2 +1,18 @@
 <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+<style type="text/css">
+    .validate input:required:invalid:not(:focus), .validate select:required:invalid:not(:focus) {
+        /* insert your own styles for invalid form input */
+        -moz-box-shadow: none;
+        border: 1px solid red;
+    }
+</style>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+    $.fn.invalidFields = function()
+    {
+        var allFields = this.find('input[required], select[required]');
+        return allFields.filter(function(index, el) {
+            return $(el).val() === '';
+        });
+    };
+</script>
