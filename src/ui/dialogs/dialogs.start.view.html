@@ -49,16 +49,17 @@
                 var selectEl = $('#select-race-type'), sheets = data, sheet, html = '';
                 for (var i = 0; i<sheets.length; i++) {
                     sheet = sheets[i];
-                    html += '<option name="'+sheet.id+'">' + sheet.name + '</option>';
+                    html += '<option value="'+sheet.id+'">' + sheet.name + '</option>';
                 }
                 selectEl.append(html).prop('disabled', false);
                 $('#btn-start').prop('disabled', false);
             }
             function onRaceTemplateSelected(e) {
                 var regionSelectEl = $('#select-race-region'),
-                        raceTypeSelectEl = $('#select-race-type'),
-                        raceTypeName = raceTypeSelectEl.val();
-                regionSelectEl.prop('disabled', raceTypeName !== "Hasler Race");
+                        raceTypeSelectEl = $('#select-race-type option:selected'),
+                        raceTypeName = raceTypeSelectEl.text(),
+                        regionInUse = raceTypeName == 'Hasler Race';
+                regionSelectEl.prop('disabled', !regionInUse);
             }
 
             $(function() {
