@@ -5,48 +5,51 @@
         <?!= include('dialogs.head.include'); ?>
     </head>
     <body>
+        <div id="messages"></div>
         <form>
-        <div class="block form-group">
-            <label for="input-race-name">Race name</label>
-            <input type="text" id="input-race-name" name="name" required style="width: 250px;">
-        </div>
-        <div class="block">
-            <div class="inline form-group">
-                <label for="select-race-type">Race type</label>
-                <select id="select-race-type" name="type" disabled required>
-                    <option value="" selected>Select</option>
-                </select>
+            <div class="block form-group">
+                <label for="input-race-name">Race name</label>
+                <input type="text" id="input-race-name" name="name" required style="width: 250px;">
             </div>
-            <div class="inline form-group">
-                <label for="select-race-region">Region</label>
-                <select id="select-race-region" name="region" disabled>
-                    <option value="" selected>Select</option>
-                    <option value="EA">Eastern</option>
-                    <option value="LS">London & South East</option>
-                    <option value="MID">Midlands</option>
-                    <option value="NO">Northern</option>
-                    <option value="NW">North West</option>
-                    <option value="SCOE">Scotland East</option>
-                    <option value="SCOW">Scotland West</option>
-                    <option value="SO">Southern</option>
-                    <option value="SW">South West</option>
-                    <option value="WA">Wales</option>
-                    <option value="YH">Yorkshire</option>
-                    <option value="CS">Services</option>
-                </select>
+            <div class="block">
+                <div class="inline form-group">
+                    <label for="select-race-type">Race type</label>
+                    <select id="select-race-type" name="type" disabled required>
+                        <option value="" selected>Select</option>
+                    </select>
+                </div>
+                <div class="inline form-group">
+                    <label for="select-race-region">Region</label>
+                    <select id="select-race-region" name="region" disabled>
+                        <option value="" selected>Select</option>
+                        <option value="EA">Eastern</option>
+                        <option value="LS">London & South East</option>
+                        <option value="MID">Midlands</option>
+                        <option value="NO">Northern</option>
+                        <option value="NW">North West</option>
+                        <option value="SCOE">Scotland East</option>
+                        <option value="SCOW">Scotland West</option>
+                        <option value="SO">Southern</option>
+                        <option value="SW">South West</option>
+                        <option value="WA">Wales</option>
+                        <option value="YH">Yorkshire</option>
+                        <option value="CS">Services</option>
+                    </select>
+                </div>
             </div>
-        </div>
-        <div class="block form-group">
-            <input type="checkbox" id="checkbox-rankings" name="importRankings" checked>
-            <label for="checkbox-rankings">Import rankings automatically</label>
-        </div>
-        <div class="block form-group">
-            <input id="btn-start" type="submit" value="Start" class="action" disabled />
-            <input id="btn-cancel" type="button" value="Close" />
-        </div>
+            <div class="block form-group">
+                <input type="checkbox" id="checkbox-rankings" name="importRankings" value="y" checked>
+                <label for="checkbox-rankings">Import rankings automatically</label>
+            </div>
+            <div class="block form-group">
+                <input id="btn-start" type="submit" value="Start" class="action" disabled />
+                <input id="btn-cancel" type="button" value="Close" />
+            </div>
         </form>
 
         <script>
+            var spreadSheetId = '<?= spreadsheetId ?>';
+
             function onRaceTemplatesLoaded(data) {
                 var selectEl = $('#select-race-type'), sheets = data, sheet, html = '';
                 for (var i = 0; i<sheets.length; i++) {
@@ -55,6 +58,9 @@
                 }
                 selectEl.append(html).prop('disabled', false);
                 $('#btn-start').prop('disabled', false);
+            }
+            function onFailure(error) {
+                $('#messages').html('Sorry, an error occurred');
             }
             function onRaceTemplateSelected(e) {
                 var regionSelectEl = $('#select-race-region'),
@@ -77,9 +83,11 @@
                     if (failedFields.length > 0) {
                         console.log('Validation failed for some fields', failedFields);
                     } else {
+                        var formData = $form.serializeObject();
+                        console.log(formData);
                         google.script.run.withSuccessHandler(function() {
                             google.script.host.close();
-                        }).dialog_start_submit();
+                        }).dialog_start_submit(spreadSheetId, formData);
                     }
                 });
 
@@ -93,7 +101,10 @@
                     onRaceTemplateSelected(event);
                 });
 
-                google.script.run.withSuccessHandler(onRaceTemplatesLoaded).dialog_start_getRaceTemplates();
+                google.script.run
+                        .withSuccessHandler(onRaceTemplatesLoaded)
+                        .withFailureHandler(onFailure)
+                        .dialog_start_getRaceTemplates();
             });
         </script>
         <!--=include ../mock-services.html -->

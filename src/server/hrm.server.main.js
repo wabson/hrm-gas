@@ -177,7 +177,7 @@ function showLoadRankings() {
 /**
  * Load current Hasler Rankings from the latest Excel file on the marathon web site
  */
-function loadRankingsXLS() {
+function loadRankingsXLS(ss) {
   var pageResp = UrlFetchApp.fetch("http://canoeracing.org.uk/marathon/index.php/latest-marathon-ranking-list/"), pageSrc = pageResp.getContentText(),
     reMatch = /<a href="([\w\/\-_:\.]+.xlsx?)"[\w_\s="]*>RankingList<\/a>/ig.exec(pageSrc);
   if (!reMatch) {
@@ -188,20 +188,20 @@ function loadRankingsXLS() {
     var file = {
       title: fileName
     };
-    file = Drive.Files.insert(file, response.getBlob(), {
+    var driveFile = Drive.Files.insert(file, response.getBlob(), {
       convert: true
     });
-    loadRankingsSheet_(file.id);
-    DriveApp.removeFile(DriveApp.getFileById(file.id));
+    loadRankingsSheet_(SpreadsheetApp.openById(driveFile.id), ss);
+    DriveApp.removeFile(DriveApp.getFileById(driveFile.id));
   } else {
     throw "An error was encountered loading the rankings spreadsheet (code: " + response.getResponseCode() + ")";
   }
 }
 
-function loadRankingsSheet_(spreadsheetId, clubName) {
+function loadRankingsSheet_(sourceSS, ss, clubName) {
   // Locate Rankings sheet or create it if it doesn't already exist
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sourceSS = SpreadsheetApp.openById(spreadsheetId),
-    sheet = ss.getSheetByName(rankingsSheetName) || ss.insertSheet(rankingsSheetName, ss.getSheets().length), 
+  ss = ss || SpreadsheetApp.getAsctiveSpreadsheet();
+  var sheet = ss.getSheetByName(rankingsSheetName) || ss.insertSheet(rankingsSheetName, ss.getSheets().length),
     sourceSheet = sourceSS.getSheetByName(rankingsSheetName) || sourceSS.getActiveSheet(),
     sourceRange = sourceSheet.getDataRange(), sourceWidth = sourceRange.getWidth(),
     sourceHeight = sourceRange.getHeight(), sourceHeaderRange = sourceSheet.getRange(1, 1, 1, sourceWidth);
@@ -233,7 +233,6 @@ function loadRankingsSheet_(spreadsheetId, clubName) {
     if (expiryColPos > -1) {
       sheet.getRange(2, expiryColPos + 1, sourceHeight-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
     }
-    Browser.msgBox("Added " + srcRows.length + " rankings");
   }
 }
 
@@ -331,7 +330,7 @@ function addLocalRankings(eventInfo) {
   var ssId = eventInfo.parameter.spreadsheetId;
   if (ssId)
   {
-    loadRankingsSheet_(ssId);
+    loadRankingsSheet_(SpreadsheetApp.getSpreadsheetById(ssId));
   } else {
     throw "Could not locate source spreadsheet";
   }
@@ -552,6 +551,34 @@ function importClubs_(sheet) {
   } else {
     throw "Could not find Clubs sheet";
   }
+}
+
+function getRaceNameCellRange_(sheet) {
+  sheet = sheet || SpreadsheetApp.getActiveSpreadsheet();
+  var clubsSheet = sheet.getSheetByName("Clubs");
+  if (clubsSheet) {
+    return clubsSheet.getRange(1, 20);
+  }
+}
+
+function getRegionCellRange_(sheet) {
+  sheet = sheet || SpreadsheetApp.getActiveSpreadsheet();
+  var clubsSheet = sheet.getSheetByName("Clubs");
+  if (clubsSheet) {
+    return clubsSheet.getRange(1, 19);
+  }
+}
+
+function setRegionId_(sheet, regionId) {
+  getRegionCellRange_(sheet).setValue(regionId);
+}
+
+function setRaceName_(sheet, raceName) {
+  getRaceNameCellRange_(sheet).setValue(raceName);
+}
+
+function getRegionId_(sheet) {
+  getRegionCellRange_(sheet).getValue();
 }
 
 function getClubsFromGoogleSheet_(clubsFile) {
@@ -3597,6 +3624,58 @@ function customiseRaceSheet_(sheetInfo, sheet) {
 }
 
 /**
+ * Update the existing spreadsheet from a template
+ */
+function setupRaceFromTemplate_(spreadsheet, template, options) {
+
+  var sheets = spreadsheet.getSheets(), templateSheets = template.getSheets(),
+      tempSheet = spreadsheet.insertSheet('Temp' + Date.now());
+
+  options = options || {};
+
+  Logger.log(options);
+
+  // Delete preexisting sheets
+  for (var i = 0; i < sheets.length; i++) {
+    spreadsheet.deleteSheet(sheets[i]);
+  }
+
+  // Copy all template sheets into current
+  for (var j = 0; j < templateSheets.length; j++) {
+    templateSheets[j].copyTo(spreadsheet).setName(templateSheets[j].getName());
+  }
+
+  spreadsheet.deleteSheet(tempSheet);
+
+  if (options.importClubs === true) {
+    var clubsSheet = spreadsheet.getSheetByName('Clubs');
+    if (clubsSheet) {
+      importClubs_(clubsSheet);
+    }
+  }
+
+  if (options.importRankings === true) {
+    Logger.log('Import rankings');
+    loadRankingsXLS(spreadsheet);
+  }
+
+  if (options.raceRegion) {
+    setRegionId_(spreadsheet, options.raceRegion);
+  }
+
+  if (options.raceName) {
+    setRaceName_(spreadsheet, options.raceName);
+  }
+
+  var sourceRaceType = getRaceType_(template.getId());
+  Logger.log(sourceRaceType);
+  if (sourceRaceType) {
+    Logger.log('Setting race type ' + sourceRaceType.value);
+    setRaceType_(spreadsheet.getId(), sourceRaceType.value);
+  }
+}
+
+/**
  * Create a new spreadsheet to manage a race
  */
 function createRaceSpreadsheet(name, raceSheets, extraSheets, columns) {
@@ -3650,12 +3729,30 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columns) {
   // Set race type custom property
   var raceType = getRaceType(ss);
   if (raceType) {
-    Drive.Properties.insert({
-        key: 'hrmType',
-        value: raceType,
-        visibility: 'PUBLIC'
-      }, ss.getId());
+    setRaceType_(ss.getId(), raceType);
   }
+}
+
+function setDriveProperty_(spreadsheetId, name, value) {
+  Drive.Properties.insert({
+    key: name,
+    value: value,
+    visibility: 'PUBLIC'
+  }, spreadsheetId);
+}
+
+function getDriveProperty_(spreadsheetId, name) {
+  return Drive.Properties.get(spreadsheetId, name, {
+    visibility: 'PUBLIC'
+  });
+}
+
+function setRaceType_(spreadsheetId, raceType) {
+  setDriveProperty_(spreadsheetId, 'hrmType', raceType);
+}
+
+function getRaceType_(spreadsheetId) {
+  return getDriveProperty_(spreadsheetId, 'hrmType');
 }
 
 /**

@@ -15,6 +15,17 @@ function dialog_start_getRaceTemplates() {
     return data;
 }
 
-function dialog_start_submit() {
-    Logger.log('Start');
+function dialog_start_submit(spreadsheetId, formData) {
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId), template = SpreadsheetApp.openById(formData.type);
+
+    Logger.log('Setting race region ' + formData.region || 'ALL');
+
+    setupRaceFromTemplate_(spreadsheet, template, {
+        importClubs: true,
+        importRankings: formData.importRankings == 'y',
+        raceRegion: formData.region || 'ALL',
+        raceName: formData.name
+    });
+
+    // TODO open entries sidebar if requested
 }
