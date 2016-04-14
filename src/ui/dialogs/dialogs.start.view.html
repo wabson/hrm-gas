@@ -2,7 +2,7 @@
 <html>
     <head>
         <base target="_top">
-        <?!= include('dialogs.head.include'); ?>
+        <?!= include('forms.head.include'); ?>
     </head>
     <body>
         <div id="messages"></div>
@@ -47,6 +47,7 @@
             </div>
         </form>
 
+        <?!= include('forms.script.include'); ?>
         <script>
             var spreadSheetId = '<?= spreadsheetId ?>';
 
@@ -107,7 +108,7 @@
                         .dialog_start_getRaceTemplates();
             });
         </script>
-        <!--=include ../mock-services.html -->
+        <!--=include mock-services.html -->
 
     </body>
 </html>

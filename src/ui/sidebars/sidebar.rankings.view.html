@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <?!= include('forms.head.include'); ?>
+    <?!= include('sidebar.head.include'); ?>
+</head>
+<body>
+<div class="sidebar-content">
+    <div id="rankings-messages" class="error"></div>
+    <p id="rankings-info"></p>
+    <p id="rankings-update" class="info" style="display: none">A new version of the ranking list may be available <span></span></p>
+    <form id="import-form">
+        <div class="block form-group">
+            <input id="btn-import" type="submit" value="Update Rankings" class="action" />
+        </div>
+        <div class="block form-group">
+            <div id="import-messages"></div>
+        </div>
+    </form>
+</div>
+
+<?!= include('forms.script.include'); ?>
+<script>
+    var spreadSheetId = '<?= spreadsheetId ?>';
+
+    function formatSummary(data) {
+        if (typeof data.rankingsSize == 'number') {
+            var text = data.rankingsSize > 0 ? ('There are ' +
+                    (data.rankingsSize.toLocaleString ? data.rankingsSize.toLocaleString(): data.rankingsSize) +
+                    ' known marathon rankings') : 'No marathon rankings have been imported';
+            if (data.lastUpdated) {
+                text += ', last updated on ' + data.lastUpdated;
+            }
+            return text;
+        } else {
+            return 'A problem occurred when looking up the rankings';
+        }
+    }
+    function onSpreadsheetInfoSuccess(data) {
+        var lastUpdated = data.lastUpdated;
+
+        $('#rankings-info').html(formatSummary(data), false);
+
+        google.script.run
+                .withSuccessHandler(function (webLastUpdated) {
+                    if (webLastUpdated !== null && lastUpdated !== null && webLastUpdated != lastUpdated) {
+                        $('#rankings-update').css('display', 'block');
+                        $('#rankings-update span').html(webLastUpdated);
+                    } else {
+                        $('#rankings-update').css('display', 'none');
+                    }
+                })
+                .withFailureHandler(onFailure)
+                .sidebar_rankings_last_updated(spreadSheetId)
+    }
+    function onImportRankingsSuccess(data) {
+        onSpreadsheetInfoSuccess(data);
+        $('#import-form').restoreSubmit();
+    }
+    function onImportRankingsFailure(error) {
+        $('#rankings-messages').html('Sorry, an error occurred importing the ranking data. Please try again later.');
+        $('#import-form').restoreSubmit();
+    }
+    function onFailure(error) {
+        $('#rankings-messages').html('Sorry, an error occurred. Please try again later.');
+    }
+
+    $(function() {
+
+        $('#import-form').submit(function(event) {
+            event.preventDefault();
+            var $form = $(this);
+            var formData = $form.serializeObject();
+            $form.disableSubmit();
+            google.script.run
+                    .withSuccessHandler(onImportRankingsSuccess)
+                    .withFailureHandler(onImportRankingsFailure)
+                    .sidebar_rankings_import(spreadSheetId, formData);
+        });
+
+        google.script.run
+                .withSuccessHandler(onSpreadsheetInfoSuccess)
+                .withFailureHandler(onFailure)
+                .sidebar_rankings_info(spreadSheetId)
+    });
+</script>
+<!--=include mock-services.html -->
+
+</body>
+</html>

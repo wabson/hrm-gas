@@ -5,6 +5,10 @@
         this.successHandler = successHandler;
         return this;
     };
+    Runner.prototype.withFailureHandler = function(failureHandler) {
+        this.failureHandler = failureHandler;
+        return this;
+    };
     Runner.prototype.addData = function(fnName, data) {
         this[fnName] = function() {
             this.successHandler(data);
@@ -19,6 +23,16 @@
         id: '2',
         name: 'Nationals'
     }]);
+    runner.addData('sidebar_rankings_import', {
+        lastUpdated: '26/04/2016',
+        rankingsSize: 48910
+    });
+    runner.addData('sidebar_rankings_info', {
+        lastUpdated: '24/04/2016',
+        rankingsSize: 32323
+    });
+    runner.addData('getRaceSheetNamesHTML', ['Div1', 'Div2', 'Div3']);
+    runner.addData('sidebar_rankings_last_updated', '23/04/2016');
 
     var google = {
         script: {

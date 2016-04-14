@@ -17,6 +17,7 @@ function onOpen(e) {
 
   addonMenu
     .addItem('Start', 'openStartDialog')
+    .addItem('Rankings', 'openRankingsSidebar')
     .addSubMenu(ui.createMenu('New')
       .addItem('HRM Sheet', 'createHRMSheet')
       .addItem('ARM Sheet', 'createARMSheet')

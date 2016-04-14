@@ -25,6 +25,7 @@ var replace = require('gulp-replace');
 var path = require('path');
 var include = require('gulp-include');
 var webserver = require('gulp-webserver');
+var flatten = require('gulp-flatten');
 
 // minimist structure and defaults for this task configuration
 var knownOptions = {
@@ -138,12 +139,13 @@ gulp.task('lint-ui-server', function() {
 
 gulp.task('copy-ui', function() {
     return gulp.src([srcRoot + '/ui/**/*.html', testRoot + '/ui/**/*.html'])
+        .pipe(flatten())
         .pipe(gulp.dest('build/ui-test'));
 });
 
 gulp.task('includes', ['copy-ui'], function() {
     return gulp.src('build/ui-test/**/*.html')
-        .pipe(replace(/<\?!= ?include\('([\.\w]+)'\); ?\?>/, '<!--=include $1.html -->'))
+        .pipe(replace(/<\?!= ?include\('([-\.\w]+)'\);? ?\?>/g, '<!--=include $1.html -->'))
         .pipe(include())
         .pipe(gulp.dest('build/ui-test-includes'));
 });
