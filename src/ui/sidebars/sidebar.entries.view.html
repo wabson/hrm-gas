@@ -134,7 +134,7 @@
 
     function onSearchResultsLoaded(resp) {
         $( "#users tbody" ).empty().append(resp.map(function(row) { return "<tr>" +
-                "<td><input type=\"radio\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
+                "<td><input type=\"checkbox\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
                 "<td>" + row[1] + " " + row[0] + "</td>" +
                 "<td>" + row[2] + "</td>" +
                 "<td>" + row[3] + "</td>" +
@@ -154,14 +154,16 @@
     }
 
     function onClickAddToCrew() {
-        var selectedVal = $("#users input[name=entry]:checked").val().split("|");
-        $("#crew-members tbody").append("<tr>" +
-                "<td><input type=\"hidden\" name=\"entry\" value=\"" + selectedVal.join("|") + "\" />" +
-                "" + selectedVal[1] + " " + selectedVal[0] + "</td>" +
-                "<td>" + selectedVal[2] + "</td>" +
-                "<td>" + selectedVal[3] + "</td>" +
-                "<td>" + selectedVal[6] + "</td>" +
-                "</tr>");
+        var selectedVals = $.map($("#users input[name=entry]:checked").toArray(), (function(el) {
+            return [$(el).val().split('|')];
+        }));
+        $("#crew-members tbody").append(selectedVals.map(function(val) { return "<tr>" +
+                "<td><input type=\"hidden\" name=\"entry\" value=\"" + val + "\" />" +
+                "" + val[1] + " " + val[0] + "</td>" +
+                "<td>" + val[2] + "</td>" +
+                "<td>" + val[3] + "</td>" +
+                "<td>" + val[6] + "</td>" +
+                "</tr>";}));
         $("#users tbody" ).empty();
         $("#add-entry").prop("disabled", false);
         $('#name').val("");
