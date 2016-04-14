@@ -1,0 +1,9 @@
+{
+  "undef": false,
+  "unused": false,
+  "predef": [
+    "Logger",
+    "SpreadsheetApp",
+    "Utilities"
+  ]
+}
