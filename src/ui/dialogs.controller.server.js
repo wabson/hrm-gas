@@ -12,4 +12,12 @@ function openRankingsSidebar() {
         .setWidth(300);
     SpreadsheetApp.getUi().showSidebar(html);
 }
+function openEntriesSidebar() {
+    var template = HtmlService.createTemplateFromFile('sidebar.entries.view');
+    template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
+    var html = template.evaluate()
+        .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+        .setTitle('Add Entries')
+        .setWidth(300);
+    SpreadsheetApp.getUi().showSidebar(html);
 }
