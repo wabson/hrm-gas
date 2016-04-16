@@ -154,16 +154,17 @@
     }
 
     function onClickAddToCrew() {
-        var selectedVals = $.map($("#users input[name=entry]:checked").toArray(), (function(el) {
-            return [$(el).val().split('|')];
-        }));
-        $("#crew-members tbody").append(selectedVals.map(function(val) { return "<tr>" +
-                "<td><input type=\"hidden\" name=\"entry\" value=\"" + val + "\" />" +
-                "" + val[1] + " " + val[0] + "</td>" +
-                "<td>" + val[2] + "</td>" +
-                "<td>" + val[3] + "</td>" +
-                "<td>" + val[6] + "</td>" +
-                "</tr>";}));
+        var selectedVals = $("#users input[name=entry]:checked").map(function() {
+            return [$(this).val().split('|')];
+        });
+        var rowHtml = selectedVals.map(function() { return "<tr>" +
+                "<td><input type=\"hidden\" name=\"entry\" value=\"" + this.join('|') + "\" />" +
+                "" + this[1] + " " + this[0] + "</td>" +
+                "<td>" + this[2] + "</td>" +
+                "<td>" + this[3] + "</td>" +
+                "<td>" + this[6] + "</td>" +
+                "</tr>";}).toArray();
+        $("#crew-members tbody").append(rowHtml);
         $("#users tbody" ).empty();
         $("#add-entry").prop("disabled", false);
         $('#name').val("");
