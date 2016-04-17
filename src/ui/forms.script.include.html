@@ -38,6 +38,7 @@
             $buttons = this.find('input[type="submit"]');
         }
         $buttons.attr('data-orig-value', $buttons.val()).val(tempLabel).prop('disabled', true);
+        return this;
     };
     $.fn.restoreSubmit = function()
     {
@@ -48,5 +49,6 @@
             $buttons = this.find('input[type="submit"]');
         }
         $buttons.val($buttons.attr('data-orig-value')).prop('disabled', false);
+        return this;
     };
 </script>

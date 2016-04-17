@@ -5,226 +5,69 @@
     <?!= include('forms.head.include'); ?>
     <?!= include('sidebar.head.include'); ?>
     <style type="text/css">
-        #crew-form, #add-entry-messages {
+        #crew-list-form, #results-form, #add-entry-messages {
             margin-top: 10px;
         }
-        #name {
-            width: 250px;
-        }
-        table {
+        form table {
+            width: 100%;
             border-collapse: collapse;
-            border-bottom: 1px solid grey;
         }
-        form table th {
-            border-bottom: 1px solid grey;
-            font-weight: normal;
-            padding: 2px;
+        tr:last-child > th {
+            text-transform: uppercase;
+            color: #666;
+            border-bottom: 1px solid #ebebeb;
         }
-        table th, table td {
-            border: 1px solid grey;
+        form table th, form table td {
             padding: 2px;
         }
     </style>
 </head>
 <body>
+<?!= include('forms.script.include'); ?>
+<script>
+    var spreadSheetId = '<?= spreadsheetId ?>';
+</script>
 <div class="sidebar-content">
 
-    <form id="search-form">
-        <div class="block form-group">
-            <label for="name">Search by name or BCU number</label>
-            <input type="text" name="name" id="name" value="" required autocomplete="off">
-            <!-- Allow form submission with keyboard without duplicating the dialog button -->
-            <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
-        </div>
-    </form>
-    <form id="crew-form">
-        <div id="users-contain">
-            <div class="block form-group">
-                <table id="users">
-                    <thead>
-                        <tr>
-                            <th></th> <!-- Radio button -->
-                            <th>Name</th>
-                            <th>Class</th>
-                            <th>Club</th>
-                            <th>Division</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-            <div class="block form-group">
-                <button id="add-member">Add to Crew</button>
-            </div>
-            <div class="block form-group">
-                <table id="crew-members">
-                    <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Class</th>
-                        <th>Club</th>
-                        <th>Division</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-            <div class="block form-group">
-                <div class="inline form-group">
-                    <select name="race"><option>Auto</option></select>
-                    <input type="submit" id="add-entry" class="action" disabled value="Add Entry" />
-                    <button id="clear-crew">Clear</button>
-                </div>
-            </div>
-        </div>
-    </form>
+    <?!= include('component.rankings-search'); ?>
+    <?!= include('component.crew-list'); ?>
     <div class="block form-group">
         <div id="add-entry-messages"></div>
     </div>
 </div>
-
-<?!= include('forms.script.include'); ?>
 <script>
-    var spreadSheetId = '<?= spreadsheetId ?>';
 
-    function checkLength( o, n, min, max ) {
-        if ( o.val().length > max || o.val().length < min ) {
-            o.addClass( "ui-state-error" );
-            updateTips( "Length of " + n + " must be between " +
-                    min + " and " + max + "." );
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    function addUser() {
-        var valid = true;
-        var name = $('#name'),
-                allFields = $( [] ).add( name );
-        allFields.removeClass( "ui-state-error" );
-        valid = valid && checkLength( name, "username", 3, 16 );
-
-        if ( valid ) {
-            $( "#users tbody" ).append( "<tr>" +
-                    "<td>" + name.val() + "</td>" +
-                    "<td>" + password.val() + "</td>" +
-                    "</tr>" );
-            dialog.dialog( "close" );
-        }
-        return valid;
-    }
-
-    function loadRaceNames() {
-        google.script.run.withSuccessHandler(onRaceNamesLoaded).getRaceSheetNamesHTML(spreadSheetId);
-    }
-
-    function onRaceNamesLoaded(resp) {
-        $.each(resp, function(i, name) {
-            $("select[name=race]").append("<option>" + name + "</option>");
-        });
-    }
-
-    function search() {
-        var name = $('#name');
-        google.script.run.withSuccessHandler(onSearchResultsLoaded).findSpreadsheetRankings(spreadSheetId, name.val());
-    }
-
-    function onSearchResultsLoaded(resp) {
-        $( "#users tbody" ).empty().append(resp.map(function(row) { return "<tr>" +
-                "<td><input type=\"checkbox\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
-                "<td>" + row[1] + " " + row[0] + "</td>" +
-                "<td>" + row[2] + "</td>" +
-                "<td>" + row[3] + "</td>" +
-                "<td>" + row[6] + "</td>" +
-                "</tr>";}));
-        var addToCrewEnabled = resp.length > 0;
-        if (resp.length == 1) {
-            $("#users input[name=entry]").prop("checked", true);
-        } else if (resp.length == 1) {
-            // TODO indicate nothing there
-        }
-        $("#add-member").prop("disabled", !addToCrewEnabled);
-
-        $("#users input[name=entry]").change(function() {
-            $("#add-member").prop("disabled", false);
-        });
-    }
-
-    function onClickAddToCrew() {
-        var selectedVals = $("#users input[name=entry]:checked").map(function() {
-            return [$(this).val().split('|')];
-        });
-        var rowHtml = selectedVals.map(function() { return "<tr>" +
-                "<td><input type=\"hidden\" name=\"entry\" value=\"" + this.join('|') + "\" />" +
-                "" + this[1] + " " + this[0] + "</td>" +
-                "<td>" + this[2] + "</td>" +
-                "<td>" + this[3] + "</td>" +
-                "<td>" + this[6] + "</td>" +
-                "</tr>";}).toArray();
-        $("#crew-members tbody").append(rowHtml);
-        $("#users tbody" ).empty();
-        $("#add-entry").prop("disabled", false);
-        $('#name').val("");
-    }
-
-    function onClickAddCrew() {
-        var selected = $("#crew-members input[type=hidden]");
-        var raceName = $("select[name=race]").val();
-        if (selected.length > 0 && selected.length <= 2) {
-            $('#crew-form').disableSubmit();
-            google.script.run
-                    .withSuccessHandler(onAddCrewSuccess)
-                    .withFailureHandler(onAddCrewFailure)
-                    .onHTMLAddEntryClick(
-                            spreadSheetId,
-                            $(selected[0]).attr("value").split("|"),
-                            selected.length > 1 ? $(selected[1]).attr("value").split("|") : null,
-                            raceName
-                    );
-        }
+    function addCrewToRace(obj) {
+        var raceName = obj.raceName, selected = obj.crewMembers;
+        google.script.run
+                .withSuccessHandler(onAddCrewSuccess)
+                .withFailureHandler(onAddCrewFailure)
+                .onHTMLAddEntryClick(
+                        spreadSheetId,
+                        selected[0],
+                        selected.length > 1 ? selected[1] : null,
+                        raceName
+                );
     }
 
     function onAddCrewSuccess(result) {
-        var name = $('#name');
-        $('#crew-form').restoreSubmit();
-        $("#add-entry-messages").html("Added " + result.boatNumber + " " + result.crewName + " in " +
+        $('#crew-list-form').trigger('crewSubmitSuccess');
+        $('#rankings-search').trigger('crewSubmitSuccess');
+        $('#add-entry-messages').html('Added ' + result.boatNumber + ' ' + result.crewName + ' in ' +
                 result.sheetName);
-        $( "#crew-members tbody" ).empty();
-        $("#add-entry").prop("disabled", true);
-        name.focus();
     }
 
     function onAddCrewFailure(result) {
-        $('#crew-form').restoreSubmit();
-    }
-
-    function onClickClearCrew() {
-        $( "#crew-members tbody" ).empty();
-    }
-    function onFailure(error) {
-        $('#rankings-messages').html('Sorry, an error occurred. Please try again later.');
+        $('#crew-list-form').trigger('crewSubmitFailure');
     }
 
     $(function() {
-
-        loadRaceNames();
-
-        $('#search-form').submit(function(event) {
-            event.preventDefault();
-            search();
+        $('#rankings-search').on('crewMemberAdd', function(e, customObj) {
+            $('#crew-list-form').trigger('crewMemberAdd', customObj);
         });
-        $('#add-member').click(function(event) {
-            event.preventDefault();
-            onClickAddToCrew();
+        $('#crew-list-form').on('crewSubmit', function(e, customObj) {
+            addCrewToRace(customObj);
         });
-        $('#crew-form').submit(function(event) {
-            event.preventDefault();
-            onClickAddCrew();
-        });
-        $("#clear-crew").click(onClickClearCrew);
     });
 </script>
 <!--=include mock-services.html -->
