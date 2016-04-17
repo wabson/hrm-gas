@@ -73,16 +73,19 @@
             } else {
                 $row.removeClass('selected');
             }
+        }).click(function(event) {
+            event.stopPropagation(); // Stop event going to the row
         });
 
         $users.find('tr').click(function() {
             $(this).find('input[name=entry]').each(function(idx, el) {
-                $(el).click();
+                var currentState = $(el).prop('checked');
+                $(el).prop('checked', !currentState).change();
             });
         });
 
         if (resp.length == 1) {
-            $users.find('input[name=entry]').prop('checked', true);
+            $users.find('input[name=entry]').prop('checked', true).change();
         }
     }
 
