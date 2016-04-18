@@ -45,17 +45,22 @@
         var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
 
         function renderNameValue(values) {
-            return values[headings.indexOf('Surname')] + ' ' + values[headings.indexOf('First name')];
+            return values[headings.indexOf('Surname')] + ', ' + values[headings.indexOf('First name')];
+        }
+
+        function renderClassValue(values) {
+            return values[headings.indexOf('Club')] + ', ' + values[headings.indexOf('Class')];
         }
 
         var headingsRenderer = function(names) {
-            var modifiedCols = ['Name', 'Club', 'Class', 'Div', 'BCU #', 'Expiry'];
+            var modifiedCols = ['Name', 'Class', 'Div', 'BCU #', 'Expiry'];
             return $.map(modifiedCols, function (colName) {
                 return '<th>' + colName + '</th>';
             });
         }, dataRenderer = function(values) {
             var modifiedValues = values.slice();
             modifiedValues.splice(0, 2, [renderNameValue(values)]);
+            modifiedValues.splice(1, 2, [renderClassValue(values)]);
             return modifiedValues.map(function (value) {
                 return '<td>' + value + '</td>';
             });
