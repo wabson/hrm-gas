@@ -97,12 +97,13 @@
         function onAddCrewSuccess(result, ctx) {
             $('#crew-list-form').trigger('crewSubmitSuccess');
             $('#rankings-search').trigger('crewSubmitSuccess');
-            $('#add-entry-messages').html('Added <a href="#">' + result.boatNumber + ' ' + crewName_(ctx.crewMembers) + '</a> in ' +
-                    result.sheetName);
-            $('#add-entry-messages').find('a').click(function (event) {
-                event.preventDefault();
-                onAddedCrewClick(result.sheetName, result.rowNumber);
-            });
+            $('#add-entry-messages')
+                    .append('<p>Added <a href="#" id="boat-link-' + result.boatNumber + '">' + result.boatNumber + ' ' + crewName_(ctx.crewMembers) + '</a> in ' +
+                        result.sheetName + '</p>')
+                    .find('a#boat-link-' + result.boatNumber).click(function (event) {
+                        event.preventDefault();
+                        onAddedCrewClick(result.sheetName, result.rowNumber);
+                    });
         }
 
         function onAddCrewFailure(result) {
