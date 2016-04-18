@@ -24,3 +24,69 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename)
       .getContent();
 }
+
+/**
+ * Create a JSON-safe copy of the specified object, since the server cannot send a Date object we must encode this
+ * as a string.
+ *
+ * @param source  {object} Source object to copy
+ * @returns {object}  Copy of the input with date properties replaced with strings
+ */
+function jsonSafeObj(source) {
+  var copy = {}, val;
+  for (var p in source) {
+    if (source.hasOwnProperty(p)) {
+      val = source[p];
+      copy[p] = val instanceof Date ? val.toDateString() : val;
+    }
+  }
+  return copy;
+}
+
+/**
+ * Create a JSON-safe copy of an array of objects. A copy of each object will be created via jsonSafeObj() and these
+ * will be returned in a new array of size equal to the input. The object copies are shallow and any properties which
+ * are themselves objects will not be converted and will simply be copied by reference from the original.
+ *
+ * @param source {object[]} Source array to copy
+ * @returns {object[]} New array with each item being a copy of the corresponding item in the original
+ */
+function jsonSafeArr(source) {
+  return source.map(function (item) {
+    return jsonSafeObj(item);
+  });
+}
+
+/**
+ * Convert an object received from the client, which may contain string-encoded dates
+ *
+ * @param source {object} Source object to copy
+ * @returns {object}  Copy of the input with date-like string properties replaced with real date objects
+ */
+function objFromJson(source) {
+  var copy = {}, val, isDate, dateRe = /\w{3} \w{3} \d{1,2} \d{4}/i;
+  for (var p in source) {
+    if (source.hasOwnProperty(p)) {
+      val = source[p];
+      isDate = typeof val == 'string' && dateRe.test(val);
+      copy[p] = isDate ? new Date(val) : val;
+    }
+  }
+  return copy;
+}
+
+/**
+ * Create a copy of an array of objects received from the client, with string-encoded dates converted to real dates.
+ *
+ * A copy of each object will be created via objFromJson() and these
+ * will be returned in a new array of size equal to the input. The object copies are shallow and any properties which
+ * are themselves objects will not be converted and will simply be copied by reference from the original.
+ *
+ * @param source {object[]} Source array to copy
+ * @returns {object[]} New array with each item being a copy of the corresponding item in the original
+ */
+function arrFromJson(source) {
+  return source.map(function (item) {
+    return objFromJson(item);
+  });
+}

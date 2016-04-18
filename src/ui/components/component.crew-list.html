@@ -9,10 +9,6 @@
             <table id="crew-members">
                 <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Club</th>
-                    <th>Class</th>
-                    <th>Division</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -30,66 +26,80 @@
 </form>
 <script>
 
-    function loadRaceNames() {
-        google.script.run.withSuccessHandler(onRaceNamesLoaded).getRaceSheetNamesHTML(spreadSheetId);
-    }
-
-    function onRaceNamesLoaded(resp) {
-        $.each(resp, function(i, name) {
-            $('select[name=race]').append('<option>' + name + '</option>');
-        });
-    }
-
-    function onAddCrewMember(e, customObj) {
-        var selectedVals = customObj.selectedMembers;
-        var rowHtml = selectedVals.map(function() { return '<tr>' +
-                '<td><input type="hidden" name="entry" value="' + this.join('|') + '" />' +
-                this[1] + ' ' + this[0] + '</td>' +
-                '<td>' + this[2] + '</td>' +
-                '<td>' + this[3] + '</td>' +
-                '<td>' + this[6] + '</td>' +
-                '</tr>';}).toArray();
-        $('#crew-members').find('tbody').append(rowHtml);
-        $('#add-entry, #clear-crew').prop('disabled', false);
-    }
-
-    function onClickAddCrew() {
-        var selected = $('#crew-members').find('input[type=hidden]');
-        var raceName = $('select[name=race]').val();
-        if (selected.length > 0 && selected.length <= 2) {
-            $('#crew-list-form').disableSubmit().trigger('crewSubmit', {
-                raceName: raceName,
-                crewMembers: selected.map(function(index, el) {
-                    return [$(el).val().split('|')];
-                }).toArray()
-            });
-        }
-    }
-
-    function onClickClearCrew() {
-        $('#crew-members').find('tbody').empty();
-        $('#add-entry, #clear-crew').prop('disabled', true);
-    }
-
-    /**
-     * Fired when the submitted crew was processed successfully
-     */
-    function onCrewSubmitSuccess() {
-        $(this).restoreSubmit();
-        $('#crew-members').find('tbody').empty();
-        $('#add-entry, #clear-crew').prop('disabled', true);
-    }
-
-    /**
-     * Fired when a problem occurred processing the submitted crew
-     */
-    function onCrewSubmitFailure() {
-        $(this).restoreSubmit();
-    }
-
     $(function() {
 
+        var columnNames = [];
+
+        function populateTableHeadings_(names) {
+            columnNames = names;
+            $('#crew-members').find('thead tr').append($.map(names, function (colName) {
+                return '<th>' + colName + '</th>';
+            }));
+        }
+
+        function initialise_(event, opts) {
+            populateTableHeadings_(opts.headings);
+            $('#name').prop('disabled', false);
+        }
+
+        function loadRaceNames() {
+            google.script.run.withSuccessHandler(onRaceNamesLoaded).getRaceSheetNamesHTML(spreadSheetId);
+        }
+
+        function onRaceNamesLoaded(resp) {
+            $.each(resp, function(i, name) {
+                $('select[name=race]').append('<option>' + name + '</option>');
+            });
+        }
+
+        function onAddCrewMember(e, customObj) {
+            var selectedVals = customObj.selectedMembers;
+            var rowHtml = selectedVals.map(function() { return '<tr ' +
+                    'data-row-data="' + this.join('|') + '">' +
+                    $.map(this, function (value) {
+                        return '<td>' + value + '</td>';
+                    }) +
+                    '</tr>';}).toArray();
+            $('#crew-members').find('tbody').append(rowHtml);
+            $('#add-entry, #clear-crew').prop('disabled', false);
+        }
+
+        function onClickAddCrew() {
+            var selected = $('#crew-members').find('tbody tr');
+            var raceName = $('select[name=race]').val();
+            if (selected.length > 0 && selected.length <= 2) {
+                $('#crew-list-form').disableSubmit().trigger('crewSubmit', {
+                    raceName: raceName,
+                    crewMembers: selected.map(function(index, el) {
+                        return [$(el).attr('data-row-data').split('|')];
+                    }).toArray()
+                });
+            }
+        }
+
+        function onClickClearCrew() {
+            $('#crew-members').find('tbody').empty();
+            $('#add-entry, #clear-crew').prop('disabled', true);
+        }
+
+        /**
+         * Fired when the submitted crew was processed successfully
+         */
+        function onCrewSubmitSuccess() {
+            $(this).restoreSubmit();
+            $('#crew-members').find('tbody').empty();
+            $('#add-entry, #clear-crew').prop('disabled', true);
+        }
+
+        /**
+         * Fired when a problem occurred processing the submitted crew
+         */
+        function onCrewSubmitFailure() {
+            $(this).restoreSubmit();
+        }
+
         $('#crew-list-form')
+            .on('init', initialise_)
             .on('crewMemberAdd', onAddCrewMember)
             .on('crewSubmitSuccess', onCrewSubmitSuccess)
             .on('crewSubmitFailure', onCrewSubmitFailure)

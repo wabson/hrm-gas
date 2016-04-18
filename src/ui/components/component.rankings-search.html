@@ -14,7 +14,7 @@
     <form id="rankings-search-form">
         <div class="block form-group">
             <label for="name">Search by name or BCU number</label>
-            <input type="text" name="name" id="name" value="" required autocomplete="off">
+            <input type="text" name="name" id="name" value="" required disabled aria-valuemin="2" autocomplete="off">
         </div>
     </form>
 
@@ -25,10 +25,6 @@
                     <thead>
                     <tr>
                         <th></th> <!-- Radio button -->
-                        <th>Name</th>
-                        <th>Club</th>
-                        <th>Class</th>
-                        <th>Division</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -45,71 +41,93 @@
 
 <script>
 
-    function search() {
-        google.script.run
-                .withSuccessHandler(onSearchResultsLoaded)
-                .findSpreadsheetRankings(spreadSheetId, $('#name').val());
-    }
-
-    function getNumRowsSelected() {
-        return $('#users').find('input[name=entry]:checked').length;
-    }
-
-    function onSearchResultsLoaded(resp) {
-        var $users = $('#users');
-        $users.find('tbody').empty().append(resp.map(function(row) { return '<tr>' +
-                '<td><input type="checkbox" name="entry" value="' + row.join('|') + '" /></td>' +
-                '<td>' + row[1] + ' ' + row[0] + '</td>' +
-                '<td>' + row[2] + '</td>' +
-                '<td>' + row[3] + '</td>' +
-                '<td>' + row[6] + '</td>' +
-                '</tr>';}));
-
-        $users.find('input[name=entry]').change(function() {
-            $('#add-member').prop('disabled', getNumRowsSelected() === 0);
-            var $row = $(this).closest('tr');
-            if (this.checked) {
-                $row.addClass('selected');
-            } else {
-                $row.removeClass('selected');
-            }
-        }).click(function(event) {
-            event.stopPropagation(); // Stop event going to the row
-        });
-
-        $users.find('tr').click(function() {
-            $(this).find('input[name=entry]').each(function(idx, el) {
-                var currentState = $(el).prop('checked');
-                $(el).prop('checked', !currentState).change();
-            });
-        });
-
-        if (resp.length == 1) {
-            $users.find('input[name=entry]').prop('checked', true).change();
-        }
-    }
-
-    function onClickAddToCrew() {
-        var $users = $('#users');
-        var selectedMembers = $users.find('input[name=entry]:checked').map(function() {
-            return [$(this).val().split('|')];
-        });
-        $('#rankings-search').trigger('crewMemberAdd', {
-            selectedMembers: selectedMembers
-        });
-        $users.find('tbody').empty();
-        $('#add-member').prop('disabled', true);
-        $('#name').val('');
-    }
-
-    /**
-     * Fired when the submitted crew was processed successfully
-     */
-    function onCrewSubmitSuccess() {
-        $('#name').focus();
-    }
-
     $(function() {
+
+        var columnNames = [];
+
+        function populateTableHeadings_(names) {
+            columnNames = names;
+            $('#users').find('thead tr').append($.map(names, function (colName) {
+                return '<th>' + colName + '</th>';
+            }));
+        }
+
+        function initialise_(event, opts) {
+            populateTableHeadings_(opts.headings);
+            $('#name').prop('disabled', false);
+        }
+
+        function search() {
+            var term = $('#name').val();
+            if (term && term.length > 1) {
+                google.script.run
+                        .withSuccessHandler(onSearchResultsLoaded)
+                        .sidebar_entries_search(spreadSheetId, term);
+            }
+        }
+
+        function getNumRowsSelected() {
+            return $('#users').find('input[name=entry]:checked').length;
+        }
+
+        function onSearchResultsLoaded(resp) {
+            var $users = $('#users');
+            $users.find('tbody').empty().append(resp.map(function(row) {
+                var colValues = $.map(columnNames, function (colName) {
+                    return row[colName];
+                });
+                return '<tr>' +
+                        '<td><input type="checkbox" name="entry" value="' + colValues.join('|') + '" /></td>' +
+                        colValues.map(function (value) {
+                            return '<td>' + value + '</td>';
+                        }) +
+                        '</tr>';}));
+
+            $users.find('input[name=entry]').change(function() {
+                $('#add-member').prop('disabled', getNumRowsSelected() === 0);
+                var $row = $(this).closest('tr');
+                if (this.checked) {
+                    $row.addClass('selected');
+                } else {
+                    $row.removeClass('selected');
+                }
+            }).click(function(event) {
+                event.stopPropagation(); // Stop event going to the row
+            });
+
+            $users.find('tr').click(function() {
+                $(this).find('input[name=entry]').each(function(idx, el) {
+                    var currentState = $(el).prop('checked');
+                    $(el).prop('checked', !currentState).change();
+                });
+            });
+
+            if (resp.length == 1) {
+                $users.find('input[name=entry]').prop('checked', true).change();
+            }
+        }
+
+        function onClickAddToCrew() {
+            var $users = $('#users');
+            var selectedMembers = $users.find('input[name=entry]:checked').map(function() {
+                return [$(this).val().split('|')];
+            });
+            $('#rankings-search').trigger('crewMemberAdd', {
+                selectedMembers: selectedMembers
+            });
+            $users.find('tbody').empty();
+            $('#add-member').prop('disabled', true);
+            $('#name').val('');
+        }
+
+        /**
+         * Fired when the submitted crew was processed successfully
+         */
+        function onCrewSubmitSuccess() {
+            $('#name').focus();
+        }
+
+        $('#rankings-search').on('init', initialise_);
 
         $('#rankings-search-form')
             .on('crewSubmitSuccess', onCrewSubmitSuccess)

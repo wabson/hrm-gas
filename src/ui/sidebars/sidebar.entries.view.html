@@ -20,6 +20,9 @@
         form table th, form table td {
             padding: 2px;
         }
+        form thead th {
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -37,37 +40,75 @@
 </div>
 <script>
 
-    function addCrewToRace(obj) {
-        var raceName = obj.raceName, selected = obj.crewMembers;
-        google.script.run
-                .withSuccessHandler(onAddCrewSuccess)
-                .withFailureHandler(onAddCrewFailure)
-                .onHTMLAddEntryClick(
-                        spreadSheetId,
-                        selected[0],
-                        selected.length > 1 ? selected[1] : null,
-                        raceName
-                );
-    }
-
-    function onAddCrewSuccess(result) {
-        $('#crew-list-form').trigger('crewSubmitSuccess');
-        $('#rankings-search').trigger('crewSubmitSuccess');
-        $('#add-entry-messages').html('Added ' + result.boatNumber + ' ' + result.crewName + ' in ' +
-                result.sheetName);
-    }
-
-    function onAddCrewFailure(result) {
-        $('#crew-list-form').trigger('crewSubmitFailure');
-    }
-
     $(function() {
-        $('#rankings-search').on('crewMemberAdd', function(e, customObj) {
-            $('#crew-list-form').trigger('crewMemberAdd', customObj);
-        });
-        $('#crew-list-form').on('crewSubmit', function(e, customObj) {
-            addCrewToRace(customObj);
-        });
+
+        var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
+
+        function addCrewToRace(obj) {
+            var raceName = obj.raceName, crewMemberObj, crewMembers = $.map(obj.crewMembers, function(arr) {
+                crewMemberObj = {};
+                $.each(headings, function(index, heading) {
+                    crewMemberObj[heading] = arr[index];
+                });
+                return crewMemberObj;
+            });
+            google.script.run
+                    .withSuccessHandler(onAddCrewSuccess)
+                    .withFailureHandler(onAddCrewFailure)
+                    .withUserObject({
+                        crewMembers: crewMembers
+                    })
+                    .sidebar_entries_add(
+                            spreadSheetId,
+                            crewMembers,
+                            headings,
+                            raceName
+                    );
+        }
+
+        function crewName_(members) {
+            return members.map(function(o) {
+                return o['Surname'] + ', ' + o['First name'];
+            }).join(' / ');
+        }
+
+        function onAddCrewSuccess(result, ctx) {
+            $('#crew-list-form').trigger('crewSubmitSuccess');
+            $('#rankings-search').trigger('crewSubmitSuccess');
+            $('#add-entry-messages').html('Added <a href="#">' + result.boatNumber + ' ' + crewName_(ctx.crewMembers) + '</a> in ' +
+                    result.sheetName);
+            $('#add-entry-messages').find('a').click(function (event) {
+                event.preventDefault();
+                onAddedCrewClick(result.sheetName, result.rowNumber);
+            });
+        }
+
+        function onAddCrewFailure(result) {
+            $('#crew-list-form').trigger('crewSubmitFailure');
+        }
+
+        function onAddedCrewClick(sheetName, rowNumber) {
+            google.script.run
+                    .withSuccessHandler(function() {
+                        google.script.host.editor.focus();
+                    })
+                    .sidebar_entries_link(sheetName, rowNumber);
+        }
+
+        $('#rankings-search')
+                .trigger('init', {
+                    headings: headings
+                })
+                .on('crewMemberAdd', function(e, customObj) {
+                    $('#crew-list-form').trigger('crewMemberAdd', customObj);
+                });
+        $('#crew-list-form')
+                .trigger('init', {
+                    headings: headings
+                })
+                .on('crewSubmit', function(e, customObj) {
+                    addCrewToRace(customObj);
+                });
     });
 </script>
 <!--=include mock-services.html -->

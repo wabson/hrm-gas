@@ -803,178 +803,6 @@ function addLocalEntries(eventInfo) {
 }
 
 /**
- * Display the dialog for adding race entries
- *
- * @public
- */
-function showAddEntries() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(rankingsSheetName);
-  if (sheet && sheet.getLastRow() > 1) {
-    // Dialog height in pixels
-    var dialogHeight = 360;
-    
-    // Create the UiInstance object myapp and set the title text
-    var app = UiApp.createApplication().setTitle('Add Entries').setHeight(dialogHeight);
-    
-    // Crew member 1 controls
-    var text1 = app.createTextBox().setName("name1").setId("name1");
-    var lb1 = app.createListBox(false).setId('list1').setName('list1').setEnabled(false).setVisibleItemCount(8);
-    var shandler1 = app.createServerHandler("onAddEntrySearch").addCallbackElement(text1).addCallbackElement(lb1);
-    var search1 = app.createButton("Search", shandler1).setId("search1");
-    var text1Handler = app.createServerKeyHandler('onAddEntryEnter').addCallbackElement(text1).addCallbackElement(lb1);
-    text1.addKeyUpHandler(text1Handler);
-    
-    // Crew member 2 controls
-    var text2 = app.createTextBox().setName("name2").setId("name2");
-    var lb2 = app.createListBox(false).setId('list2').setName('list2').setEnabled(false).setVisibleItemCount(8);
-    var shandler2 = app.createServerHandler("onAddEntrySearch").addCallbackElement(text2).addCallbackElement(lb2);
-    var search2 = app.createButton("Search", shandler2).setId("search2");
-    var text2Handler = app.createServerKeyHandler('onAddEntryEnter').addCallbackElement(text2).addCallbackElement(lb2);
-    text2.addKeyUpHandler(text2Handler);
-    
-    // Create a vertical panel called mypanel and add it to myapp
-    var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-    
-    // Radio buttons to select K1 or K2, with client-side handlers
-    var boatgrid = app.createGrid(1, 2);
-    var k1button = app.createRadioButton("boat", "K1").addValueChangeHandler(
-      app.createClientHandler().forTargets(text2).setEnabled(false).forTargets(lb2).setEnabled(false).forTargets(search2).setEnabled(false)).setValue(true, true);
-    var k2button = app.createRadioButton("boat", "K2").setName("boat").addValueChangeHandler(
-      app.createClientHandler().forTargets(text2).setEnabled(true).forTargets(lb2).setEnabled(true).forTargets(search2).setEnabled(true));
-    boatgrid.setWidget(0, 0, k1button);
-    boatgrid.setWidget(0, 1, k2button);
-    mypanel.add(boatgrid);
-    
-    // Grid for crew members
-    var crewgrid = app.createGrid(3, 2).setStyleAttribute("width", "100%");
-    
-    // Paddler 1
-    crewgrid.setWidget(0, 0, text1);
-    crewgrid.setWidget(1, 0, search1);
-    crewgrid.setWidget(2, 0, lb1);
-    
-    // Paddler 2
-    crewgrid.setWidget(0, 1, text2);
-    crewgrid.setWidget(1, 1, search2);
-    crewgrid.setWidget(2, 1, lb2);
-    
-    // Add crew grid to panel
-    mypanel.add(crewgrid);
-    
-    // Drop-down to select class to enter crew into
-    var clb = app.createListBox(false).setId('className').setName('className');
-    clb.setVisibleItemCount(1);
-    
-    // add items to ListBox
-    var sheetNames = getRaceSheetNames();
-    clb.addItem("Auto");
-    for (var i=0; i<sheetNames.length; i++) {
-      clb.addItem(sheetNames[i], sheetNames[i]);
-    }
-    mypanel.add(clb);
-    
-    // Button handler for adding entry
-    var addhandler = app.createServerHandler("add").addCallbackElement(lb1).addCallbackElement(lb2).addCallbackElement(clb).addCallbackElement(k1button).addCallbackElement(k2button);
-    
-    // Button to add crew to entries list
-    //mypanel.add(app.createButton("Add", addhandler).setId("add").addClickHandler(app.createClientHandler().forEventSource().setEnabled(false)));
-    mypanel.add(app.createButton("Add", addhandler).setId("add"));
-    
-    // Status text
-    var appState = app.createHidden("lastAdd", "").setId("lastAdd");
-    mypanel.add(app.createHTML("").setId("result").addClickHandler(app.createServerHandler("onEntryResultClick").addCallbackElement(appState)).setStyleAttributes({cursor: 'pointer'}));
-    
-    // For the close button, we create a server click handler closeHandler and pass closeHandler to the close button as a click handler.
-    // The function close is called when the close button is clicked.
-    var closeButton = app.createButton('Done');
-    var closeHandler = app.createServerClickHandler('close');
-    closeButton.addClickHandler(closeHandler);
-    mypanel.add(closeButton);
-    
-    // Add my panel to myapp
-    app.add(mypanel);
-    
-    app.add(appState);
-  
-    // Set focus
-    text1.setFocus(true);
-    
-    ss.show(app);
-  } else {
-    throw "No rankings found. You must add some rankings before you can enter crew details.";
-  }
-}
-
-function onEntryResultClick(e) {
-  var app = UiApp.getActiveApplication();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (e.parameter.lastAdd) {
-    var pair = e.parameter.lastAdd.split("!");
-    if (pair.length == 2) {
-      var targetSheet = ss.getSheetByName(pair[0]);
-      ss.setActiveSheet(targetSheet);
-      ss.setActiveSelection(targetSheet.getRange(pair[1], 1));
-    }
-  }
-  return app;
-}
-
-/**
- * Event handler for keypress in search box - used to detect when the enter key is pressed
- *
- * @param {object} e Event information
- * @return {AppInstance} Active application instance
- */
-function onAddEntryEnter(e) {
-  if (e.parameter.keyCode==13) {
-    var n = parseInt(e.parameter.source.replace(/[a-z]+/, "")); // Paddler 1 or 2?
-    return onAddEntrySearch(e, n);
-  }
-  return UiApp.getActiveApplication();
-}
-
-/**
- * Event handler for paddler search box - handles both search boxes for K2 entries
- *
- * @param {object} eventInfo Event information
- * @param {int} n Column number 1 or 2 (optional, will attempt to retrieve from event if not specified)
- * @return {AppInstance} Active application instance
- */
-function onAddEntrySearch(eventInfo, n) {
-  n = n || parseInt(eventInfo.parameter.source.replace(/[a-z]+/, "")); // Paddler 1 or 2?
-  var app = UiApp.getActiveApplication();
-  // Because the text box was named "namex" and added as a callback element to the
-  // button's click event, we have its value available in eventInfo.parameter.namex.
-  var name = eventInfo.parameter["name" + n];
-  if (name)
-  {
-    var search = app.getElementById("search" + n), list = app.getElementById("list" + n);
-    search.setEnabled(false);
-    list.clear();
-    var matches = findRankings(name.trim());
-    if (matches.length > 0) {
-      for (var i=0; i<matches.length; i++) {
-        var expiryDate = matches[i]["expiry"],
-          itemName = "" + matches[i]["surname"] + ", " + matches[i]["first name"] + " (" + matches[i]["club"] + ", " + matches[i]["class"] + ")",
-          itemValue = "" + matches[i]["surname"] + "|" + matches[i]["first name"] + "|" + matches[i]["club"] + "|" + matches[i]["class"] + "|" + 
-            matches[i]["bcu number"] + "|" + (expiryDate instanceof Date ? expiryDate.toDateString() : expiryDate) + "|" + matches[i]["division"];
-        list.addItem(itemName, itemValue);
-      }
-    } else {
-      //app.createDialogBox().setText("No results found for '" + name + "'").setVisible(true);
-      throw ("No results found for '" + name + "'");
-    }
-    // Auto-select the paddler if there is only one match
-    if (matches.length == 1) {
-      list.setSelectedIndex(0);
-    }
-    list.setEnabled(true);
-    search.setEnabled(true);
-  }
-  return app;
-}
-
-/**
  * Return a new object generated by assigning the specified values to the set of object properties with the given keys.
  */
 function arrayZip(keys, values)
@@ -1015,115 +843,46 @@ function objUnzip(obj, keys, ignoreMissing, defaultValue) {
 }
 
 /**
- * Find ranked competitors with the given name or BCU number. Returns an array of records each being a seven-element array containing the following string values:
- * Surname, First name, Club, Class, BCU Number, BCU Expiration, Division
+ * Search for rows matching a specific search term and return matching rows
  *
- * @public
- * @param {string} name Search for paddlers whose names match the given string
- * @param {string} spreadsheet Spreadsheet in which to look up ranking data, defaults to the active spreadsheet if not specified
- * @return {array} Two-dimensional array containing matching rows from the Rankings sheet
+ * @param sheet {Sheet} The sheet to search within
+ * @param columns {array<object{name, regexp}>}
+ * @param useOr {Boolean} True if only one column in a row must match the term for a match, otherwise all columns must match
+ * @return {Object[]} Set of matching rows
+ * @private
  */
-function findRankings(name, spreadsheet) {
-  var matches = [], bcuRegexp = /^\s*[A-Z]*\/?(\d+)\/?[A-Z]*\s*$/;
-  var ss = spreadsheet ? spreadsheet : SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName("Rankings");
-  if (sheet) {
-    if (sheet.getLastRow() < 2) {
-      throw "No data in Rankings sheet";
-    }
-    if (name) { // check name is not emptysheet.getLastRow()
-      var isBCUNum = bcuRegexp.test(name.toUpperCase()), 
-          range = sheet.getRange(1, 1, sheet.getLastRow()-1, sheet.getLastColumn()), values = range.getValues(), columnNames = values[0].map(function(n) { return ("" + n).toLowerCase(); });
-      for (var i=1; i<values.length; i++) {
-        if (isBCUNum) { // BCU number
-          var bcu = String(values[i][columnNames.indexOf("bcu number")]).toUpperCase().trim(), result = bcuRegexp.exec(bcu);
-          if (result && (bcu == name || result[1] == name)) { // Match the whole number or just the content between the slashes (if present)
-            matches.push(arrayZip(columnNames, values[i]));
-          }
-        } else { // Name
-          if ((""+values[i][columnNames.indexOf("surname")]).toLowerCase().trim().indexOf(name.toLowerCase()) === 0 || (""+values[i][columnNames.indexOf("first name")]).toLowerCase().trim().indexOf(name.toLowerCase()) === 0) {
-            matches.push(arrayZip(columnNames, values[i]));
-          }
-        }
-      }
-    }
-    return matches;
-  } else {
-    throw "Rankings sheet could not be found";
-  }
+function searchSheetData_(sheet, columns, useOr) {
+  var rows = getTableRows(sheet, false);
+  return lookupInTable(rows, columns, useOr);
 }
 
 /**
- * Event handler Add Entry button click
+ * Search for rankings matching a specific term
  *
- * @param {object} eventInfo Event information
- * @return {AppInstance} Active application instance
+ * @param spreadsheet {Spreadsheet} Spreadsheet in which to locate the rankings sheet
+ * @param term {String} Search term to look for via start-of-item or regexp (if supplied in columns array)
+ * @private
  */
-function add(eventInfo) {
-  var app = UiApp.getActiveApplication();
-  // Because the text box was named "text" and added as a callback element to the
-  // button's click event, we have its value available in eventInfo.parameter.text.
-  var add1 = eventInfo.parameter.list1, add2 = eventInfo.parameter.list2, k2button = eventInfo.parameter.boat;
-  if (add1) {
-    var items1 = add1.split("|"), 
-        items2 = add2 ? add2.split("|") : [];
-
-    if (k2button == "true") {
-      if (items2.length > 0) { // Was there a second crew member selected?
-      } else {
-        throw("You must select a second crew member");
-      }
-    }
-    var selectedClass = eventInfo.parameter.className;
-    var result = addEntry(items1, items2, selectedClass);
-
-    if (result && result.boatNumber) {
-      app.getElementById("result").setText("Added " + result.boatNumber + " " + result.crewName + " in " + 
-        result.sheetName);
-      app.getElementById("name1").setValue("");
-      app.getElementById("name2").setValue("");
-      app.getElementById("list1").clear();
-      app.getElementById("list2").clear();
-      app.getElementById("lastAdd").setValue(result.sheetName + "!" + result.rowNumber);
-      return app;
-    } else {
-      throw("Could not add crew in " + selectedClass);
-    }
-  } else {
-    throw("Nobody was selected");
-  }
+function searchRankings_(spreadsheet, term) {
+  var sheet = spreadsheet.getSheetByName('Rankings');
+  return searchSheetData_(sheet, [
+    { name: 'First name', type: 'regexp', value: new RegExp('^' + term, 'i') },
+    { name: 'Surname', type: 'regexp', value: new RegExp('^' + term, 'i') },
+    { name: 'BCU Number', type: 'regexp', value: new RegExp('^\\s*[A-Z]*\\/?(' + term + ')\\/?[A-Z]*\\s*$', 'i') }
+  ], true);
 }
 
-function addEntry(items1, items2, selectedClass, spreadsheet) {
+function addEntry_(items, headers, selectedClass, spreadsheet) {
   if (!selectedClass) {
-    selectedClass = "Auto";
+    selectedClass = 'Auto';
   }
-  if (items1) {
-    var name1 = items1[0] + ", " + items1[1],
-        name2 = null,
-        crew = name1;
-    if (items2 && items2.length) { // Was there a second crew member selected?
-      name2 = items2[0] + ", " + items2[1];
-      crew = name1 + " / " + name2;
+  if (items.length > 0) {
+    var sheetName = ('Auto' == selectedClass) ? getTabName_(items || [], spreadsheet) : selectedClass;
+    if (sheetName === null) {
+      throw 'Could not find a suitable race';
     }
-    var sheetName = ("Auto" == selectedClass) ? getTabName(items1, items2 || [], spreadsheet) : selectedClass;
-    
-    var row1 = [items1[rankingsSheetColumnNames.indexOf("Surname")], items1[rankingsSheetColumnNames.indexOf("First name")], items1[rankingsSheetColumnNames.indexOf("BCU Number")], 
-        items1[rankingsSheetColumnNames.indexOf("Expiry")], items1[rankingsSheetColumnNames.indexOf("Club")], items1[rankingsSheetColumnNames.indexOf("Class")], 
-        items1[rankingsSheetColumnNames.indexOf("Division")]],
-      row2 = (items2 && items2.length ? [items2[rankingsSheetColumnNames.indexOf("Surname")], items2[rankingsSheetColumnNames.indexOf("First name")], items2[rankingsSheetColumnNames.indexOf("BCU Number")], 
-        items2[rankingsSheetColumnNames.indexOf("Expiry")], items2[rankingsSheetColumnNames.indexOf("Club")], items2[rankingsSheetColumnNames.indexOf("Class")], 
-        items2[rankingsSheetColumnNames.indexOf("Division")]] : null),
-      result;
-    // Convert dates
-    if (row1[3]) {
-      row1[3] = new Date(row1[3]);
-    }
-    if (row2 && row2[3]) {
-      row2[3] = new Date(row2[3]);
-    }
-    result = addEntryToSheet(row1, row2, sheetName, spreadsheet);
+    var result = addEntryToSheet_(items, headers, sheetName, spreadsheet);
     result.sheetName = sheetName;
-    result.crewName = crew;
     return result;
   } else {
     throw("Nobody was selected");
@@ -1133,33 +892,49 @@ function addEntry(items1, items2, selectedClass, spreadsheet) {
 /**
  * Convert ranking data row to an entry row by translating property names
  */
-function rankingToEntryData(ranking) {
+function rankingToEntryData_(ranking) {
   var entry = {};
   for (var k in ranking) {
     if (ranking.hasOwnProperty(k)) {
-      entry[k.toLowerCase() == "division" ? k.substr(0, 3) : k] = ranking[k];
+      entry[rankingToEntryHeader_(k)] = ranking[k];
     }
   }
   return entry;
 }
 
-function lookupInTable(rows, matchValues) {
+/**
+ * Convert ranking data headers to an entry row headers
+ */
+function rankingToEntryHeaders_(rankingHeaders) {
+  return rankingHeaders.map(function(header) {
+    return rankingToEntryHeader_(header);
+  });
+}
+
+function rankingToEntryHeader_(header) {
+  return header.toLowerCase() == "division" ? header.substr(0, 3) : header;
+}
+
+function matchTableRow_(row, matchValues, useOr) {
+  var match = useOr !== true, colMatch, propName, propType, propValue;
+  matchValues.forEach(function (toMatch) {
+    propName = toMatch.name;
+    propType = toMatch.type;
+    propValue = toMatch.value;
+    if (propType == 'regexp') {
+      colMatch = propValue.test(''+row[propName]);
+    } else {
+      colMatch = row[propName] === propValue || (''+row[propName]).trim() === (''+propValue).trim();
+    }
+    match = useOr === true ? (match || colMatch) : (match && colMatch);
+  });
+  return match;
+}
+
+function lookupInTable(rows, matchValues, useOr) {
   var matches = [], match;
   for (var i = 0; i < rows.length; i++) {
-    match = true;
-    for (var p in matchValues) {
-      if (matchValues.hasOwnProperty(p)) {
-        if (matchValues[p] instanceof RegExp) {
-          if (!matchValues[p].test(''+rows[i][p])) {
-            match = false;
-          }
-        } else {
-          if (rows[i][p] !== matchValues[p] && (''+rows[i][p]).trim() !== (''+matchValues[p]).trim()) {
-            match = false;
-          }
-        }
-      }
-    }
+    match = matchTableRow_(rows[i], matchValues, useOr);
     if (match) {
       matches.push(rows[i]);
     }
@@ -1183,10 +958,13 @@ function updateEntriesFromRankings(replaceExisting) {
         var bcuNum = raceData[j]['bcu number'], classAbbr = raceData[j]['class'], bcuMatch = /(\d+)/.exec(bcuNum);
         if (bcuMatch) {
           Logger.log("BCU Number: " + bcuMatch[1]);
-          var matches = lookupInTable(rankingData, {'bcu number': new RegExp("^" + bcuMatch[1] + "/?[A-Za-z]?$"), 'class': classAbbr});
+          var matches = lookupInTable(rankingData, [
+            {name: 'bcu number', type: 'regexp', value: new RegExp('^' + bcuMatch[1] + '/?[A-Za-z]?$')},
+            {name: 'class', value: classAbbr}
+          ]);
           if (matches.length == 1) {
             Logger.log("Found match: " + matches[0]);
-            var update = rankingToEntryData(matches[0]);
+            var update = rankingToEntryData_(matches[0]);
             for (var p in update) {
               if (update.hasOwnProperty(p) && (raceData[j][p] === '' || replaceExisting === true)) {
                 Logger.log("Set " + p + ": " + update[p]);
@@ -1222,14 +1000,20 @@ function checkEntriesFromRankings_() {
           var columns = ['Div', 'BCU Number'];
           var boatNum = raceData[j]['Number'] || raceData[j-1]['Number'], bcuNum = raceData[j]['BCU Number'];
           if (bcuNum) {
-            var matches = lookupInTable(rankingData, {'Surname': raceData[j]['Surname'], 'First name': raceData[j]['First name'], 'Club': raceData[j]['Club'], 'Class': raceData[j]['Class']});
+            var matches = lookupInTable(rankingData, [
+              {name: 'Surname', value: raceData[j]['Surname']},
+              {name: 'First name', value: raceData[j]['First name']},
+              {name: 'Club', value: raceData[j]['Club']},
+              {name: 'Class', value: raceData[j]['Class']}]);
             if (matches.length === 0) { // Try again based on BCU number
-              matches = lookupInTable(rankingData, {'BCU Number': raceData[j]['BCU Number']});
+              matches = lookupInTable(rankingData, [
+                {name: 'BCU Number', value: raceData[j]['BCU Number']}
+              ]);
               columns = ['Div', 'Club', 'Surname', 'First name', 'Class'];
             }
             if (matches.length === 1) {
               Logger.log("Found match: " + matches[0]);
-              var update = rankingToEntryData(matches[0]);
+              var update = rankingToEntryData_(matches[0]);
               for (var p in update) {
                 if (update.hasOwnProperty(p)) {
                   if (columns.indexOf(p) > -1 && raceData[j][p] != update[p] && ("" + raceData[j][p]).trim() != ("" + update[p]).trim()) {
@@ -1470,7 +1254,7 @@ function getLastEntryRowNumber(sheet) {
   return lastN;
 }
 
-function addEntryToSheet(row1, row2, sheetName, spreadsheet) {
+function addEntryToSheet_(rows, headers, sheetName, spreadsheet) {
   var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName);
   // Check that sheet exists!
   if (!sheet) {
@@ -1481,20 +1265,24 @@ function addEntryToSheet(row1, row2, sheetName, spreadsheet) {
       nextRowPos = (nextRows.length > 0) ? nextRows[0][1] : 0,
       nextRowSize = (nextRows.length > 0) ? nextRows[0][2] : 0;
   if (nextRowPos > 0) {
-    var rowValues = [row1];
-    if (row2 && row2.length > 0) {
-      rowValues.push(row2);
+    if (nextRowSize != rows.length) {
+      throw("Could not add entry of size " + rows.length + " in row " + nextRowPos + " (" + nextRowSize + " rows available)");
     }
-    if (nextRowSize != rowValues.length) {
-      if (nextRowSize == 1 && rowValues.length == 2) {
-        throw("Cannot add a K2 to a K1 race");
-      } else if (nextRowSize == 2 && rowValues.length == 1) {
-        throw("Cannot add a K1 to a K2 race");
-      } else {
-        throw("Could not add entry of size " + rowValues.length + " in row " + nextRowPos + " (" + nextRowSize + " rows available)");
-      }
-    }
-    var rowRange = sheet.getRange(nextRowPos, 2, rowValues.length, rowValues[0].length);
+    var targetSheetHeaders = getTableHeaders(sheet),
+        headerIndexes = rankingToEntryHeaders_(headers).map(function(header) {
+          return targetSheetHeaders.indexOf(header);
+        }).filter(function(index) {
+          return index >= 0;
+        }), minIndex = Math.min.apply(null, headerIndexes), maxIndex = Math.max.apply(null, headerIndexes),
+        applyHeaders = targetSheetHeaders.slice(minIndex, maxIndex + 1), convertedRow;
+
+    var rowValues = rows.map(function(row) {
+      convertedRow = rankingToEntryData_(row);
+      return applyHeaders.map(function (header) {
+        return convertedRow.hasOwnProperty(header) ? convertedRow[header] : '';
+      });
+    });
+    var rowRange = sheet.getRange(nextRowPos, minIndex + 1, rowValues.length, applyHeaders.length);
     rowRange.setValues(rowValues);
   }
   return { boatNumber: nextBoatNum, rowNumber: nextRowPos };
@@ -1508,17 +1296,12 @@ function addEntryToSheet(row1, row2, sheetName, spreadsheet) {
  * @param {object} ss Spreadsheet object to pass to getRaceName(), optional
  * @return {string} Name of the sheet where the entry should be placed for this crew
  */
-function getTabName(crew1, crew2, ss) {
-  var tname = getRaceName(crew1, crew2, ss);
+function getTabName_(crews, ss) {
+  var tname = getRaceName_(crews, ss);
   // Lightning tabs are unusual as they contain a space
-  if (tname == "U10M") {
-    tname = "U10 M";
-  } else if (tname == "U10F") {
-    tname = "U10 F";
-  } else if (tname == "U12M") {
-    tname = "U12 M";
-  } else if (tname == "U12F") {
-    tname = "U12 F";
+  var lightningMatch = /^(U?\d{2}) ?([MF])$/.exec(tname);
+  if (lightningMatch) {
+    tname = lightningMatch[1] + ' ' + lightningMatch[2];
   }
   return tname;
 }
@@ -1572,19 +1355,18 @@ function getRaceNames(spreadsheet) {
  * @param {object} ss Spreadsheet object to pass to getRaceName(), optional
  * @return {string} Name of the division
  */
-function getRaceName(crew1, crew2, ss) {
-  var divIndex = rankingsSheetColumnNames.indexOf("Division"), 
-      div1 = crew1[divIndex],
+function getRaceName_(crews, ss) {
+  var div1 = crews[0]['Division'],
       div2 = null;
-  if (crew2.length > 0) {
-      div2 = crew2[divIndex];
+  if (crews.length > 1) {
+      div2 = crews[1]['Division'];
   } else {
     return parseInt(div1) ? ("Div" + parseInt(div1)) : div1;
   }
   var combined = combineDivs(div1, div2), // Will come back as '1' or 'U10M'
       combinedInt = parseInt(combined);
   if (combinedInt) {
-    if (crew2) {
+    if (crews.length > 1) {
       // OLD IMPLEMENTATION
       // return "Div" + combinedInt + "_" + combinedInt
       // NEW IMPLEMENTATION
@@ -1603,6 +1385,7 @@ function getRaceName(crew1, crew2, ss) {
   } else {
     return combined;
   }
+  return null;
 }
 
 /**
