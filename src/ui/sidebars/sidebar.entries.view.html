@@ -44,6 +44,23 @@
 
         var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
 
+        function renderNameValue(values) {
+            return values[headings.indexOf('Surname')] + ' ' + values[headings.indexOf('First name')];
+        }
+
+        var headingsRenderer = function(names) {
+            var modifiedCols = ['Name', 'Club', 'Class', 'Div', 'BCU #', 'Expiry'];
+            return $.map(modifiedCols, function (colName) {
+                return '<th>' + colName + '</th>';
+            });
+        }, dataRenderer = function(values) {
+            var modifiedValues = values.slice();
+            modifiedValues.splice(0, 2, [renderNameValue(values)]);
+            return modifiedValues.map(function (value) {
+                return '<td>' + value + '</td>';
+            });
+        };
+
         function addCrewToRace(obj) {
             var raceName = obj.raceName, crewMemberObj, crewMembers = $.map(obj.crewMembers, function(arr) {
                 crewMemberObj = {};
@@ -97,14 +114,18 @@
 
         $('#rankings-search')
                 .trigger('init', {
-                    headings: headings
+                    headings: headings,
+                    headingsRenderer: headingsRenderer,
+                    dataRenderer: dataRenderer
                 })
                 .on('crewMemberAdd', function(e, customObj) {
                     $('#crew-list-form').trigger('crewMemberAdd', customObj);
                 });
         $('#crew-list-form')
                 .trigger('init', {
-                    headings: headings
+                    headings: headings,
+                    headingsRenderer: headingsRenderer,
+                    dataRenderer: dataRenderer
                 })
                 .on('crewSubmit', function(e, customObj) {
                     addCrewToRace(customObj);

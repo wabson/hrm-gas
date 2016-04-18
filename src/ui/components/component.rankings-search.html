@@ -43,16 +43,24 @@
 
     $(function() {
 
-        var columnNames = [];
+        var columnNames = [], headingsRenderer = function(names) {
+            return $.map(names, function (colName) {
+                return '<th>' + colName + '</th>';
+            });
+        }, dataRenderer = function(values) {
+            return values.map(function (value) {
+                return '<td>' + value + '</td>';
+            });
+        };
 
         function populateTableHeadings_(names) {
             columnNames = names;
-            $('#users').find('thead tr').append($.map(names, function (colName) {
-                return '<th>' + colName + '</th>';
-            }));
+            $('#users').find('thead tr').append(headingsRenderer(names));
         }
 
         function initialise_(event, opts) {
+            headingsRenderer = opts.headingsRenderer || headingsRenderer;
+            dataRenderer = opts.dataRenderer || dataRenderer;
             populateTableHeadings_(opts.headings);
             $('#name').prop('disabled', false);
         }
@@ -78,9 +86,7 @@
                 });
                 return '<tr>' +
                         '<td><input type="checkbox" name="entry" value="' + colValues.join('|') + '" /></td>' +
-                        colValues.map(function (value) {
-                            return '<td>' + value + '</td>';
-                        }) +
+                        dataRenderer(colValues) +
                         '</tr>';}));
 
             $users.find('input[name=entry]').change(function() {

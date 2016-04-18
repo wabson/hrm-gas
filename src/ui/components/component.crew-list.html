@@ -28,16 +28,24 @@
 
     $(function() {
 
-        var columnNames = [];
+        var columnNames = [], headingsRenderer = function(names) {
+            return $.map(names, function (colName) {
+                return '<th>' + colName + '</th>';
+            });
+        }, dataRenderer = function(values) {
+            return values.map(function (value) {
+                return '<td>' + value + '</td>';
+            });
+        };
 
         function populateTableHeadings_(names) {
             columnNames = names;
-            $('#crew-members').find('thead tr').append($.map(names, function (colName) {
-                return '<th>' + colName + '</th>';
-            }));
+            $('#crew-members').find('thead tr').append(headingsRenderer(names));
         }
 
         function initialise_(event, opts) {
+            headingsRenderer = opts.headingsRenderer || headingsRenderer;
+            dataRenderer = opts.dataRenderer || dataRenderer;
             populateTableHeadings_(opts.headings);
             $('#name').prop('disabled', false);
         }
@@ -56,9 +64,7 @@
             var selectedVals = customObj.selectedMembers;
             var rowHtml = selectedVals.map(function() { return '<tr ' +
                     'data-row-data="' + this.join('|') + '">' +
-                    $.map(this, function (value) {
-                        return '<td>' + value + '</td>';
-                    }) +
+                    dataRenderer(this) +
                     '</tr>';}).toArray();
             $('#crew-members').find('tbody').append(rowHtml);
             $('#add-entry, #clear-crew').prop('disabled', false);
