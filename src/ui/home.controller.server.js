@@ -1,21 +1,5 @@
 /*jshint sub:true*/
 
-/**
- * Print entries summary
- *
- * @public
- * @param {String} ssKey Spreadsheet key
- */
-function saveEntriesHTMLForSpreadsheet(ssKey) {
-  var fileId = Drive.Properties.get(ssKey, 'publishedEntriesId', {
-    visibility: 'PUBLIC'
-  }).value;
-  Logger.log("Looking for existing properties file: " + fileId);
-  return saveEntriesHTML({
-    publishedEntriesId: fileId
-  }, SpreadsheetApp.openById(ssKey));
-}
-
 function checkFinishDuplicates_(ss) {
   var sheet = ss.getSheetByName('Finishes');
   if (sheet === null) {

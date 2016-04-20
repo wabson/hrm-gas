@@ -37,9 +37,18 @@ function doGet(e) {
  * @public
  * @param {object} e Event information
  */
-function saveResultsHTML(scriptProps, ss) {
-  var template = HtmlService.createTemplateFromFile('ResultsStatic'), title, data, outputHtml;
+function saveResultsHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  var template = HtmlService.createTemplateFromFile('resuts-static.view'), scriptProps, title, data, outputHtml;
+  var publishedResultsId = null;
+  try {
+    publishedResultsId= Drive.Properties.get(ss.getId(), 'publishedResultsId', {
+      visibility: 'PUBLIC'
+    }).value;
+  } catch (e) { }
+  scriptProps = {
+    publishedResultsId: publishedResultsId
+  };
   title = ss.getName();
   template.showNotes = false;
   template.title = title;
@@ -79,23 +88,24 @@ function saveResultsHTML(scriptProps, ss) {
  * @param {object} e Event information
  */
 function saveResultsHTMLForSpreadsheet(ssKey) {
-  var fileId = Drive.Properties.get(ssKey, 'publishedResultsId', {
-    visibility: 'PUBLIC'
-  }).value;
-  saveResultsHTML({
-    publishedResultsId: fileId
-  }, SpreadsheetApp.openById(ssKey));
-  return {
-    fileId: fileId
-  };
+  return saveResultsHTML(SpreadsheetApp.openById(ssKey));
 }
 
 /**
  * Print entries summary
  */
-function saveEntriesHTML(scriptProps, ss) {
-  var template = HtmlService.createTemplateFromFile('EntriesStatic'), title, data;
+function saveEntriesHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  var template = HtmlService.createTemplateFromFile('entries-static.view'), scriptProps, title, data;
+  var publishedResultsId = null;
+  try {
+    publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedEntriesId', {
+      visibility: 'PUBLIC'
+    }).value;
+  } catch (e) { }
+  scriptProps = {
+    publishedEntriesId: publishedResultsId
+  };
   title = ss.getName();
   template.title = title;
   data = getRaceEntriesFromSpreadsheet(ss, scriptProps.raceDate);
@@ -126,6 +136,15 @@ function saveEntriesHTML(scriptProps, ss) {
     );
   }
   return {fileId: htmlFile.getId()};
+}
+
+/**
+ * Print entries summary
+ *
+ * @param {object} e Event information
+ */
+function saveEntriesHTMLForSpreadsheet(ssKey) {
+  return saveEntriesHTML(SpreadsheetApp.openById(ssKey));
 }
 
 /**
