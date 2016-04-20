@@ -46,8 +46,8 @@ var CLASSES_ALL = ["S","V","J","F","VF","JF","C","VC","JC","FC","VFC","JFC"];
 var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_12_MILE = ["1","2","3","4","5","6","7","8","9"];
 var DIVS_8_MILE = ["4","5","6","7","8","9"];
-var DIVS_4_MILE = ["4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
-var DIVS_LIGHTNING = ["7","8","9","U12M","U12F","U10M","U10F"];
+var DIVS_4_MILE = ["5","6","7","8","9","U12M","U12F","U10M","U10F"];
+var DIVS_LIGHTNING = ["U12M","U12F","U10M","U10F"];
 
 var COLOR_YELLOW = "#ffff99"; // Key columns
 var COLOR_BLUE = "#ccffff"; // Value columns
