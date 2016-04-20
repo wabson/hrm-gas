@@ -3154,7 +3154,8 @@ function setSheetValidation_(sheet, ss, scriptProps) {
     classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
     divRule = allowedDivs !== null ? SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build() : null,
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
-    expiryRule = scriptProps && scriptProps.raceDate ? SpreadsheetApp.newDataValidation().requireDateOnOrAfter(parseDate(scriptProps.raceDate)).build() : null;
+    expiryCutoff = scriptProps && scriptProps.raceDate ? parseDate(scriptProps.raceDate) : new Date(),
+    expiryRule = SpreadsheetApp.newDataValidation().requireDateOnOrAfter(expiryCutoff).build();
 
   var lastRow = sheet.getMaxRows(), r, expiryCol = getRaceColumnNumber("Expiry", sheet), paidCol = getRaceColumnNumber("Paid", sheet);
   if (lastRow > 1) {

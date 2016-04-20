@@ -35,6 +35,7 @@ function onOpen(e) {
       .addItem('Import Entries from CSV', 'showImportEntries')
       .addItem('Update Expiry Dates', 'updateEntriesFromRankings')
       .addItem('Clear Entries', 'showClearEntries')
+      .addItem('Set Validation', 'setValidation')
       .addSeparator()
       .addItem('Modify Crews', 'showModifyCrews')
       .addSeparator()
