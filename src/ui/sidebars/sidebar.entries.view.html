@@ -23,6 +23,9 @@
         form thead th {
             white-space: nowrap;
         }
+        #add-entry-messages p {
+            margin: 0.4em 0;
+        }
     </style>
 </head>
 <body>
@@ -98,7 +101,7 @@
             $('#crew-list-form').trigger('crewSubmitSuccess');
             $('#rankings-search').trigger('crewSubmitSuccess');
             $('#add-entry-messages')
-                    .append('<p>Added <a href="#" id="boat-link-' + result.boatNumber + '">' + result.boatNumber + ' ' + crewName_(ctx.crewMembers) + '</a> in ' +
+                    .prepend('<p>Added <a href="#" id="boat-link-' + result.boatNumber + '">' + result.boatNumber + ' ' + crewName_(ctx.crewMembers) + '</a> in ' +
                         result.sheetName + '</p>')
                     .find('a#boat-link-' + result.boatNumber).click(function (event) {
                         event.preventDefault();
