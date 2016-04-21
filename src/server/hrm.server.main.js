@@ -42,6 +42,7 @@ var BCU_NUMBER_FULL_REGEXP = '^(\\d+|(SCA|WCA) ?\\d+|INT)$';
 var VALIDATION_MSG_BCU = 'BCU Number must be in the correct format';
 
 var CLASSES_ALL = ["S","V","J","F","VF","JF","C","VC","JC","FC","VFC","JFC"];
+var CLASSES_LIGHTNING = ["J","JF"];
 
 var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_12_MILE = ["1","2","3","4","5","6","7","8","9"];
@@ -3208,7 +3209,8 @@ function setSheetValidation_(sheet, ss, scriptProps) {
  * Set sheet-specific validation
  */
 function setSheetSpecificValidation_(sheet) {
-  var sheetName = sheet.getName(), allowedDivs = DIVS_ALL, lastRow = sheet.getMaxRows(), startRow = 2, r;
+  var sheetName = sheet.getName(), allowedClasses = CLASSES_ALL, allowedDivs = DIVS_ALL,
+      lastRow = sheet.getMaxRows(), startRow = 2, r;
   // Allow a range of Divs for k2s and a single div for k1
   var divMatch = /^Div([1-9])_?([1-9])?$/.exec(sheetName);
   if (divMatch !== null) {
@@ -3228,6 +3230,13 @@ function setSheetSpecificValidation_(sheet) {
   }
   if (sheetName.indexOf('U10 ') === 0 || sheetName.indexOf('U12 ') === 0) {
     allowedDivs = DIVS_LIGHTNING;
+    allowedClasses = CLASSES_LIGHTNING;
+  }
+  var classRule = SpreadsheetApp.newDataValidation().requireValueInList(allowedClasses, true).build();
+  r = sheet.getRange(startRow, getRaceColumnNumber("Class", sheet), lastRow-1);
+  if (r) {
+    r.clearDataValidations();
+    r.setDataValidation(classRule);
   }
   var divRule = SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build();
   r = sheet.getRange(startRow, getRaceColumnNumber("Div", sheet), lastRow-1);
