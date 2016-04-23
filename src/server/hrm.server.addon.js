@@ -43,15 +43,15 @@ function onOpen(e) {
       .addItem('Club Entries', 'createClubEntries')
       .addSeparator()
       .addItem('Finance Summary', 'showRaceLevies'))
-    // .addSubMenu(ui.createMenu('Results')
+     .addSubMenu(ui.createMenu('Results')
     //   .addItem('Set Start Times', 'showSetStartTimes')
     //   .addItem('Set Finish Times', 'showSetFinishTimes')
-    //   .addItem('Calculate Promotions', 'calculatePromotions')
-    //   .addItem('Calculate Points', 'calculatePoints')
-    //   .addSeparator()
-    //   .addItem('Live Results', 'showResultsURL')
-    //   .addItem('Publish Results', 'saveResultsHTML')
-    //   .addItem('Print Results', 'createPrintableResults'))
+       .addItem('Calculate Promotions', 'calculatePromotions')
+       .addItem('Calculate Points', 'calculatePoints')
+       .addSeparator()
+       .addItem('Live Results', 'showResultsURL')
+       .addItem('Publish Results', 'saveResultsHTML')
+       .addItem('Print Results', 'createPrintableResults'))
     .addItem('Race Details', 'showEditRaceDetails');
 
   addonMenu.addToUi();
