@@ -30,7 +30,6 @@ function onOpen(e) {
       .addItem('Load Rankings from File', 'showAddLocalRankings')
       .addItem('Clear Rankings', 'clearRankings'))
     .addSubMenu(ui.createMenu('Entries')
-      .addItem('Add Entries', 'showAddEntries')
       .addItem('Add Entries from File', 'showAddLocalEntries')
       .addItem('Import Entries from CSV', 'showImportEntries')
       .addItem('Update Expiry Dates', 'updateEntriesFromRankings')
