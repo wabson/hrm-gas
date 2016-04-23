@@ -3068,10 +3068,13 @@ function getRaceColumnA1(colName, sheet) {
 /**
  * Set forumalas for all race sheets
  *
+ * @param spreadsheet {Spreadsheet} Spreadsheet to set formulas on, if not set will use SpreadsheetApp.getActiveSpreadsheet()
+ *
  * @public
  */
-function setFormulas() {
-  var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") !== null;
+function setFormulas(spreadsheet) {
+  spreadsheet = spreadsheet || SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = getRaceSheets(spreadsheet), useVLookup = spreadsheet.getSheetByName("Starts") !== null;
   for (var i=0; i<sheets.length; i++) {
     setSheetFormulas_(sheets[i]);
     setSheetSpecificFormulas_(sheets[i]);

@@ -48,6 +48,7 @@ function onOpen(e) {
     //   .addItem('Set Finish Times', 'showSetFinishTimes')
        .addItem('Calculate Promotions', 'calculatePromotions')
        .addItem('Calculate Points', 'calculatePoints')
+       .addItem('Set Formulas', 'setFormulas')
        .addSeparator()
        .addItem('Live Results', 'showResultsURL')
        .addItem('Publish Results', 'saveResultsHTML')
