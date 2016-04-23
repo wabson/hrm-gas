@@ -1556,7 +1556,7 @@ function isLightningRaceName_(raceName) {
  * @public
  */
 function showRaceLevies(scriptProps) {
-  var totalJnr = 0, totalSnr = 0, totalLightning = 0, totalUnknown = 0, totalReceived = 0;
+  var totalJnr = 0, totalSnr = 0, totalLightning = 0, totalUnknown = 0, totalReceived = 0, totalDue = 0;
   var sheets = getRaceSheets(), sheet;
   for (var i=0; i<sheets.length; i++) {
     sheet = sheets[i];
@@ -1565,7 +1565,8 @@ function showRaceLevies(scriptProps) {
     for (var j=0; j<values.length; j++) {
       var raceClass = (typeof values[j]['Class'] == "string" && values[j]['Class'] !== null ? values[j]['Class'] : "").toUpperCase().trim(),
           raceName = sheet.getName().replace(" ", ""),
-          received = parseFloat(values[j]['Paid']) || 0.0;
+          received = parseFloat(values[j]['Paid']) || 0.0,
+          due = values[j]['Due'] ? parseFloat(values[j]['Due']) : 0.0;
       if (values[j]['Surname'] !== "" || values[j]['First name'] !== "" || values[j]['BCU Number'] !== "") { // Surname, lastname or BCU number filled out
         if (isLightningRaceName_(raceName)) {
           totalLightning ++;
@@ -1587,6 +1588,9 @@ function showRaceLevies(scriptProps) {
       if (received > 0) {
         totalReceived += received;
       }
+      if (due > 0) {
+        totalDue += due;
+      }
     }
   }
   
@@ -1603,10 +1607,11 @@ function showRaceLevies(scriptProps) {
       mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
   
   mypanel.add(app.createHTML("<p>Total Received: £" + totalReceived + "</p>"));
+  mypanel.add(app.createHTML("<p>Total Due: £" + totalDue + "</p>"));
   mypanel.add(app.createHTML("<p>Total Seniors: " + totalSnr + "<br />Total Juniors: " + totalJnr + "<br />Total Lightnings: " + totalLightning + "<br />Total Unknown: " + totalUnknown + "<br />Grand Total: " + grandTotal + "</p>"));
   if (scriptProps && scriptProps.entrySenior && scriptProps.entryJunior && scriptProps.entryLightning) {
     var totalPaid = parseFloat(scriptProps.entrySenior) * totalSnr + parseFloat(scriptProps.entryJunior) * totalJnr + parseFloat(scriptProps.entryLightning) * totalLightning;
-    mypanel.add(app.createHTML("<p>Total Due: £" + totalPaid + "</p>"));
+    mypanel.add(app.createHTML("<p>Total Due (Calculated): £" + totalPaid + "</p>"));
   }
   mypanel.add(app.createHTML("<p>MRC Levies Due: £" + totalLevies + "</p>"));
   
