@@ -23,6 +23,9 @@
         form thead th {
             white-space: nowrap;
         }
+        #add-entry {
+            margin-left: 12px;
+        }
         #add-entry-messages p {
             margin: 0.4em 0;
         }
@@ -30,16 +33,14 @@
 </head>
 <body>
 <?!= include('forms.script.include'); ?>
+<?!= include('component.rankings-search'); ?>
+<?!= include('component.crew-list'); ?>
 <script>
     var spreadSheetId = '<?= spreadsheetId ?>';
 </script>
 <div class="sidebar-content">
-
-    <?!= include('component.rankings-search'); ?>
-    <?!= include('component.crew-list'); ?>
-    <div class="block form-group">
-        <div id="add-entry-messages"></div>
-    </div>
+    <div id="add-entry"></div>
+    <div id="add-entry-messages"></div>
 </div>
 <script>
 
@@ -47,98 +48,158 @@
 
         var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
 
-        function renderNameValue(values) {
-            return values[headings.indexOf('Surname')] + ', ' + values[headings.indexOf('First name')];
-        }
-
-        function renderClassValue(values) {
-            return values[headings.indexOf('Club')] + ', ' + values[headings.indexOf('Class')];
-        }
-
-        var headingsRenderer = function(names) {
-            var modifiedCols = ['Name', 'Class', 'Div', 'BCU #', 'Expiry'];
-            return $.map(modifiedCols, function (colName) {
-                return '<th>' + colName + '</th>';
-            });
-        }, dataRenderer = function(values) {
-            var modifiedValues = values.slice();
-            modifiedValues.splice(0, 2, [renderNameValue(values)]);
-            modifiedValues.splice(1, 2, [renderClassValue(values)]);
-            return modifiedValues.map(function (value) {
-                return '<td>' + value + '</td>';
-            });
+        var displayCols = ['Name', 'Class', 'Div', 'BCU #', 'Expiry'];
+        var nameCellRenderer = function(value, index, object) {
+            return object['Surname'] + ', ' + object['First name'];
+        };
+        var customCellRenders = {
+            'Name': nameCellRenderer,
+            'Class': function(value, index, object) {
+                return object['Club'] + ', ' + object['Class'];
+            },
+            'Div': function(value, index, object) {
+                return object['Division'];
+            },
+            'BCU #': function(value, index, object) {
+                return object['BCU Number'];
+            }
         };
 
-        function addCrewToRace(obj) {
-            var raceName = obj.raceName, crewMemberObj, crewMembers = $.map(obj.crewMembers, function(arr) {
-                crewMemberObj = {};
-                $.each(headings, function(index, heading) {
-                    crewMemberObj[heading] = arr[index];
+        var AddEntryView = Backbone.View.extend({
+
+            initialize: function (options) {
+
+                var rankingDispatcher = _.extend({}, Backbone.Events);
+                var crewDispatcher = _.extend({}, Backbone.Events);
+                var crewData = new TableData({
+                    columns: headings,
+                    values: []
                 });
-                return crewMemberObj;
-            });
-            google.script.run
-                    .withSuccessHandler(onAddCrewSuccess)
-                    .withFailureHandler(onAddCrewFailure)
-                    .withUserObject({
-                        crewMembers: crewMembers
-                    })
-                    .sidebar_entries_add(
-                            spreadSheetId,
-                            crewMembers,
-                            headings,
-                            raceName
-                    );
-        }
 
-        function crewName_(members) {
-            return members.map(function(o) {
-                return o['Surname'] + ', ' + o['First name'];
-            }).join(' / ');
-        }
-
-        function onAddCrewSuccess(result, ctx) {
-            $('#crew-list-form').trigger('crewSubmitSuccess');
-            $('#rankings-search').trigger('crewSubmitSuccess');
-            $('#add-entry-messages')
-                    .prepend('<p>Added <a href="#" id="boat-link-' + result.boatNumber + '">' + result.boatNumber + ' ' + crewName_(ctx.crewMembers) + '</a> in ' +
-                        result.sheetName + '</p>')
-                    .find('a#boat-link-' + result.boatNumber).click(function (event) {
-                        event.preventDefault();
-                        onAddedCrewClick(result.sheetName, result.rowNumber);
-                    });
-        }
-
-        function onAddCrewFailure(result) {
-            $('#crew-list-form').trigger('crewSubmitFailure');
-        }
-
-        function onAddedCrewClick(sheetName, rowNumber) {
-            google.script.run
-                    .withSuccessHandler(function() {
-                        google.script.host.editor.focus();
-                    })
-                    .sidebar_entries_link(sheetName, rowNumber);
-        }
-
-        $('#rankings-search')
-                .trigger('init', {
-                    headings: headings,
-                    headingsRenderer: headingsRenderer,
-                    dataRenderer: dataRenderer
-                })
-                .on('crewMemberAdd', function(e, customObj) {
-                    $('#crew-list-form').trigger('crewMemberAdd', customObj);
+                this.search = new RankingsSearch({
+                    model: {},
+                    id: 'rankings-search',
+                    dispatcher: rankingDispatcher,
+                    className: 'searchRankings',
+                    spreadsheetId: spreadSheetId,
+                    columns: headings,
+                    displayColumns: displayCols,
+                    cellRenderers: customCellRenders
                 });
-        $('#crew-list-form')
-                .trigger('init', {
-                    headings: headings,
-                    headingsRenderer: headingsRenderer,
-                    dataRenderer: dataRenderer
-                })
-                .on('crewSubmit', function(e, customObj) {
-                    addCrewToRace(customObj);
+
+                var crewTable = new DataTable({
+                    id: 'crew-members',
+                    dispatcher: crewDispatcher,
+                    data: crewData,
+                    displayColumns: displayCols,
+                    cellRenderers: customCellRenders
                 });
+
+                this.raceListData = new RaceListData({
+                    options: []
+                });
+
+                this.crewForm = new DataTableForm({
+                    id: 'crew-list-form',
+                    dispatcher: crewDispatcher,
+                    blocks: [
+                        new FormBlock({
+                            controls: [ crewTable ]
+                        }),
+                        new FormBlock({
+                            controls: [
+                                new SelectList({
+                                    title: 'Race',
+                                    name: 'race',
+                                    model: this.raceListData
+                                }),
+                                new FormButton({
+                                    id: 'add-entry',
+                                    className: 'action',
+                                    type: 'submit',
+                                    text: 'Add Entry'
+                                }),
+                                new FormButton({
+                                    id: 'clear-crew',
+                                    type: 'reset',
+                                    text: 'Clear'
+                                })
+                            ]
+                        })
+                    ]
+                });
+
+                rankingDispatcher.bind('submit', function(payload) {
+                    var newRows = payload.tableData['rankings-search-results'];
+                    crewData.set('values', crewData.get('values').concat(newRows))
+                }, this);
+
+                crewDispatcher.bind('submit', this.onCrewFormSubmit, this);
+            },
+
+            render: function () {
+                this.$el.empty().append([this.search.render().$el, this.crewForm.render().$el]);
+                this.loadRaceNames_();
+            },
+
+            loadRaceNames_: function() {
+                google.script.run.withSuccessHandler(_.bind(this.onRaceNamesLoaded, this)).getRaceSheetNamesHTML(spreadSheetId);
+            },
+
+            onRaceNamesLoaded: function(resp) {
+                this.raceListData.set('options', ['Auto'].concat(resp));
+            },
+
+            onCrewFormSubmit: function(payload) {
+                var raceName = payload.data.race, crewMembers = payload.tableData['crew-members'];
+                google.script.run
+                        .withSuccessHandler(_.bind(this.onAddCrewSuccess, this))
+                        .withFailureHandler(_.bind(this.onAddCrewFailure, this))
+                        .withUserObject({
+                            crewMembers: crewMembers
+                        })
+                        .sidebar_entries_add(
+                                spreadSheetId,
+                                crewMembers,
+                                headings,
+                                raceName
+                        );
+            },
+
+            onAddCrewSuccess: function(result, ctx) {
+                $('#add-entry-messages')
+                        .prepend('<p>Added <a href="#" id="boat-link-' + result.boatNumber + '">' + result.boatNumber + ' ' + this.crewNames_(ctx.crewMembers) + '</a> in ' +
+                                result.sheetName + '</p>')
+                        .find('a#boat-link-' + result.boatNumber).click(_.bind(function (event) {
+                            event.preventDefault();
+                            this.onAddedCrewClick(result.sheetName, result.rowNumber);
+                        }), this);
+            },
+
+            onAddCrewFailure: function(result) {
+                $('#crew-list-form').trigger('crewSubmitFailure');
+            },
+
+            crewNames_: function(members) {
+                return members.map(function(o) {
+                    return nameCellRenderer(null, null, o);
+                }).join(' / ');
+            },
+
+            onAddedCrewClick: function(sheetName, rowNumber) {
+                google.script.run
+                        .withSuccessHandler(function() {
+                            google.script.host.editor.focus();
+                        })
+                        .sidebar_entries_link(sheetName, rowNumber);
+            }
+
+        });
+
+        new AddEntryView({
+            el: '#add-entry'
+        }).render();
+
     });
 </script>
 <!--=include mock-services.html -->

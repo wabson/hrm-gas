@@ -3,120 +3,38 @@
         font-weight: 700;
     }
 </style>
-<form id="crew-list-form">
-    <div id="users-contain">
-        <div class="block form-group">
-            <table id="crew-members">
-                <thead>
-                <tr>
-                </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>
-        <div class="block form-group">
-            <div class="inline form-group">
-                <select title="Race" name="race"><option>Auto</option></select>
-                <input type="submit" id="add-entry" class="action" disabled value="Add Entry" />
-                <button id="clear-crew" disabled>Clear</button>
-            </div>
-        </div>
-    </div>
-</form>
 <script>
 
-    $(function() {
+    var RaceListData = Backbone.Model.extend({});
 
-        var columnNames = [], headingsRenderer = function(names) {
-            return $.map(names, function (colName) {
-                return '<th>' + colName + '</th>';
-            });
-        }, dataRenderer = function(values) {
-            return values.map(function (value) {
-                return '<td>' + value + '</td>';
-            });
-        };
-
-        function populateTableHeadings_(names) {
-            columnNames = names;
-            $('#crew-members').find('thead tr').append(headingsRenderer(names));
+    var SelectList = Backbone.View.extend({
+        tagName: 'select',
+        initialize: function(options) {
+            this.model = options.model || [];
+            this.name = options.name;
+            this.title = options.title;
+            this.listenTo(this.model, 'change', this.render);
+        },
+        render: function() {
+            this.$el.empty().append(_.map(this.model.get('options'), function(option) {
+                var $el = $(document.createElement('option'));
+                if (_.isString(option)) {
+                    $el.html(option);
+                } else if (_.isArray(option)) {
+                    $el.attr('value', option[0]).html(option[1] || option[0]);
+                } else if (_.isObject(option)) {
+                    $el.attr('value', option.value).html(option.text || option.value);
+                }
+                return $el;
+            }, this)).attr('name', this.name).attr('title', this.title);
+            return this;
+        },
+        getSelectedValue: function() {
+            return this.el.options[this.el.selectedIndex];
+        },
+        getSelectedText: function() {
+            return this.$el.val();
         }
-
-        function initialise_(event, opts) {
-            headingsRenderer = opts.headingsRenderer || headingsRenderer;
-            dataRenderer = opts.dataRenderer || dataRenderer;
-            populateTableHeadings_(opts.headings);
-            $('#name').prop('disabled', false);
-        }
-
-        function loadRaceNames() {
-            google.script.run.withSuccessHandler(onRaceNamesLoaded).getRaceSheetNamesHTML(spreadSheetId);
-        }
-
-        function onRaceNamesLoaded(resp) {
-            $.each(resp, function(i, name) {
-                $('select[name=race]').append('<option>' + name + '</option>');
-            });
-        }
-
-        function onAddCrewMember(e, customObj) {
-            var selectedVals = customObj.selectedMembers;
-            var rowHtml = selectedVals.map(function() { return '<tr ' +
-                    'data-row-data="' + this.join('|') + '">' +
-                    dataRenderer(this) +
-                    '</tr>';}).toArray();
-            $('#crew-members').find('tbody').append(rowHtml);
-            $('#add-entry, #clear-crew').prop('disabled', false);
-        }
-
-        function onClickAddCrew() {
-            var selected = $('#crew-members').find('tbody tr');
-            var raceName = $('select[name=race]').val();
-            if (selected.length > 0 && selected.length <= 2) {
-                $('#crew-list-form').disableSubmit().trigger('crewSubmit', {
-                    raceName: raceName,
-                    crewMembers: selected.map(function(index, el) {
-                        return [$(el).attr('data-row-data').split('|')];
-                    }).toArray()
-                });
-            }
-        }
-
-        function onClickClearCrew() {
-            $('#crew-members').find('tbody').empty();
-            $('#add-entry, #clear-crew').prop('disabled', true);
-        }
-
-        /**
-         * Fired when the submitted crew was processed successfully
-         */
-        function onCrewSubmitSuccess() {
-            $(this).restoreSubmit();
-            $('#crew-members').find('tbody').empty();
-            $('#add-entry, #clear-crew').prop('disabled', true);
-        }
-
-        /**
-         * Fired when a problem occurred processing the submitted crew
-         */
-        function onCrewSubmitFailure() {
-            $(this).restoreSubmit();
-        }
-
-        $('#crew-list-form')
-            .on('init', initialise_)
-            .on('crewMemberAdd', onAddCrewMember)
-            .on('crewSubmitSuccess', onCrewSubmitSuccess)
-            .on('crewSubmitFailure', onCrewSubmitFailure)
-            .submit(function(event) {
-                event.preventDefault();
-                onClickAddCrew();
-            });
-
-        $('#clear-crew').click(onClickClearCrew);
-
-        loadRaceNames();
-
     });
+
 </script>

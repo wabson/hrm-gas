@@ -1,5 +1,5 @@
 <style type="text/css">
-    #name {
+    #rankings-search-form input[type="text"] {
         width: 250px;
     }
     #results-form tbody tr {
@@ -9,143 +9,373 @@
         background-color: #ffc;
     }
 </style>
-<div id="rankings-search">
-
-    <form id="rankings-search-form">
-        <div class="block form-group">
-            <label for="name">Search by name or BCU number</label>
-            <input type="text" name="name" id="name" value="" required disabled aria-valuemin="2" autocomplete="off">
-        </div>
-    </form>
-
-    <form id="results-form">
-        <div id="users-contain">
-            <div class="block form-group">
-                <table id="users">
-                    <thead>
-                    <tr>
-                        <th></th> <!-- Radio button -->
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-            <div class="block form-group">
-                <button id="add-member" disabled>Add to Crew</button>
-            </div>
-        </div>
-    </form>
-
-</div>
-
 <script>
+    var TableData = Backbone.Model.extend({});
 
-    $(function() {
+    var RankingsSearch = Backbone.View.extend({
 
-        var columnNames = [], headingsRenderer = function(names) {
+        initialize: function(options) {
+            var childOpts = _.clone(options);
+            delete childOpts.el;
+            delete childOpts.id;
+            delete childOpts.className;
+            childOpts.data = new TableData({
+                columns: options.columns,
+                values: []
+            });
+            this.searchForm = new RankingsSearchForm(_.extend({}, childOpts, {
+                id: 'rankings-search-form',
+                className: 'search-form',
+                scriptMethod: 'sidebar_entries_search',
+                searchPrompt: 'Search by name or BCU number'
+            }));
+            this.resultsForm = new DataTableForm(_.extend({}, childOpts, {
+                id: 'results-form',
+                blocks: [
+                    new FormBlock({
+                        controls: [
+                                new DataTable(_.extend({}, childOpts, {
+                                    id: 'rankings-search-results',
+                                    inputType: 'checkbox'
+                                }))
+                        ]
+                    }),
+                    new FormBlock({
+                        controls: [
+                            new FormButton({
+                                id: 'add-member',
+                                type: 'submit',
+                                text: 'Add to Crew'
+                            })
+                        ]
+                    })
+                ]
+            }));
+        },
+
+        render: function() {
+            this.$el.empty().append([this.searchForm.render().$el, this.resultsForm.render().$el]);
+            return this;
+        }
+
+    });
+
+    var RankingsSearchForm = Backbone.View.extend({
+
+        tagName: 'form',
+
+        events: {
+            'submit': 'submit'
+        },
+
+        initialize: function(options) {
+
+            this.dispatcher = options.dispatcher;
+            this.scriptMethod = options.scriptMethod;
+            this.searchPrompt = options.searchPrompt;
+
+            this.spreadSheetId = options.spreadSheetId;
+            this.data = options.data;
+        },
+
+        render: function() {
+            this.$el.html('<div class="block form-group">' +
+                    '<label for="name">' + this.searchPrompt + '</label>' +
+                    '<input type="text" name="name" id="name" value="" required aria-valuemin="2" autocomplete="off">' +
+                '</div>');
+            return this;
+        },
+
+        submit: function(event) {
+            event.preventDefault();
+            var term = this.$('input').val();
+            if (term && term.length > 1) {
+                google.script.run
+                        .withSuccessHandler(_.bind(this.onSearchResultsLoaded, this))
+                        [this.scriptMethod](this.spreadSheetId, term);
+            }
+        },
+
+        onSearchResultsLoaded: function (resp) {
+            this.data.set('values', resp);
+        }
+
+    });
+
+    var DataTable = Backbone.View.extend({
+
+        tagName: 'table',
+
+        events: {
+            'change input[name=entry]': 'toggleResult',
+            'click input[name=entry]': 'clickResult',
+            'click tr': 'clickResultRow'
+        },
+
+        initialize: function(options) {
+
+            this.dispatcher = options.dispatcher;
+
+            this.inputType = options.inputType || 'hidden';
+
+            this.data = options.data;
+
+            this.displayColumns = options.displayColumns || this.data.get('columns');
+            this.cellRenderers = options.cellRenderers || {};
+
+            this.listenTo(this.data, 'change', this.render);
+        },
+
+        render: function() {
+            this.$el.html('<thead><tr></tr></thead><tbody></tbody>');
+            this.renderTableHeadings_();
+            this.renderTableData_();
+            this.dispatcher.trigger('selectedDataChange');
+            return this;
+        },
+
+        getSelectedData: function() {
+            return _.map(this.$('input[type=checkbox]:checked, input[type=hidden]'), function(el) {
+                return this.data.get('values')[parseInt($(el).val())];
+            }, this);
+        },
+
+        defaultCellRenderer: function(value) {
+            return value;
+        },
+
+        headingsRenderer: function(names) {
+            return _.map(this.displayColumns, function (colName) {
+                return '<th>' + colName + '</th>';
+            }, this);
+        },
+
+        dataRenderer: function(row) {
+            return _.map(this.displayColumns, function (colName, index) {
+                var cellRenderer = this.cellRenderers[colName] || this.defaultCellRenderer;
+                return '<td>' + cellRenderer(row[colName], index, row) + '</td>';
+            }, this);
+        },
+
+        renderTableHeadings_: function() {
+            this.$el.find('thead tr').html('<th></th>').append(this.headingsRenderer(this.data.get('columns')));
+        },
+
+        renderTableData_: function () {
+
+            var count = -1;
+            this.$el.find('tbody').empty().append(_.map(this.data.get('values'), function(row) {
+                count ++;
+                return this.generateDataRowHtml_(row, count);
+            }, this));
+
+            if (this.data.values.length == 1) {
+                this.$el.find('input[type=' + this.inputType + ']').prop('checked', true).change();
+            }
+        },
+
+        generateDataRowHtml_: function(row, index) {
+            return '<tr>' +
+                    '<td><input type="' + this.inputType + '" name="entry" value="' + index + '" /></td>' +
+                    this.dataRenderer(row) +
+                    '</tr>';
+        },
+
+        truncateBody: function() {
+            this.data.set('values', []);
+        },
+
+        toggleResult: function(event) {
+            var $row = $(event.currentTarget).closest('tr');
+            if (event.currentTarget.checked) {
+                $row.addClass('selected');
+            } else {
+                $row.removeClass('selected');
+            }
+            this.dispatcher.trigger('selectedDataChange');
+        },
+
+        clickResult: function(event) {
+            event.stopPropagation(); // Stop event going to the row
+        },
+
+        clickResultRow: function(event) {
+            $(event.currentTarget).find('input[name=entry]').each(function(idx, el) {
+                var currentState = $(el).prop('checked');
+                $(el).prop('checked', !currentState).change();
+            });
+        },
+
+        defaultHeadingsRenderer: function(names) {
             return $.map(names, function (colName) {
                 return '<th>' + colName + '</th>';
             });
-        }, dataRenderer = function(values) {
+        },
+
+        defaultDataRenderer: function(values) {
             return values.map(function (value) {
                 return '<td>' + value + '</td>';
             });
-        };
-
-        function populateTableHeadings_(names) {
-            columnNames = names;
-            $('#users').find('thead tr').append(headingsRenderer(names));
         }
 
-        function initialise_(event, opts) {
-            headingsRenderer = opts.headingsRenderer || headingsRenderer;
-            dataRenderer = opts.dataRenderer || dataRenderer;
-            populateTableHeadings_(opts.headings);
-            $('#name').prop('disabled', false);
-        }
+    });
 
-        function search() {
-            var term = $('#name').val();
-            if (term && term.length > 1) {
-                google.script.run
-                        .withSuccessHandler(onSearchResultsLoaded)
-                        .sidebar_entries_search(spreadSheetId, term);
-            }
-        }
+    var DataForm = Backbone.View.extend({
 
-        function getNumRowsSelected() {
-            return $('#users').find('input[name=entry]:checked').length;
-        }
+        tagName: 'form',
 
-        function onSearchResultsLoaded(resp) {
-            var $users = $('#users');
-            $users.find('tbody').empty().append(resp.map(function(row) {
-                var colValues = $.map(columnNames, function (colName) {
-                    return row[colName];
-                });
-                return '<tr>' +
-                        '<td><input type="checkbox" name="entry" value="' + colValues.join('|') + '" /></td>' +
-                        dataRenderer(colValues) +
-                        '</tr>';}));
+        events: {
+            'submit': 'submit'
+        },
 
-            $users.find('input[name=entry]').change(function() {
-                $('#add-member').prop('disabled', getNumRowsSelected() === 0);
-                var $row = $(this).closest('tr');
-                if (this.checked) {
-                    $row.addClass('selected');
-                } else {
-                    $row.removeClass('selected');
-                }
-            }).click(function(event) {
-                event.stopPropagation(); // Stop event going to the row
-            });
+        initialize: function(options) {
 
-            $users.find('tr').click(function() {
-                $(this).find('input[name=entry]').each(function(idx, el) {
-                    var currentState = $(el).prop('checked');
-                    $(el).prop('checked', !currentState).change();
-                });
-            });
+            this.dispatcher = options.dispatcher;
 
-            if (resp.length == 1) {
-                $users.find('input[name=entry]').prop('checked', true).change();
-            }
-        }
+            var childOpts = _.clone(options);
+            delete childOpts.el;
+            delete childOpts.id;
+            this.blocks = options.blocks || [];
+        },
 
-        function onClickAddToCrew() {
-            var $users = $('#users');
-            var selectedMembers = $users.find('input[name=entry]:checked').map(function() {
-                return [$(this).val().split('|')];
-            });
-            $('#rankings-search').trigger('crewMemberAdd', {
-                selectedMembers: selectedMembers
-            });
-            $users.find('tbody').empty();
-            $('#add-member').prop('disabled', true);
-            $('#name').val('');
-        }
+        render: function() {
+            this.$el.empty().append(_.map(this.blocks, function(block) {
+                return block.render().$el;
+            }, this));
+            return this;
+        },
 
-        /**
-         * Fired when the submitted crew was processed successfully
-         */
-        function onCrewSubmitSuccess() {
-            $('#name').focus();
-        }
-
-        $('#rankings-search').on('init', initialise_);
-
-        $('#rankings-search-form')
-            .on('crewSubmitSuccess', onCrewSubmitSuccess)
-            .submit(function (event) {
-                event.preventDefault();
-                search();
-            });
-
-        $('#add-member').click(function (event) {
+        submit: function(event) {
             event.preventDefault();
-            onClickAddToCrew();
-        });
+            var formData = this.$el.serializeObject();
+            this.dispatcher.trigger('submit', {
+                data: formData
+            });
+        }
 
+    });
+
+    var DataTableForm = DataForm.extend({
+
+        events: {
+            'submit': 'submit',
+            'click button[type=reset]': 'reset'
+        },
+
+        initialize: function(options) {
+            DataForm.prototype.initialize.call(this, options);
+            this.dispatcher.bind('selectedDataChange', this.onTableSelectedDataChange, this);
+        },
+
+        render: function() {
+            DataForm.prototype.render.call(this);
+            this.setButtonsDisabled_(true, 'submit');
+            return this;
+        },
+
+        onTableSelectedDataChange: function() {
+            this.setButtonsDisabled_(this.getNumTableRowsSelected_() === 0, 'submit');
+        },
+
+        getTableControls: function() {
+            var empty = [];
+            return empty.concat.apply(empty, _.map(this.blocks, function(block) {
+                return block.getTableControls();
+            }));
+        },
+
+        getNumTableRowsSelected_: function() {
+            return _.reduce(_.values(this.getTableData()), function(memo, val) {
+                return memo + _.pairs(val).length;
+            }, 0, this);
+        },
+
+        getTableData: function() {
+            return _.object(_.map(_.filter(this.getTableControls(), function(control) {
+                return control.id;
+            }), function(control) {
+                return [control.id, control.getSelectedData()];
+            }));
+        },
+
+        clearTableData_: function() {
+            _.each(this.getTableControls(), function(control) {
+                control.truncateBody();
+            });
+        },
+
+        submit: function(event) {
+            event.preventDefault();
+            var formData = this.$el.serializeObject();
+            this.dispatcher.trigger('submit', {
+                data: formData,
+                tableData: this.getTableData()
+            });
+            this.clearTableData_();
+            this.setButtonsDisabled_(true, 'submit');
+        },
+
+        reset: function() {
+            this.clearTableData_();
+        },
+
+        setButtonsDisabled_: function (disabled, type) {
+            this.$el.find('button[type=' + (type || '') + ']').prop('disabled', disabled);
+        }
+
+
+    });
+
+    var FormBlock = Backbone.View.extend({
+        className: 'block form-group',
+        initialize: function(options) {
+            this.controls = options.controls;
+        },
+        render: function() {
+            this.$el.empty().append(_.map(this.controls, function(control) {
+                return control.render().$el;
+            }, this));
+            return this;
+        },
+        getTableControls() {
+            return _.filter(this.controls, function (control) {
+                return control.tagName === 'table';
+            });
+        }
+    });
+
+    var FormGroupInline = Backbone.View.extend({
+        className: 'inline form-group',
+        initialize: function(options) {
+            this.controls = options.controls;
+        },
+        render: function() {
+            this.$el.empty().append(_.map(this.controls, function(control) {
+                return control.render().$el;
+            }, this));
+            return this;
+        },
+        getTableControls() {
+            return _.filter(this.controls, function (control) {
+                return control.tagName === 'table';
+            });
+        }
+    });
+
+    var FormButton = Backbone.View.extend({
+        tagName: 'button',
+        initialize: function(options) {
+            this.type = options.type;
+            this.disabled = options.disabled === true;
+            this.required = options.required === true;
+            this.text = options.text;
+        },
+        render: function() {
+            this.$el.html(this.text)
+                    .prop('type', this.type)
+                    .prop('disabled', this.disabled)
+                    .prop('required', this.required);
+            return this;
+        }
     });
 </script>
