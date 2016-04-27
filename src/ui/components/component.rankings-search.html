@@ -74,7 +74,7 @@
             this.scriptMethod = options.scriptMethod;
             this.searchPrompt = options.searchPrompt;
 
-            this.spreadSheetId = options.spreadSheetId;
+            this.spreadsheetId = options.spreadsheetId;
             this.data = options.data;
         },
 
@@ -92,7 +92,7 @@
             if (term && term.length > 1) {
                 google.script.run
                         .withSuccessHandler(_.bind(this.onSearchResultsLoaded, this))
-                        [this.scriptMethod](this.spreadSheetId, term);
+                        [this.scriptMethod](this.spreadsheetId, term);
             }
         },
 
