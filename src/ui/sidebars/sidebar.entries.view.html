@@ -70,7 +70,7 @@
             initialize: function (options) {
 
                 var rankingDispatcher = _.extend({}, Backbone.Events);
-                var crewDispatcher = _.extend({}, Backbone.Events);
+                this.crewDispatcher = _.extend({}, Backbone.Events);
                 var crewData = new TableData({
                     columns: headings,
                     values: []
@@ -89,7 +89,7 @@
 
                 var crewTable = new DataTable({
                     id: 'crew-members',
-                    dispatcher: crewDispatcher,
+                    dispatcher: this.crewDispatcher,
                     data: crewData,
                     displayColumns: displayCols,
                     cellRenderers: customCellRenders
@@ -101,7 +101,7 @@
 
                 this.crewForm = new DataTableForm({
                     id: 'crew-list-form',
-                    dispatcher: crewDispatcher,
+                    dispatcher: this.crewDispatcher,
                     blocks: [
                         new FormBlock({
                             controls: [ crewTable ]
@@ -131,14 +131,19 @@
 
                 rankingDispatcher.bind('submit', function(payload) {
                     var newRows = payload.tableData['rankings-search-results'];
-                    crewData.set('values', crewData.get('values').concat(newRows))
+                    crewData.set('values', crewData.get('values').concat(newRows));
+                    rankingDispatcher.trigger('submitSuccess');
                 }, this);
 
-                crewDispatcher.bind('submit', this.onCrewFormSubmit, this);
+                this.crewDispatcher.bind('submit', this.onCrewFormSubmit, this);
+            },
+
+            createMessagesDiv_: function() {
+                return $(document.createElement('div')).attr('id', this.el.id  + '-messages');
             },
 
             render: function () {
-                this.$el.empty().append([this.search.render().$el, this.crewForm.render().$el]);
+                this.$el.empty().append([this.search.render().$el, this.crewForm.render().$el, this.createMessagesDiv_()]);
                 this.loadRaceNames_();
             },
 
@@ -167,6 +172,7 @@
             },
 
             onAddCrewSuccess: function(result, ctx) {
+                this.crewDispatcher.trigger('submitSuccess');
                 $('#add-entry-messages')
                         .prepend('<p>Added <a href="#" id="boat-link-' + result.boatNumber + '">' + result.boatNumber + ' ' + this.crewNames_(ctx.crewMembers) + '</a> in ' +
                                 result.sheetName + '</p>')
@@ -177,7 +183,8 @@
             },
 
             onAddCrewFailure: function(result) {
-                $('#crew-list-form').trigger('crewSubmitFailure');
+                this.$('#' + this.el.id + '-messages').html('Sorry, a problem occurred adding the crew to the selected race');
+                this.crewDispatcher.trigger('submitFailure');
             },
 
             crewNames_: function(members) {

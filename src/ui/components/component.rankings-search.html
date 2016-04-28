@@ -8,6 +8,9 @@
     #results-form tbody tr.selected {
         background-color: #ffc;
     }
+    #add-entry-widget-messages {
+        margin-top: 10px;
+    }
 </style>
 <script>
     var TableData = Backbone.Model.extend({});
@@ -265,6 +268,8 @@
         initialize: function(options) {
             DataForm.prototype.initialize.call(this, options);
             this.dispatcher.bind('selectedDataChange', this.onTableSelectedDataChange, this);
+            this.dispatcher.bind('submitSuccess', this.onSubmitSuccess, this);
+            this.dispatcher.bind('submitFailure', this.onSubmitFailure, this);
         },
 
         render: function() {
@@ -275,6 +280,15 @@
 
         onTableSelectedDataChange: function() {
             this.setButtonsDisabled_(this.getNumTableRowsSelected_() === 0, 'submit');
+        },
+
+        onSubmitSuccess: function() {
+            this.clearTableData_();
+            this.setButtonsDisabled_(true, 'submit');
+        },
+
+        onSubmitFailure: function() {
+            this.setButtonsDisabled_(false, 'submit');
         },
 
         getTableControls: function() {
@@ -311,7 +325,6 @@
                 data: formData,
                 tableData: this.getTableData()
             });
-            this.clearTableData_();
             this.setButtonsDisabled_(true, 'submit');
         },
 
