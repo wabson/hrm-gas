@@ -39,7 +39,7 @@
     var spreadSheetId = '<?= spreadsheetId ?>';
 </script>
 <div class="sidebar-content">
-    <div id="add-entry"></div>
+    <div id="add-entry-widget"></div>
     <div id="add-entry-messages"></div>
 </div>
 <script>
@@ -197,7 +197,7 @@
         });
 
         new AddEntryView({
-            el: '#add-entry'
+            el: '#add-entry-widget'
         }).render();
 
     });
