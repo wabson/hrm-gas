@@ -132,7 +132,7 @@
                 rankingDispatcher.bind('submit', function(payload) {
                     var newRows = payload.tableData['rankings-search-results'];
                     crewData.set('values', crewData.get('values').concat(newRows));
-                    rankingDispatcher.trigger('submitSuccess');
+                    rankingDispatcher.trigger('submitSuccess', this);
                 }, this);
 
                 this.crewDispatcher.bind('submit', this.onCrewFormSubmit, this);

@@ -63,48 +63,6 @@
 
     });
 
-    var RankingsSearchForm = Backbone.View.extend({
-
-        tagName: 'form',
-
-        events: {
-            'submit': 'submit'
-        },
-
-        initialize: function(options) {
-
-            this.dispatcher = options.dispatcher;
-            this.scriptMethod = options.scriptMethod;
-            this.searchPrompt = options.searchPrompt;
-
-            this.spreadsheetId = options.spreadsheetId;
-            this.data = options.data;
-        },
-
-        render: function() {
-            this.$el.html('<div class="block form-group">' +
-                    '<label for="name">' + this.searchPrompt + '</label>' +
-                    '<input type="text" name="name" id="name" value="" required aria-valuemin="2" autocomplete="off">' +
-                '</div>');
-            return this;
-        },
-
-        submit: function(event) {
-            event.preventDefault();
-            var term = this.$('input').val();
-            if (term && term.length > 1) {
-                google.script.run
-                        .withSuccessHandler(_.bind(this.onSearchResultsLoaded, this))
-                        [this.scriptMethod](this.spreadsheetId, term);
-            }
-        },
-
-        onSearchResultsLoaded: function (resp) {
-            this.data.set('values', resp);
-        }
-
-    });
-
     var DataTable = Backbone.View.extend({
 
         tagName: 'table',
@@ -239,6 +197,9 @@
             delete childOpts.el;
             delete childOpts.id;
             this.blocks = options.blocks || [];
+
+            this.dispatcher.bind('submitSuccess', this.onSubmitSuccess, this);
+            this.dispatcher.bind('submitFailure', this.onSubmitFailure, this);
         },
 
         render: function() {
@@ -254,6 +215,20 @@
             this.dispatcher.trigger('submit', {
                 data: formData
             });
+            this.setButtonsDisabled_(true, 'submit');
+        },
+
+        onSubmitSuccess: function() {
+            this.$('input[type=text]').val('');
+            this.setButtonsDisabled_(true, 'submit');
+        },
+
+        onSubmitFailure: function() {
+            this.setButtonsDisabled_(false, 'submit');
+        },
+
+        setButtonsDisabled_: function (disabled, type) {
+            this.$el.find('button[type=' + (type || '') + ']').prop('disabled', disabled);
         }
 
     });
@@ -268,8 +243,6 @@
         initialize: function(options) {
             DataForm.prototype.initialize.call(this, options);
             this.dispatcher.bind('selectedDataChange', this.onTableSelectedDataChange, this);
-            this.dispatcher.bind('submitSuccess', this.onSubmitSuccess, this);
-            this.dispatcher.bind('submitFailure', this.onSubmitFailure, this);
         },
 
         render: function() {
@@ -283,12 +256,8 @@
         },
 
         onSubmitSuccess: function() {
+            DataForm.prototype.onSubmitSuccess.call(this);
             this.clearTableData_();
-            this.setButtonsDisabled_(true, 'submit');
-        },
-
-        onSubmitFailure: function() {
-            this.setButtonsDisabled_(false, 'submit');
         },
 
         getTableControls: function() {
@@ -330,12 +299,44 @@
 
         reset: function() {
             this.clearTableData_();
-        },
-
-        setButtonsDisabled_: function (disabled, type) {
-            this.$el.find('button[type=' + (type || '') + ']').prop('disabled', disabled);
         }
 
+    });
+
+    var RankingsSearchForm = DataForm.extend({
+
+        initialize: function(options) {
+
+            DataForm.prototype.initialize.call(this, options);
+
+            this.scriptMethod = options.scriptMethod;
+            this.searchPrompt = options.searchPrompt;
+            this.spreadsheetId = options.spreadsheetId;
+
+            this.data = options.data;
+        },
+
+        render: function() {
+            this.$el.html('<div class="block form-group">' +
+                    '<label for="name">' + this.searchPrompt + '</label>' +
+                    '<input type="text" name="name" id="name" value="" required aria-valuemin="2" autocomplete="off">' +
+                    '</div>');
+            return this;
+        },
+
+        submit: function(event) {
+            event.preventDefault();
+            var term = this.$('input').val();
+            if (term && term.length > 1) {
+                google.script.run
+                        .withSuccessHandler(_.bind(this.onSearchResultsLoaded, this))
+                        [this.scriptMethod](this.spreadsheetId, term);
+            }
+        },
+
+        onSearchResultsLoaded: function (resp) {
+            this.data.set('values', resp);
+        }
 
     });
 
