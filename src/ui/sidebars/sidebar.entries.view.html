@@ -149,6 +149,7 @@
 
             onRaceNamesLoaded: function(resp) {
                 this.raceListData.set('options', ['Auto'].concat(resp));
+                this.search.searchForm.setFormFieldsDisabled(false);
             },
 
             onCrewFormSubmit: function(payload) {
