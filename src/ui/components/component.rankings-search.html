@@ -68,6 +68,10 @@
                     })
                 ]
             }));
+
+            options.dispatcher.bind('submitSuccess', function(payload) {
+                this.searchForm.reset();
+            }, this);
         },
 
         render: function() {
@@ -232,8 +236,13 @@
             this.setButtonsDisabled_(true, 'submit');
         },
 
+        reset: function() {
+            this.resetFormFields_();
+            return this;
+        },
+
         onSubmitSuccess: function() {
-            this.$('input[type=text]').val('');
+            this.resetFormFields_();
             this.setButtonsDisabled_(true, 'submit');
         },
 
@@ -243,6 +252,11 @@
 
         setButtonsDisabled_: function (disabled, type) {
             this.$el.find('button[type=' + (type || '') + ']').prop('disabled', disabled);
+        },
+
+        resetFormFields_: function() {
+            this.$el.find('input[type=text]').val('');
+            return this;
         }
 
     });
@@ -312,6 +326,7 @@
         },
 
         reset: function() {
+            DataForm.prototype.reset.call(this);
             this.clearTableData_();
         }
 
