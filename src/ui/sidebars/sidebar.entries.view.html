@@ -65,7 +65,7 @@
             }
         };
 
-        var AddEntryView = Backbone.View.extend({
+        var AddEntryView = BaseComponent.extend({
 
             initialize: function (options) {
 
@@ -138,12 +138,8 @@
                 this.crewDispatcher.bind('submit', this.onCrewFormSubmit, this);
             },
 
-            createMessagesDiv_: function() {
-                return $(document.createElement('div')).attr('id', this.el.id  + '-messages');
-            },
-
             render: function () {
-                this.$el.empty().append([this.search.render().$el, this.crewForm.render().$el, this.createMessagesDiv_()]);
+                this.$el.empty().append([this.search.render().$el, this.crewForm.render().$el, this.createDiv_('-messages')]);
                 this.loadRaceNames_();
             },
 

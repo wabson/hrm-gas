@@ -17,6 +17,10 @@
 
     var BaseComponent = Backbone.View.extend({
 
+        createDiv_: function(idSuffix) {
+            return $(document.createElement('div')).attr('id', this.el.id  + idSuffix);
+        },
+
         createOptionsForSubView: function(options, additionalOptions) {
             var childOpts = _.clone(options);
             delete childOpts.el;
@@ -67,7 +71,7 @@
         },
 
         render: function() {
-            this.$el.empty().append([this.searchForm.render().$el, this.resultsForm.render().$el]);
+            this.$el.empty().append([this.searchForm.render().$el, this.resultsForm.render().$el, this.createDiv_('-messages')]);
             return this;
         }
 
