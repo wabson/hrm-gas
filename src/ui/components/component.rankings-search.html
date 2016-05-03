@@ -15,16 +15,26 @@
 <script>
     var TableData = Backbone.Model.extend({});
 
-    var RankingsSearch = Backbone.View.extend({
+    var BaseComponent = Backbone.View.extend({
 
-        initialize: function(options) {
+        createOptionsForSubView: function(options, additionalOptions) {
             var childOpts = _.clone(options);
             delete childOpts.el;
             delete childOpts.id;
             delete childOpts.className;
-            childOpts.data = new TableData({
-                columns: options.columns,
-                values: []
+            return _.extend(childOpts, additionalOptions || {});
+        }
+
+    });
+
+    var RankingsSearch = BaseComponent.extend({
+
+        initialize: function(options) {
+            var childOpts = this.createOptionsForSubView(options, {
+                data: new TableData({
+                    columns: options.columns,
+                    values: []
+                })
             });
             this.searchForm = new RankingsSearchForm(_.extend({}, childOpts, {
                 id: 'rankings-search-form',
