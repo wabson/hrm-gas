@@ -262,6 +262,11 @@
         setFormFieldsDisabled: function (disabled) {
             this.$el.find('input[type=text]').prop('disabled', disabled);
             return this;
+        },
+
+        focus: function () {
+            this.$el.find('input[type=text]').focus();
+            return this;
         }
 
     });

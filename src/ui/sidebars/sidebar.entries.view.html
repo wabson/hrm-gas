@@ -149,7 +149,7 @@
 
             onRaceNamesLoaded: function(resp) {
                 this.raceListData.set('options', ['Auto'].concat(resp));
-                this.search.searchForm.setFormFieldsDisabled(false);
+                this.search.searchForm.setFormFieldsDisabled(false).focus();
             },
 
             onCrewFormSubmit: function(payload) {
@@ -178,6 +178,7 @@
                             event.preventDefault();
                             this.onAddedCrewClick(result.sheetName, result.rowNumber);
                         }), this);
+                this.search.searchForm.focus();
             },
 
             onAddCrewFailure: function(result) {
