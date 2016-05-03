@@ -40,7 +40,6 @@
 </script>
 <div class="sidebar-content">
     <div id="add-entry-widget"></div>
-    <div id="add-entry-messages"></div>
 </div>
 <script>
 
@@ -66,6 +65,10 @@
         };
 
         var AddEntryView = BaseComponent.extend({
+
+            events: {
+                'click div.results a': 'onAddedCrewClick'
+            },
 
             initialize: function (options) {
 
@@ -139,7 +142,9 @@
             },
 
             render: function () {
-                this.$el.empty().append([this.search.render().$el, this.crewForm.render().$el, this.createDiv_('-messages')]);
+                this.$el.empty().append([this.search.render().$el, this.crewForm.render().$el, this.createDiv_('-messages'), this.createDiv_('-results', {
+                    className: 'results'
+                })]);
                 this.loadRaceNames_();
             },
 
@@ -171,13 +176,10 @@
 
             onAddCrewSuccess: function(result, ctx) {
                 this.crewDispatcher.trigger('submitSuccess');
-                $('#add-entry-messages')
-                        .prepend('<p>Added <a href="#" id="boat-link-' + result.boatNumber + '">' + result.boatNumber + ' ' + this.crewNames_(ctx.crewMembers) + '</a> in ' +
-                                result.sheetName + '</p>')
-                        .find('a#boat-link-' + result.boatNumber).click(_.bind(function (event) {
-                            event.preventDefault();
-                            this.onAddedCrewClick(result.sheetName, result.rowNumber);
-                        }), this);
+                this.$('.results')
+                        .prepend('<p>Added <a href="#" data-row-num="' + result.rowNumber + '" data-sheet-name="' +
+                                result.sheetName + '">' + result.boatNumber + ' ' + this.crewNames_(ctx.crewMembers) +
+                                '</a> in ' + result.sheetName + '</p>');
                 this.search.searchForm.focus();
             },
 
@@ -192,7 +194,9 @@
                 }).join(' / ');
             },
 
-            onAddedCrewClick: function(sheetName, rowNumber) {
+            onAddedCrewClick: function(event) {
+                var sheetName = $(event.target).attr('data-sheet-name'), rowNumber = $(event.target).attr('data-row-num');
+                event.preventDefault();
                 google.script.run
                         .withSuccessHandler(function() {
                             google.script.host.editor.focus();

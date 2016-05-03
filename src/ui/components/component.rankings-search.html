@@ -17,8 +17,12 @@
 
     var BaseComponent = Backbone.View.extend({
 
-        createDiv_: function(idSuffix) {
-            return $(document.createElement('div')).attr('id', this.el.id  + idSuffix);
+        createDiv_: function(idSuffix, options) {
+            var newEl = $(document.createElement('div')).attr('id', this.el.id  + idSuffix);
+            if (options && options.className) {
+                newEl.addClass(options.className);
+            }
+            return newEl;
         },
 
         createOptionsForSubView: function(options, additionalOptions) {
