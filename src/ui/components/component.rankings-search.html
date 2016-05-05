@@ -43,7 +43,12 @@
 
     var RankingsSearch = BaseComponent.extend({
 
+        events: {
+            'click button[type=button]': 'onEditClick'
+        },
+
         initialize: function(options) {
+            this.dispatcher = options.dispatcher;
             var childOpts = this.createOptionsForSubView(options, {
                 data: new TableData({
                     columns: options.columns,
@@ -73,13 +78,20 @@
                                 id: 'add-member',
                                 type: 'submit',
                                 text: 'Add to Crew'
+                            }),
+                            new FormButton({
+                                id: 'edit-member',
+                                type: 'button',
+                                text: 'Edit Details',
+                                disabled: true
                             })
                         ]
                     })
                 ]
             }));
+            this.dispatcher.bind('selectedDataChange', this.onSelectedDataChange, this);
 
-            options.dispatcher.bind('submitSuccess', function(payload) {
+            this.dispatcher.bind('submitSuccess', function(payload) {
                 this.searchForm.reset();
             }, this);
         },
@@ -87,6 +99,17 @@
         render: function() {
             this.$el.empty().append([this.searchForm.render().$el, this.resultsForm.render().$el, this.createDiv_('-messages')]);
             return this;
+        },
+
+        onSelectedDataChange: function(payload) {
+            this.selected = payload && payload.selected ? payload.selected : [];
+            this.$('#edit-member').prop('disabled', this.selected.length != 1);
+        },
+
+        onEditClick: function(event) {
+            this.dispatcher.trigger('editMember', {
+                selected: this.selected
+            });
         }
 
     });
@@ -181,7 +204,9 @@
             } else {
                 $row.removeClass('selected');
             }
-            this.dispatcher.trigger('selectedDataChange');
+            this.dispatcher.trigger('selectedDataChange', {
+                selected: this.getSelectedData()
+            });
         },
 
         clickResult: function(event) {
@@ -228,6 +253,7 @@
 
             this.dispatcher.bind('submitSuccess', this.onSubmitSuccess, this);
             this.dispatcher.bind('submitFailure', this.onSubmitFailure, this);
+            this.dispatcher.bind('formData', this.setFormData, this);
         },
 
         render: function() {
@@ -279,6 +305,12 @@
         focus: function () {
             this.$el.find('input[type=text]').focus();
             return this;
+        },
+
+        setFormData: function(formData) {
+            _.each(formData.values, function(value, key) {
+                this.$el.find('input[name="' + key + '"], select[name="' + key + '"]').val(value);
+            }, this);
         }
 
     });
@@ -496,6 +528,7 @@
         initialize: function (options) {
             this.dispatcher = options.dispatcher;
             this.tabs = options.tabs;
+            this.dispatcher.bind('select', this.selectTab, this)
         },
 
         render: function () {
@@ -525,6 +558,10 @@
         clickTab: function(event) {
             event.preventDefault();
             this.showView_($(event.target).closest('span').attr('data-target'));
+        },
+
+        selectTab: function(payload) {
+            this.showView_(payload.id);
         }
     });
 </script>

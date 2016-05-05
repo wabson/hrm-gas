@@ -280,7 +280,9 @@
                         })
                     ]
                 });
+                var tabsDispatcher = _.extend({}, Backbone.Events);
                 this.tabs = new TabsList({
+                    dispatcher: tabsDispatcher,
                     tabs: {
                         'Search Rankings': this.search,
                         'Manual Entry': this.manualForm
@@ -291,6 +293,14 @@
                     var newRows = payload.tableData['rankings-search-results'];
                     crewData.set('values', crewData.get('values').concat(newRows));
                     rankingDispatcher.trigger('submitSuccess', this);
+                }, this);
+                rankingDispatcher.bind('editMember', function(payload) {
+                    manualEntryDispatcher.trigger('formData', {
+                        values: payload.selected[0]
+                    });
+                    tabsDispatcher.trigger('select', {
+                        id: this.manualForm.el.id
+                    });
                 }, this);
 
                 manualEntryDispatcher.bind('submit', function(payload) {

@@ -37,10 +37,16 @@ function jsonSafeObj(source) {
   for (var p in source) {
     if (source.hasOwnProperty(p)) {
       val = source[p];
-      copy[p] = val instanceof Date ? val.toDateString() : val;
+      copy[p] = val instanceof Date ? dateToString_(val) : val;
     }
   }
   return copy;
+}
+
+function dateToString_(d) {
+  var day = ('0' + d.getDate()).slice(-2);
+  var month = ('0' + (d.getMonth() + 1)).slice(-2);
+  return [d.getFullYear(), month, day].join('-');
 }
 
 /**
