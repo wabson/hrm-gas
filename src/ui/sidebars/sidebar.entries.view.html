@@ -73,6 +73,17 @@
         var nameCellRenderer = function(value, index, object) {
             return object['Surname'] + ', ' + object['First name'];
         };
+        var raceDate = new Date();
+        function isBCUCurrent(value, object) {
+            return new Date(object['Expiry']) < raceDate;
+        }
+        function wrapIfInvalid(value, object, validatorFn) {
+            if (validatorFn(value, object)) {
+                return '<span class="warning">' + value + '</span>';
+            } else {
+                return value;
+            }
+        }
         var customCellRenders = {
             'Name': nameCellRenderer,
             'Class': function(value, index, object) {
@@ -84,10 +95,10 @@
             'BCU #': function(value, index, object) {
                 return object['BCU Number'];
             },
-            'Expiry': function(value) {
+            'Expiry': function(value, index, object) {
                 if (value) {
                     var parts = new Date(value).toDateString().split(' ');
-                    return parts.length == 4 ? [parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' ') : '';
+                    return parts.length == 4 ? wrapIfInvalid([parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' '), object, isBCUCurrent) : '';
                 } else {
                     return '';
                 }
