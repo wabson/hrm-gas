@@ -84,10 +84,27 @@
                 return value;
             }
         }
+        function addTitle(value, options) {
+            if (value === '') {
+                return '';
+            }
+            var matches = _.filter(options, function(option) {
+                return value === option[0];
+            });
+            return matches.length > 0 ? '<abbr title="' + matches[0][1] + '">' + value + '</abbr>' : value;
+        }
+        var classListData = new SelectListData({
+            options: []
+        });
+        var clubListData = new SelectListData({
+            options: []
+        });
         var customCellRenders = {
             'Name': nameCellRenderer,
             'Class': function(value, index, object) {
-                return object['Club'] + ', ' + object['Class'];
+                return addTitle(object['Club'], clubListData.get('options')) +
+                        ', ' +
+                        addTitle(object['Class'], classListData.get('options'));
             },
             'Div': function(value, index, object) {
                 return object['Division'];
@@ -121,14 +138,10 @@
                     values: []
                 });
 
-                this.classListData = new SelectListData({
-                    options: [['S', 'Senior']]
-                });
-                this.clubListData = new SelectListData({
-                    options: [['RIC', 'Richmond'], ['ROY', 'Royal']]
-                });
+                this.classListData = classListData;
+                this.clubListData = clubListData;
                 this.divisionsListData = new SelectListData({
-                    options: [['1', 'Div1'], ['2', 'Div2']]
+                    options: []
                 });
                 this.search = new RankingsSearch({
                     model: {},
