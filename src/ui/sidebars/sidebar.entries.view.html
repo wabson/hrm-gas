@@ -85,8 +85,12 @@
                 return object['BCU Number'];
             },
             'Expiry': function(value) {
-                var parts = new Date(value).toDateString().split(' ');
-                return [parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' ');
+                if (value) {
+                    var parts = new Date(value).toDateString().split(' ');
+                    return parts.length == 4 ? [parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' ') : '';
+                } else {
+                    return '';
+                }
             }
         };
 
