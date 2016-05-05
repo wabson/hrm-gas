@@ -84,6 +84,10 @@
                                 type: 'button',
                                 text: 'Edit Details',
                                 disabled: true
+                            }),
+                            new FormButton({
+                                type: 'reset',
+                                text: 'Clear'
                             })
                         ]
                     })
@@ -93,6 +97,9 @@
 
             this.dispatcher.bind('submitSuccess', function(payload) {
                 this.searchForm.reset();
+            }, this);
+            this.dispatcher.bind('reset', function() {
+                this.searchForm.reset(false).focus();
             }, this);
         },
 
@@ -239,7 +246,8 @@
         tagName: 'form',
 
         events: {
-            'submit': 'submit'
+            'submit': 'submit',
+            'click button[type=reset]': 'onClickReset'
         },
 
         initialize: function(options) {
@@ -272,8 +280,15 @@
             });
         },
 
-        reset: function() {
+        onClickReset: function() {
+            this.reset().focus();
+        },
+
+        reset: function(trigger) {
             this.resetFormFields_();
+            if (trigger !== false) {
+                this.dispatcher.trigger('reset');
+            }
             return this;
         },
 
@@ -303,7 +318,10 @@
         },
 
         focus: function () {
-            this.$el.find('input[type=text]').focus();
+            var els = this.$('input[type=text], select');
+            if (els.length) {
+                els[0].focus();
+            }
             return this;
         },
 
@@ -316,11 +334,6 @@
     });
 
     var DataTableForm = DataForm.extend({
-
-        events: {
-            'submit': 'submit',
-            'click button[type=reset]': 'reset'
-        },
 
         initialize: function(options) {
             DataForm.prototype.initialize.call(this, options);
@@ -382,6 +395,7 @@
         reset: function() {
             DataForm.prototype.reset.call(this);
             this.clearTableData_();
+            return this;
         }
 
     });
