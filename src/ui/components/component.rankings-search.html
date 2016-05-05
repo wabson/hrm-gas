@@ -9,7 +9,13 @@
         background-color: #ffc;
     }
     #add-entry-widget-messages {
-        margin-top: 10px;
+        margin-top: 16px;
+    }
+    #manual-entry-form {
+        display: none;
+    }
+    #manual-entry-form input[type=text], #manual-entry-form input[type=date] {
+        width: 130px;
     }
 </style>
 <script>
@@ -233,11 +239,11 @@
 
         submit: function(event) {
             event.preventDefault();
+            this.setButtonsDisabled_(true, 'submit');
             var formData = this.$el.serializeObject();
             this.dispatcher.trigger('submit', {
                 data: formData
             });
-            this.setButtonsDisabled_(true, 'submit');
         },
 
         reset: function() {
@@ -247,7 +253,7 @@
 
         onSubmitSuccess: function() {
             this.resetFormFields_();
-            this.setButtonsDisabled_(true, 'submit');
+            this.setButtonsDisabled_(false, 'submit');
         },
 
         onSubmitFailure: function() {
@@ -256,15 +262,17 @@
 
         setButtonsDisabled_: function (disabled, type) {
             this.$el.find('button[type=' + (type || '') + ']').prop('disabled', disabled);
+            return this;
         },
 
         resetFormFields_: function() {
-            this.$el.find('input[type=text]').val('');
+            this.$el.find('input[type=text], input[type=date]').val('');
+            this.$el.find('select').prop('selectedIndex', 0);
             return this;
         },
 
         setFormFieldsDisabled: function (disabled) {
-            this.$el.find('input[type=text]').prop('disabled', disabled);
+            this.$el.find('input[type=text], input[type=date]').prop('disabled', disabled);
             return this;
         },
 
@@ -401,22 +409,8 @@
         }
     });
 
-    var FormGroupInline = Backbone.View.extend({
-        className: 'inline form-group',
-        initialize: function(options) {
-            this.controls = options.controls;
-        },
-        render: function() {
-            this.$el.empty().append(_.map(this.controls, function(control) {
-                return control.render().$el;
-            }, this));
-            return this;
-        },
-        getTableControls() {
-            return _.filter(this.controls, function (control) {
-                return control.tagName === 'table';
-            });
-        }
+    var FormGroupInline = FormBlock.extend({
+        className: 'inline form-group'
     });
 
     var FormButton = Backbone.View.extend({
@@ -433,6 +427,104 @@
                     .prop('disabled', this.disabled)
                     .prop('required', this.required);
             return this;
+        }
+    });
+
+    var FormField = Backbone.View.extend({
+        tagName: 'span',
+        initialize: function(options) {
+            this.fieldId = options.fieldId;
+            this.fieldClassName = options.fieldClassName;
+            this.name = options.name;
+            this.type = options.type;
+            this.label = options.label;
+            this.disabled = options.disabled === true;
+            this.required = options.required === true;
+            this.value = options.value;
+            this.size = options.size;
+        },
+        getFieldHtmlId_() {
+            return this.fieldId || this.name;
+        },
+        getLabelHtml_() {
+            return _.template('<label for="<%= id %>"><%= label %></label>')({
+                id: this.getFieldHtmlId_(),
+                label: this.label
+            });
+        },
+        getControlHtml_() {
+            var template;
+            if (this.type == 'text' || this.type == 'date') {
+                template = '<input id="<%= id %>" class="<%= className %>" name="<%= name %>" type="<%= type %>" value="<%= value %>" <%= required ? "required" : "" %> <%= disabled ? "disabled" : "" %> />';
+            } else {
+                throw 'Unknown type ' + this.type;
+            }
+            return _.template(template)({
+                id: this.getFieldHtmlId_(),
+                className: this.fieldClassName,
+                name: this.name,
+                type: this.type,
+                disabled: this.disabled,
+                required: this.required,
+                size: this.size,
+                value: this.value
+            });
+        },
+        render: function() {
+            this.$el.empty().append([this.getLabelHtml_(), this.getControlHtml_()]);
+            return this;
+        }
+    });
+    var FormSelectField = FormField.extend({
+        initialize: function(options) {
+            FormField.prototype.initialize.apply(this, arguments);
+            this.selectList = options.selectList;
+        },
+        getControlHtml_() {
+            return this.selectList.render().$el.attr('id', this.getFieldHtmlId_());
+        }
+    });
+
+    var TabsList = Backbone.View.extend({
+
+        tagName: 'div',
+
+        events: {
+            'click a': 'clickTab'
+        },
+
+        initialize: function (options) {
+            this.dispatcher = options.dispatcher;
+            this.tabs = options.tabs;
+        },
+
+        render: function () {
+            this.$el.empty().append(_.map(_.pairs(this.tabs), function(pair, index) {
+                var name = pair[0], view = pair[1];
+                return _.template('<span class="<%= className %>" data-target="<%= targetId %>"><a href="#"><%= name %></a></span>')({
+                    name: name,
+                    targetId: view.el.id,
+                    className: index === 0 ? 'tab selected' : 'tab'
+                });
+            }));
+            return this;
+        },
+
+        showView_: function(elId) {
+            _.each(_.values(this.tabs), function(view) {
+                if (view.el.id == elId) {
+                    view.$el.css('display', 'block');
+                } else {
+                    view.$el.css('display', 'none');
+                }
+            }, this);
+            this.$('span.tab').removeClass('selected');
+            this.$('span.tab[data-target=' + elId + ']').addClass('selected');
+        },
+
+        clickTab: function(event) {
+            event.preventDefault();
+            this.showView_($(event.target).closest('span').attr('data-target'));
         }
     });
 </script>

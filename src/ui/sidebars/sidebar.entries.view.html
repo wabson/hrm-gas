@@ -5,8 +5,14 @@
     <?!= include('forms.head.include'); ?>
     <?!= include('sidebar.head.include'); ?>
     <style type="text/css">
-        #crew-list-form, #results-form, #add-entry-messages {
-            margin-top: 10px;
+        #results-form, #add-entry-messages {
+            margin-top: 16px;
+        }
+        #crew-list-form {
+            margin-top: 24px;
+        }
+        #rankings-search, #manual-entry-form {
+            margin-top: 21px;
         }
         form table {
             width: 100%;
@@ -16,6 +22,19 @@
             text-transform: uppercase;
             color: #666;
             border-bottom: 1px solid #ebebeb;
+        }
+        span.tab {
+            text-transform: uppercase;
+            padding: 4px 5px;
+            font-size: 1.1em;
+        }
+        span.tab.selected {
+            font-weight: bold;
+            border-bottom: 2px solid #d22;
+        }
+        span.tab a {
+            color: #222;
+            text-decoration: none;
         }
         form table th, form table td {
             padding: 2px;
@@ -70,15 +89,25 @@
                 'click div.results a': 'onAddedCrewClick'
             },
 
-            initialize: function (options) {
+            initialize: function () {
 
                 var rankingDispatcher = _.extend({}, Backbone.Events);
+                var manualEntryDispatcher = _.extend({}, Backbone.Events);
                 this.crewDispatcher = _.extend({}, Backbone.Events);
                 var crewData = new TableData({
                     columns: headings,
                     values: []
                 });
 
+                this.classListData = new SelectListData({
+                    options: [['S', 'Senior']]
+                });
+                this.clubListData = new SelectListData({
+                    options: [['RIC', 'Richmond'], ['ROY', 'Royal']]
+                });
+                this.divisionsListData = new SelectListData({
+                    options: [['1', 'Div1'], ['2', 'Div2']]
+                });
                 this.search = new RankingsSearch({
                     model: {},
                     id: 'rankings-search',
@@ -87,7 +116,124 @@
                     spreadsheetId: spreadSheetId,
                     columns: headings,
                     displayColumns: displayCols,
-                    cellRenderers: customCellRenders
+                    cellRenderers: customCellRenders,
+                    classListData: this.classListData,
+                    clubListData: this.clubListData,
+                    divisionsListData: this.divisionsListData
+                });
+                this.manualForm = new DataForm({
+                    id: 'manual-entry-form',
+                    dispatcher: manualEntryDispatcher,
+                    blocks: [
+                        new FormBlock({
+                            controls: [
+                                new FormGroupInline({
+                                    controls: [
+                                        new FormField({
+                                            name: 'Surname',
+                                            className: 'surname',
+                                            type: 'text',
+                                            label: 'Surname',
+                                            required: true
+                                        })
+                                    ]
+                                }),
+                                new FormGroupInline({
+                                    controls: [
+                                        new FormField({
+                                            name: 'First name',
+                                            className: 'first-name',
+                                            type: 'text',
+                                            label: 'First name',
+                                            required: true
+                                        })
+                                    ]
+                                })
+                            ]
+                        }),
+                        new FormBlock({
+                            controls: [
+                                new FormGroupInline({
+                                    controls: [
+                                        new FormField({
+                                            name: 'BCU Number',
+                                            type: 'text',
+                                            label: 'BCU Number',
+                                            required: true
+                                        })
+                                    ]
+                                }),
+                                new FormGroupInline({
+                                    controls: [
+                                        new FormField({
+                                            name: 'Expiry',
+                                            type: 'date',
+                                            label: 'Expiry',
+                                            required: true
+                                        })
+                                    ]
+                                })
+                            ]
+                        }),
+                        new FormBlock({
+                            controls: [
+                                new FormGroupInline({
+                                    controls: [
+                                        new FormSelectField({
+                                            fieldId: 'select-class',
+                                            label: 'Class',
+                                            selectList: new SelectList({
+                                                id: 'select-class',
+                                                name: 'Class',
+                                                model: this.classListData,
+                                                placeholder: 'Select',
+                                                required: true
+                                            })
+                                        })
+                                    ]
+                                }),
+                                new FormGroupInline({
+                                    controls: [
+                                        new FormSelectField({
+                                            fieldId: 'select-club',
+                                            label: 'Club',
+                                            selectList: new SelectList({
+                                                id: 'select-club',
+                                                name: 'Club',
+                                                model: this.clubListData,
+                                                placeholder: 'Select',
+                                                required: true
+                                            })
+                                        })
+                                    ]
+                                }),
+                                new FormGroupInline({
+                                    controls: [
+                                        new FormSelectField({
+                                            fieldId: 'select-division',
+                                            label: 'Division',
+                                            selectList: new SelectList({
+                                                id: 'select-division',
+                                                name: 'Division',
+                                                model: this.divisionsListData,
+                                                placeholder: 'Select',
+                                                required: true
+                                            })
+                                        })
+                                    ]
+                                })
+                            ]
+                        }),
+                        new FormBlock({
+                            controls: [
+                                new FormButton({
+                                    id: 'add-manual',
+                                    type: 'submit',
+                                    text: 'Add to Crew'
+                                })
+                            ]
+                        })
+                    ]
                 });
 
                 var crewTable = new DataTable({
@@ -98,7 +244,7 @@
                     cellRenderers: customCellRenders
                 });
 
-                this.raceListData = new RaceListData({
+                this.raceListData = new SelectListData({
                     options: []
                 });
 
@@ -131,6 +277,12 @@
                         })
                     ]
                 });
+                this.tabs = new TabsList({
+                    tabs: {
+                        'Search Rankings': this.search,
+                        'Manual Entry': this.manualForm
+                    }
+                });
 
                 rankingDispatcher.bind('submit', function(payload) {
                     var newRows = payload.tableData['rankings-search-results'];
@@ -138,11 +290,17 @@
                     rankingDispatcher.trigger('submitSuccess', this);
                 }, this);
 
+                manualEntryDispatcher.bind('submit', function(payload) {
+                    var newRows = [payload.data];
+                    crewData.set('values', crewData.get('values').concat(newRows));
+                    manualEntryDispatcher.trigger('submitSuccess', this);
+                }, this);
+
                 this.crewDispatcher.bind('submit', this.onCrewFormSubmit, this);
             },
 
             render: function () {
-                this.$el.empty().append([this.search.render().$el, this.crewForm.render().$el, this.createDiv_('-messages'), this.createDiv_('-results', {
+                this.$el.empty().append([this.tabs.render().$el, this.search.render().$el, this.manualForm.render().$el, this.crewForm.render().$el, this.createDiv_('-messages'), this.createDiv_('-results', {
                     className: 'results'
                 })]);
                 this.loadRaceNames_();

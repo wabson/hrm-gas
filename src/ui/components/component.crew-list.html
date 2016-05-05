@@ -5,7 +5,7 @@
 </style>
 <script>
 
-    var RaceListData = Backbone.Model.extend({});
+    var SelectListData = Backbone.Model.extend({});
 
     var SelectList = Backbone.View.extend({
         tagName: 'select',
@@ -13,20 +13,25 @@
             this.model = options.model || [];
             this.name = options.name;
             this.title = options.title;
+            this.placeholder = options.placeholder;
+            this.required = options.required;
             this.listenTo(this.model, 'change', this.render);
         },
         render: function() {
-            this.$el.empty().append(_.map(this.model.get('options'), function(option) {
-                var $el = $(document.createElement('option'));
-                if (_.isString(option)) {
-                    $el.html(option);
-                } else if (_.isArray(option)) {
-                    $el.attr('value', option[0]).html(option[1] || option[0]);
-                } else if (_.isObject(option)) {
-                    $el.attr('value', option.value).html(option.text || option.value);
-                }
-                return $el;
-            }, this)).attr('name', this.name).attr('title', this.title);
+            this.$el.empty().append(this.placeholder ? '<option value="">' + this.placeholder + '</option>' : '')
+                .append(_.map(this.model.get('options'), function(option) {
+                        var $el = $(document.createElement('option'));
+                        if (_.isString(option)) {
+                            $el.html(option);
+                        } else if (_.isArray(option)) {
+                            $el.attr('value', option[0]).html(option[1] || option[0]);
+                        } else if (_.isObject(option)) {
+                            $el.attr('value', option.value).html(option.text || option.value);
+                        }
+                        return $el;
+                    }, this))
+                .attr('name', this.name).attr('title', this.title);
+            this.$el.prop('required', this.required === true);
             return this;
         },
         getSelectedValue: function() {
