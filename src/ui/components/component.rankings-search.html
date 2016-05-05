@@ -494,6 +494,8 @@
             this.required = options.required === true;
             this.value = options.value;
             this.size = options.size;
+            this.pattern = options.pattern;
+            this.title = options.title;
         },
         getFieldHtmlId_() {
             return this.fieldId || this.name;
@@ -507,7 +509,7 @@
         getControlHtml_() {
             var template;
             if (this.type == 'text' || this.type == 'date') {
-                template = '<input id="<%= id %>" class="<%= className %>" name="<%= name %>" type="<%= type %>" value="<%= value %>" <%= required ? "required" : "" %> <%= disabled ? "disabled" : "" %> />';
+                template = '<input id="<%= id %>" class="<%= className %>" name="<%= name %>" <%= title ? \'title="\' + title + \'"\' : "" %> type="<%= type %>" value="<%= value %>" <%= required ? "required" : "" %> <%= pattern ? \'pattern="\' + pattern + \'"\' : "" %> <%= disabled ? "disabled" : "" %> />';
             } else {
                 throw 'Unknown type ' + this.type;
             }
@@ -519,7 +521,9 @@
                 disabled: this.disabled,
                 required: this.required,
                 size: this.size,
-                value: this.value
+                value: this.value,
+                pattern: this.pattern,
+                title: this.title
             });
         },
         render: function() {

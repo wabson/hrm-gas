@@ -74,11 +74,15 @@
             return object['Surname'] + ', ' + object['First name'];
         };
         var raceDate = new Date();
+        var bcuRegexp = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|ET [A-Z]{3})$';
         function isBCUCurrent(value, object) {
-            return new Date(object['Expiry']) < raceDate;
+            return new Date(object['Expiry']) >= raceDate;
+        }
+        function isBCUNumberValid(value, object) {
+            return object['BCU Number'] && new RegExp(bcuRegexp).test(object['BCU Number']);
         }
         function wrapIfInvalid(value, object, validatorFn) {
-            if (validatorFn(value, object)) {
+            if (!validatorFn(value, object)) {
                 return '<span class="warning">' + value + '</span>';
             } else {
                 return value;
@@ -110,7 +114,7 @@
                 return object['Division'];
             },
             'BCU #': function(value, index, object) {
-                return object['BCU Number'];
+                return wrapIfInvalid(object['BCU Number'], object, isBCUNumberValid);
             },
             'Expiry': function(value, index, object) {
                 if (value) {
@@ -194,7 +198,9 @@
                                             name: 'BCU Number',
                                             type: 'text',
                                             label: 'BCU Number',
-                                            required: true
+                                            required: true,
+                                            pattern: bcuRegexp,
+                                            title: 'Must be in the format XXX, CLB/XXX, WCA XXX, SCA XXX, INT or ET EVENT, where XXX is a number and CLB is a valid club code e.g. RIC'
                                         })
                                     ]
                                 }),
