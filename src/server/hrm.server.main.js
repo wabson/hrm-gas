@@ -41,8 +41,9 @@ var BCU_NUMBER_REGEXP = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+)$';
 var BCU_NUMBER_FULL_REGEXP = '^(\\d+|(SCA|WCA) ?\\d+|INT)$';
 var VALIDATION_MSG_BCU = 'BCU Number must be in the correct format';
 
-var CLASSES_ALL = ["S","V","J","F","VF","JF","C","VC","JC","FC","VFC","JFC"];
-var CLASSES_LIGHTNING = ["J","JF"];
+var CLASSES_DEFS = [['S', 'Senior Male'],['V', 'Veteran Male'],['J', 'Junior Male'],['F', 'Senior Female'],['VF', 'Veteran Female'],['JF', 'Junior Female'],['C', 'SM Canoe'],['VC', 'VM Canoe'],['JC', 'JM Canoe'],['FC', 'SF Canoe'],['VFC', 'VF Canoe'],['JFC', 'JF Canoe']];
+var CLASSES_ALL = ['S','V','J','F','VF','JF','C','VC','JC','FC','VFC','JFC'];
+var CLASSES_LIGHTNING = ['J','JF'];
 
 var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_12_MILE = ["1","2","3","4","5","6","7","8","9"];

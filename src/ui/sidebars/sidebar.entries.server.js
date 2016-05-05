@@ -1,5 +1,15 @@
 /* globals Logger, SpreadsheetApp, Utilities */
 
+function sidebar_entries_race_info(spreadsheetId) {
+
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    return {
+        classes: CLASSES_DEFS,
+        divisions: DIVS_ALL,
+        clubs: getClubRows(spreadsheet.getSheetByName("Clubs"))
+    };
+}
+
 function sidebar_entries_search(spreadsheetId, term) {
 
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId);

@@ -48,6 +48,9 @@
         #add-entry-messages p {
             margin: 0.4em 0;
         }
+        #manual-entry-form select {
+            width: 80px;
+        }
     </style>
 </head>
 <body>
@@ -304,15 +307,28 @@
                     className: 'results'
                 })]);
                 this.loadRaceNames_();
+                this.loadRaceInfo_();
             },
 
             loadRaceNames_: function() {
                 google.script.run.withSuccessHandler(_.bind(this.onRaceNamesLoaded, this)).getRaceSheetNamesHTML(spreadSheetId);
             },
 
+            loadRaceInfo_: function() {
+                google.script.run.withSuccessHandler(_.bind(this.onRaceInfoLoaded, this)).sidebar_entries_race_info(spreadSheetId);
+            },
+
             onRaceNamesLoaded: function(resp) {
                 this.raceListData.set('options', ['Auto'].concat(resp));
                 this.search.searchForm.setFormFieldsDisabled(false).focus();
+            },
+
+            onRaceInfoLoaded: function(resp) {
+                this.classListData.set('options', resp.classes);
+                this.clubListData.set('options', _.map(resp.clubs, function(clubArr) {
+                    return [clubArr[1], clubArr[0]];
+                }));
+                this.divisionsListData.set('options', resp.divisions);
             },
 
             onCrewFormSubmit: function(payload) {
