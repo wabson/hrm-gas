@@ -44,13 +44,20 @@
             color: #dd4b39;
             content: 'error';
         }
+        .message p.icon-info {
+            color: #666;
+            vertical-align: middle;
+        }
+        .message p.icon-info:before {
+            color: #999;
+        }
     </style>
 </head>
 <body>
 <div class="sidebar-content">
     <div id="rankings-messages" class="error"></div>
     <p id="rankings-info"></p>
-    <div id="rankings-update" class="message-box info"><p class="icon icon-info">A new version of the ranking list may be available <span></span></p></div>
+    <div id="rankings-update"><p class="icon icon-info"></p></div>
     <form id="import-form">
         <div class="block form-group">
             <input id="btn-import" type="submit" value="Update Rankings" class="action" />
@@ -91,10 +98,19 @@
         google.script.run
                 .withSuccessHandler(function (webLastUpdated) {
                     if (webLastUpdated !== null && lastUpdated !== null && webLastUpdated != lastUpdated) {
-                        $('#rankings-update').css('display', 'block');
-                        $('#rankings-update span').html('updated ' + webLastUpdated);
+                        $('#rankings-update')
+                                .css('display', 'block')
+                                .removeClass()
+                                .addClass('message-box info')
+                                .find('p')
+                                    .html('A new version of the ranking list may be available updated ' + webLastUpdated);
                     } else {
-                        $('#rankings-update').css('display', 'none');
+                        $('#rankings-update')
+                                .css('display', 'block')
+                                .removeClass()
+                                .addClass('message info')
+                                .find('p')
+                                    .html('You have the latest version of the ranking list');
                     }
                 })
                 .withFailureHandler(onFailure)
