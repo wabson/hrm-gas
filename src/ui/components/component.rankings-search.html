@@ -80,7 +80,7 @@
                     return object['Division'];
                 },
                 'BCU #': _.bind(function (value, index, object) {
-                    return this.wrapIfInvalid(object['BCU Number'], object, this.isBCUNumberValid);
+                    return this.wrapIfInvalid(object['BCU Number'], object, _.bind(this.isBCUNumberValid, this));
                 }, this),
                 'Expiry': _.bind(function (value, index, object) {
                     if (value) {
