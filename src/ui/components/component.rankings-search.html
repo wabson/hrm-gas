@@ -1,5 +1,5 @@
 <style type="text/css">
-    .rankings-search-form input[type="text"] {
+    .rankings-search-form input[type="search"] {
         width: 250px;
     }
     .rankings-search-results {
@@ -355,7 +355,7 @@
         },
 
         resetFormFields_: function() {
-            this.$el.find('input[type=text], input[type=date]').val('');
+            this.$el.find('input[type=text], input[type=date], input[type=search]').val('');
             this.$el.find('select').prop('selectedIndex', 0);
             return this;
         },
@@ -465,7 +465,7 @@
         render: function() {
             this.$el.html('<div class="block form-group">' +
                     '<label for="name">' + this.searchPrompt + '</label>' +
-                    '<input type="text" name="name" id="name" value="" required aria-valuemin="2" autocomplete="off">' +
+                    '<input type="search" name="name" id="name" value="" required aria-valuemin="2" autocomplete="off">' +
                     '</div>');
             this.$('input').prop('disabled', this.disabled);
             return this;
