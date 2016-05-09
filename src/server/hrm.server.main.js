@@ -1256,20 +1256,12 @@ function getLastEntryRowNumber(sheet) {
   return lastN;
 }
 
-function addEntryToSheet_(rows, headers, sheetName, spreadsheet) {
-  var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName);
+function addRowsToSheet_(rows, headers, sheet, rowPosition) {
   // Check that sheet exists!
   if (!sheet) {
     throw("Could not find sheet " + sheetName);
   }
-  var nextRows = getNextEntryRows(sheet), 
-      nextBoatNum = (nextRows.length > 0) ? nextRows[0][0] : 0,
-      nextRowPos = (nextRows.length > 0) ? nextRows[0][1] : 0,
-      nextRowSize = (nextRows.length > 0) ? nextRows[0][2] : 0;
-  if (nextRowPos > 0) {
-    if (nextRowSize != rows.length) {
-      throw("Could not add entry of size " + rows.length + " in row " + nextRowPos + " (" + nextRowSize + " rows available)");
-    }
+  if (rowPosition > 1) {
     var targetSheetHeaders = getTableHeaders(sheet),
         headerIndexes = rankingToEntryHeaders_(headers).map(function(header) {
           return targetSheetHeaders.indexOf(header);
@@ -1284,8 +1276,28 @@ function addEntryToSheet_(rows, headers, sheetName, spreadsheet) {
         return convertedRow.hasOwnProperty(header) ? convertedRow[header] : '';
       });
     });
-    var rowRange = sheet.getRange(nextRowPos, minIndex + 1, rowValues.length, applyHeaders.length);
+    var rowRange = sheet.getRange(rowPosition, minIndex + 1, rowValues.length, applyHeaders.length);
     rowRange.setValues(rowValues);
+  } else {
+    throw 'Cannot add to first row';
+  }
+}
+
+function addEntryToSheet_(rows, headers, sheetName, spreadsheet) {
+  var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName);
+  // Check that sheet exists!
+  if (!sheet) {
+    throw("Could not find sheet " + sheetName);
+  }
+  var nextRows = getNextEntryRows(sheet),
+      nextBoatNum = (nextRows.length > 0) ? nextRows[0][0] : 0,
+      nextRowPos = (nextRows.length > 0) ? nextRows[0][1] : 0,
+      nextRowSize = (nextRows.length > 0) ? nextRows[0][2] : 0;
+  if (nextRowPos > 0) {
+    if (nextRowSize != rows.length) {
+      throw("Could not add entry of size " + rows.length + " in row " + nextRowPos + " (" + nextRowSize + " rows available)");
+    }
+    addRowsToSheet_(rows, headers, sheet, nextRowPos);
   }
   return { boatNumber: nextBoatNum, rowNumber: nextRowPos };
 }

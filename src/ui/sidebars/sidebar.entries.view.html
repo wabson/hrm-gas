@@ -5,7 +5,7 @@
     <?!= include('forms.head.include'); ?>
     <?!= include('sidebar.head.include'); ?>
     <style type="text/css">
-        #results-form, #add-entry-messages {
+        #add-entry-messages {
             margin-top: 16px;
         }
         #crew-list-form {
@@ -13,34 +13,6 @@
         }
         #rankings-search, #manual-entry-form {
             margin-top: 21px;
-        }
-        form table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        tr:last-child > th {
-            text-transform: uppercase;
-            color: #666;
-            border-bottom: 1px solid #ebebeb;
-        }
-        span.tab {
-            text-transform: uppercase;
-            padding: 4px 5px;
-            font-size: 1em;
-        }
-        span.tab.selected {
-            font-weight: bold;
-            border-bottom: 2px solid #d22;
-        }
-        span.tab a {
-            color: #222;
-            text-decoration: none;
-        }
-        form table th, form table td {
-            padding: 2px;
-        }
-        form thead th {
-            white-space: nowrap;
         }
         #add-entry {
             margin-left: 12px;
@@ -50,6 +22,15 @@
         }
         #manual-entry-form select {
             width: 80px;
+        }
+        #add-entry-widget-messages {
+            margin-top: 16px;
+        }
+        #manual-entry-form {
+            display: none;
+        }
+        #manual-entry-form input[type=text], #manual-entry-form input[type=date] {
+            width: 126px;
         }
     </style>
 </head>
@@ -68,63 +49,17 @@
     $(function() {
 
         var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
-
         var displayCols = ['Name', 'Class', 'Div', 'BCU #', 'Expiry'];
-        var nameCellRenderer = function(value, index, object) {
-            return object['Surname'] + ', ' + object['First name'];
-        };
-        var raceDate = new Date();
-        var bcuRegexp = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|ET [A-Z]{3})$';
-        function isBCUCurrent(value, object) {
-            return new Date(object['Expiry']) >= raceDate;
-        }
-        function isBCUNumberValid(value, object) {
-            return object['BCU Number'] && new RegExp(bcuRegexp).test(object['BCU Number']);
-        }
-        function wrapIfInvalid(value, object, validatorFn) {
-            if (!validatorFn(value, object)) {
-                return '<span class="warning">' + value + '</span>';
-            } else {
-                return value;
-            }
-        }
-        function addTitle(value, options) {
-            if (value === '') {
-                return '';
-            }
-            var matches = _.filter(options, function(option) {
-                return value === option[0];
-            });
-            return matches.length > 0 ? '<abbr title="' + matches[0][1] + '">' + value + '</abbr>' : value;
-        }
         var classListData = new SelectListData({
             options: []
         });
         var clubListData = new SelectListData({
             options: []
         });
-        var customCellRenders = {
-            'Name': nameCellRenderer,
-            'Class': function(value, index, object) {
-                return addTitle(object['Club'], clubListData.get('options')) +
-                        ', ' +
-                        addTitle(object['Class'], classListData.get('options'));
-            },
-            'Div': function(value, index, object) {
-                return object['Division'];
-            },
-            'BCU #': function(value, index, object) {
-                return wrapIfInvalid(object['BCU Number'], object, isBCUNumberValid);
-            },
-            'Expiry': function(value, index, object) {
-                if (value) {
-                    var parts = new Date(value).toDateString().split(' ');
-                    return parts.length == 4 ? wrapIfInvalid([parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' '), object, isBCUCurrent) : '';
-                } else {
-                    return '';
-                }
-            }
-        };
+        var rankingDetails = new HaslerRankingDetails({
+            classListData: classListData,
+            clubListData: clubListData
+        });
 
         var AddEntryView = BaseComponent.extend({
 
@@ -132,8 +67,9 @@
                 'click div.results a': 'onAddedCrewClick'
             },
 
-            initialize: function () {
+            initialize: function (options) {
 
+                this.spreadsheetId = options.spreadsheetId;
                 var rankingDispatcher = _.extend({}, Backbone.Events);
                 var manualEntryDispatcher = _.extend({}, Backbone.Events);
                 this.crewDispatcher = _.extend({}, Backbone.Events);
@@ -142,22 +78,39 @@
                     values: []
                 });
 
-                this.classListData = classListData;
-                this.clubListData = clubListData;
+                this.classListData = options.classListData;
+                this.clubListData = options.clubListData;
                 this.divisionsListData = new SelectListData({
                     options: []
                 });
                 this.search = new RankingsSearch({
-                    model: {},
                     id: 'rankings-search',
                     dispatcher: rankingDispatcher,
-                    spreadsheetId: spreadSheetId,
+                    spreadsheetId: this.spreadsheetId,
                     columns: headings,
                     displayColumns: displayCols,
-                    cellRenderers: customCellRenders,
+                    cellRenderers: rankingDetails.getCellRenders(),
                     classListData: this.classListData,
                     clubListData: this.clubListData,
-                    divisionsListData: this.divisionsListData
+                    divisionsListData: this.divisionsListData,
+                    resultsButtons: [
+                        new FormButton({
+                            id: 'add-member',
+                            type: 'submit',
+                            text: 'Add to Crew'
+                        }),
+                        new FormButton({
+                            id: 'edit-member',
+                            type: 'button',
+                            text: 'Edit Details',
+                            disabled: true
+                        }),
+                        new FormButton({
+                            type: 'reset',
+                            text: 'Clear'
+                        })
+                    ],
+                    searchDisabled: true
                 });
                 this.manualForm = new DataForm({
                     id: 'manual-entry-form',
@@ -198,7 +151,7 @@
                                             type: 'text',
                                             label: 'BCU Number',
                                             required: true,
-                                            pattern: bcuRegexp,
+                                            pattern: rankingDetails.bcuRegexp,
                                             title: 'Must be in the format XXX, CLB/XXX, WCA XXX, SCA XXX, INT or ET EVENT, where XXX is a number and CLB is a valid club code e.g. RIC'
                                         })
                                     ]
@@ -285,7 +238,7 @@
                     dispatcher: this.crewDispatcher,
                     data: crewData,
                     displayColumns: displayCols,
-                    cellRenderers: customCellRenders
+                    cellRenderers: rankingDetails.getCellRenders()
                 });
 
                 this.raceListData = new SelectListData({
@@ -362,11 +315,11 @@
             },
 
             loadRaceNames_: function() {
-                google.script.run.withSuccessHandler(_.bind(this.onRaceNamesLoaded, this)).getRaceSheetNamesHTML(spreadSheetId);
+                google.script.run.withSuccessHandler(_.bind(this.onRaceNamesLoaded, this)).getRaceSheetNamesHTML(this.spreadsheetId);
             },
 
             loadRaceInfo_: function() {
-                google.script.run.withSuccessHandler(_.bind(this.onRaceInfoLoaded, this)).sidebar_entries_race_info(spreadSheetId);
+                google.script.run.withSuccessHandler(_.bind(this.onRaceInfoLoaded, this)).sidebar_entries_race_info(this.spreadsheetId);
             },
 
             onRaceNamesLoaded: function(resp) {
@@ -391,7 +344,7 @@
                             crewMembers: crewMembers
                         })
                         .sidebar_entries_add(
-                                spreadSheetId,
+                                this.spreadsheetId,
                                 crewMembers,
                                 headings,
                                 raceName
@@ -415,7 +368,7 @@
 
             crewNames_: function(members) {
                 return members.map(function(o) {
-                    return nameCellRenderer(null, null, o);
+                    return rankingDetails.nameCellRenderer(null, null, o);
                 }).join(' / ');
             },
 
@@ -432,7 +385,10 @@
         });
 
         new AddEntryView({
-            el: '#add-entry-widget'
+            el: '#add-entry-widget',
+            spreadsheetId: spreadSheetId,
+            classListData: classListData,
+            clubListData: clubListData
         }).render();
 
     });

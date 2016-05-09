@@ -1,27 +1,15 @@
 <style type="text/css">
-    #rankings-search-form input[type="text"] {
+    .rankings-search-form input[type="text"] {
         width: 250px;
     }
-    #results-form tbody tr {
-        cursor: pointer;
-    }
-    #results-form tbody tr.selected {
-        background-color: #ffc;
-    }
-    #add-entry-widget-messages {
+    .rankings-search-results {
         margin-top: 16px;
     }
-    #manual-entry-form {
-        display: none;
+    .rankings-search-results tbody tr {
+        cursor: pointer;
     }
-    #manual-entry-form input[type=text], #manual-entry-form input[type=date] {
-        width: 126px;
-    }
-    form table .warning {
-        color: #c22;
-    }
-    form table abbr {
-        border-bottom: 1px dotted #222;
+    .rankings-search-results tbody tr.selected {
+        background-color: #ffc;
     }
 </style>
 <script>
@@ -47,6 +35,65 @@
 
     });
 
+    var HaslerRankingDetails = function(options) {
+        this.raceDate = new Date();
+        this.bcuRegexp = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|ET [A-Z]{3})$';
+        this.classListData = options.classListData;
+        this.clubListData = options.clubListData;
+    };
+
+    HaslerRankingDetails.prototype = {
+        nameCellRenderer: function(value, index, object) {
+            return object['Surname'] + ', ' + object['First name'];
+        },
+        isBCUCurrent: function(value, object) {
+            return new Date(object['Expiry']) >= this.raceDate;
+        },
+        isBCUNumberValid: function(value, object) {
+            return object['BCU Number'] && new RegExp(this.bcuRegexp).test(object['BCU Number']);
+        },
+        wrapIfInvalid: function(value, object, validatorFn) {
+            if (!validatorFn(value, object)) {
+                return '<span class="warning">' + value + '</span>';
+            } else {
+                return value;
+            }
+        },
+        addTitle: function(value, options) {
+            if (value === '') {
+                return '';
+            }
+            var matches = _.filter(options, function(option) {
+                return value === option[0];
+            });
+            return matches.length > 0 ? '<abbr title="' + matches[0][1] + '">' + value + '</abbr>' : value;
+        },
+        getCellRenders: function() {
+            return {
+                'Name': this.nameCellRenderer,
+                'Class': _.bind(function (value, index, object) {
+                    return this.addTitle(object['Club'], this.clubListData.get('options')) +
+                            ', ' +
+                            this.addTitle(object['Class'], this.classListData.get('options'));
+                }, this),
+                'Div': function (value, index, object) {
+                    return object['Division'];
+                },
+                'BCU #': _.bind(function (value, index, object) {
+                    return this.wrapIfInvalid(object['BCU Number'], object, this.isBCUNumberValid);
+                }, this),
+                'Expiry': _.bind(function (value, index, object) {
+                    if (value) {
+                        var parts = new Date(value).toDateString().split(' ');
+                        return parts.length == 4 ? this.wrapIfInvalid([parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' '), object, _.bind(this.isBCUCurrent, this)) : '';
+                    } else {
+                        return '';
+                    }
+                }, this)
+            };
+        }
+    };
+
     var RankingsSearch = BaseComponent.extend({
 
         events: {
@@ -63,12 +110,14 @@
             });
             this.searchForm = new RankingsSearchForm(_.extend({}, childOpts, {
                 id: 'rankings-search-form',
-                className: 'search-form',
+                className: 'rankings-search-form',
                 scriptMethod: 'sidebar_entries_search',
-                searchPrompt: 'Search by name or BCU number'
+                searchPrompt: 'Search by name or BCU number',
+                disabled: options.searchDisabled
             }));
             this.resultsForm = new DataTableForm(_.extend({}, childOpts, {
                 id: 'results-form',
+                className: 'rankings-search-results',
                 blocks: [
                     new FormBlock({
                         controls: [
@@ -79,17 +128,10 @@
                         ]
                     }),
                     new FormBlock({
-                        controls: [
+                        controls: options.resultsButtons || [
                             new FormButton({
-                                id: 'add-member',
                                 type: 'submit',
-                                text: 'Add to Crew'
-                            }),
-                            new FormButton({
-                                id: 'edit-member',
-                                type: 'button',
-                                text: 'Edit Details',
-                                disabled: true
+                                text: 'Add'
                             }),
                             new FormButton({
                                 type: 'reset',
@@ -415,6 +457,7 @@
             this.scriptMethod = options.scriptMethod;
             this.searchPrompt = options.searchPrompt;
             this.spreadsheetId = options.spreadsheetId;
+            this.disabled = options.disabled === true;
 
             this.data = options.data;
         },
@@ -422,8 +465,9 @@
         render: function() {
             this.$el.html('<div class="block form-group">' +
                     '<label for="name">' + this.searchPrompt + '</label>' +
-                    '<input type="text" name="name" id="name" value="" required disabled aria-valuemin="2" autocomplete="off">' +
+                    '<input type="text" name="name" id="name" value="" required aria-valuemin="2" autocomplete="off">' +
                     '</div>');
+            this.$('input').prop('disabled', this.disabled);
             return this;
         },
 

@@ -4,12 +4,53 @@
     <base target="_top">
     <?!= include('forms.head.include'); ?>
     <?!= include('sidebar.head.include'); ?>
+    <style type="text/css">
+        #rankings-update {
+            margin: 1em 0;
+            display: none;
+        }
+        .message-box p {
+            margin: 0 0 0;
+        }
+        .message-box p.icon:before, .message p.icon:before {
+            color: rgba(0, 0, 0, 0.54);
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;  /* Preferred icon size */
+            display: block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+            /* Support for all WebKit browsers. */
+            -webkit-font-smoothing: antialiased;
+            /* Support for Safari and Chrome. */
+            text-rendering: optimizeLegibility;
+            /* Support for Firefox. */
+            -moz-osx-font-smoothing: grayscale;
+            /* Support for IE. */
+            font-feature-settings: 'liga';
+            float: left;
+            width: 24px;
+            padding-right: 5px;
+        }
+        p.icon-info:before {
+            content: 'info outline';
+        }
+        .message-box p.icon-error:before, .message p.icon-error:before {
+            color: #dd4b39;
+            content: 'error';
+        }
+    </style>
 </head>
 <body>
 <div class="sidebar-content">
     <div id="rankings-messages" class="error"></div>
     <p id="rankings-info"></p>
-    <p id="rankings-update" class="info" style="display: none">A new version of the ranking list may be available <span></span></p>
+    <div id="rankings-update" class="message-box info"><p class="icon icon-info">A new version of the ranking list may be available <span></span></p></div>
     <form id="import-form">
         <div class="block form-group">
             <input id="btn-import" type="submit" value="Update Rankings" class="action" />
@@ -18,9 +59,14 @@
             <div id="import-messages"></div>
         </div>
     </form>
+    <h2>Search Rankings</h2>
+    <div id="rankings-search"></div>
+    <div id="rankings-search-errors" class="message error"></div>
 </div>
 
 <?!= include('forms.script.include'); ?>
+<?!= include('component.rankings-search'); ?>
+<?!= include('component.crew-list'); ?>
 <script>
     var spreadSheetId = '<?= spreadsheetId ?>';
 
@@ -83,6 +129,61 @@
                 .withSuccessHandler(onSpreadsheetInfoSuccess)
                 .withFailureHandler(onFailure)
                 .sidebar_rankings_info(spreadSheetId)
+
+        var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
+        var displayCols = ['Name', 'Class', 'Div', 'BCU #', 'Expiry'];
+        var classListData = new SelectListData({
+            options: []
+        });
+        var clubListData = new SelectListData({
+            options: []
+        });
+        var rankingDetails = new HaslerRankingDetails({
+            classListData: classListData,
+            clubListData: clubListData
+        });
+        var rankingDispatcher = _.extend({}, Backbone.Events);
+        var search = new RankingsSearch({
+            el: '#rankings-search',
+            dispatcher: rankingDispatcher,
+            spreadsheetId: spreadSheetId,
+            columns: headings,
+            displayColumns: displayCols,
+            cellRenderers: rankingDetails.getCellRenders(),
+            classListData: this.classListData,
+            clubListData: this.clubListData,
+            divisionsListData: this.divisionsListData,
+            resultsButtons: [
+                new FormButton({
+                    id: 'add-member',
+                    type: 'submit',
+                    text: 'Insert into Sheet',
+                    className: 'action'
+                }),
+                new FormButton({
+                    type: 'reset',
+                    text: 'Clear'
+                })
+            ]
+        });
+        function onInsertRowsSuccess(data) {
+            rankingDispatcher.trigger('submitSuccess', this);
+        }
+        function onInsertRowsFailure(err) {
+            $('#rankings-search-errors').html('<p class="icon icon-error">Could not insert crew member: ' + err.message+ '</p>');
+            rankingDispatcher.trigger('submitFailure', this);
+        }
+        rankingDispatcher.bind('submit', function(payload) {
+            $('#rankings-search-errors').empty();
+            var newRows = payload.tableData['rankings-search-results'];
+            google.script.run
+                    .withSuccessHandler(onInsertRowsSuccess)
+                    .withFailureHandler(onInsertRowsFailure)
+                    .sidebar_rankings_insert(newRows, headings);
+        }, this);
+
+        search.render();
+
     });
 </script>
 <!--=include mock-services.html -->

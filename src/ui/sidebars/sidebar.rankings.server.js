@@ -33,3 +33,8 @@ function sidebar_rankings_last_updated(spreadsheetId) {
 
     return lastUpdated ? Utilities.formatDate(lastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null;
 }
+
+function sidebar_rankings_insert(rows, headers) {
+    var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), range = SpreadsheetApp.getActiveRange();
+    addRowsToSheet_(rows, headers, sheet, range.getRow());
+}
