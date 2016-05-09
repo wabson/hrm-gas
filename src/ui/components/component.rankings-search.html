@@ -361,12 +361,12 @@
         },
 
         setFormFieldsDisabled: function (disabled) {
-            this.$el.find('input[type=text], input[type=date]').prop('disabled', disabled);
+            this.$el.find('input[type=text], input[type=date], input[type=search]').prop('disabled', disabled);
             return this;
         },
 
         focus: function () {
-            var els = this.$('input[type=text], select');
+            var els = this.$('input[type=text], input[type=search], select');
             if (els.length) {
                 els[0].focus();
             }
