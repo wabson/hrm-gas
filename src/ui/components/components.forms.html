@@ -1,0 +1,298 @@
+<script>
+
+    var DataForm = Backbone.View.extend({
+
+        tagName: 'form',
+
+        events: {
+            'submit': 'submit',
+            'click button[type=reset]': 'onClickReset'
+        },
+
+        initialize: function(options) {
+
+            this.dispatcher = options.dispatcher;
+
+            var childOpts = _.clone(options);
+            delete childOpts.el;
+            delete childOpts.id;
+            this.blocks = options.blocks || [];
+
+            this.dispatcher.bind('submitSuccess', this.onSubmitSuccess, this);
+            this.dispatcher.bind('submitFailure', this.onSubmitFailure, this);
+            this.dispatcher.bind('formData', this.setFormData, this);
+        },
+
+        render: function() {
+            this.$el.empty().append(_.map(this.blocks, function(block) {
+                return block.render().$el;
+            }, this));
+            return this;
+        },
+
+        submit: function(event) {
+            event.preventDefault();
+            this.setButtonsDisabled_(true, 'submit');
+            var formData = this.$el.serializeObject();
+            this.dispatcher.trigger('submit', {
+                data: formData
+            });
+        },
+
+        onClickReset: function() {
+            this.reset().focus();
+        },
+
+        reset: function(trigger) {
+            this.resetFormFields_();
+            if (trigger !== false) {
+                this.dispatcher.trigger('reset');
+            }
+            return this;
+        },
+
+        onSubmitSuccess: function() {
+            this.resetFormFields_();
+            this.setButtonsDisabled_(false, 'submit');
+        },
+
+        onSubmitFailure: function() {
+            this.setButtonsDisabled_(false, 'submit');
+        },
+
+        setButtonsDisabled_: function (disabled, type) {
+            this.$el.find('button[type=' + (type || '') + ']').prop('disabled', disabled);
+            return this;
+        },
+
+        resetFormFields_: function() {
+            this.$el.find('input[type=text], input[type=date], input[type=search]').val('');
+            this.$el.find('select').prop('selectedIndex', 0);
+            return this;
+        },
+
+        setFormFieldsDisabled: function (disabled) {
+            this.$el.find('input[type=text], input[type=date], input[type=search]').prop('disabled', disabled);
+            return this;
+        },
+
+        focus: function () {
+            var els = this.$('input[type=text], input[type=search], select');
+            if (els.length) {
+                els[0].focus();
+            }
+            return this;
+        },
+
+        setFormData: function(formData) {
+            _.each(formData.values, function(value, key) {
+                this.$el.find('input[name="' + key + '"], select[name="' + key + '"]').val(value);
+            }, this);
+        }
+
+    });
+
+    var DataTableForm = DataForm.extend({
+
+        initialize: function(options) {
+            DataForm.prototype.initialize.call(this, options);
+            this.dispatcher.bind('selectedDataChange', this.onTableSelectedDataChange, this);
+        },
+
+        render: function() {
+            DataForm.prototype.render.call(this);
+            this.setButtonsDisabled_(true, 'submit');
+            return this;
+        },
+
+        onTableSelectedDataChange: function() {
+            this.setButtonsDisabled_(this.getNumTableRowsSelected_() === 0, 'submit');
+        },
+
+        onSubmitSuccess: function() {
+            DataForm.prototype.onSubmitSuccess.call(this);
+            this.clearTableData_();
+        },
+
+        getTableControls: function() {
+            var empty = [];
+            return empty.concat.apply(empty, _.map(this.blocks, function(block) {
+                return block.getTableControls();
+            }));
+        },
+
+        getNumTableRowsSelected_: function() {
+            return _.reduce(_.values(this.getTableData()), function(memo, val) {
+                return memo + _.pairs(val).length;
+            }, 0, this);
+        },
+
+        getTableData: function() {
+            return _.object(_.map(_.filter(this.getTableControls(), function(control) {
+                return control.id;
+            }), function(control) {
+                return [control.id, control.getSelectedData()];
+            }));
+        },
+
+        clearTableData_: function() {
+            _.each(this.getTableControls(), function(control) {
+                control.truncateBody();
+            });
+        },
+
+        submit: function(event) {
+            event.preventDefault();
+            var formData = this.$el.serializeObject();
+            this.dispatcher.trigger('submit', {
+                data: formData,
+                tableData: this.getTableData()
+            });
+            this.setButtonsDisabled_(true, 'submit');
+        },
+
+        reset: function() {
+            DataForm.prototype.reset.call(this);
+            this.clearTableData_();
+            return this;
+        }
+
+    });
+
+    var FormBlock = Backbone.View.extend({
+        className: 'block form-group',
+        initialize: function(options) {
+            this.controls = options.controls;
+        },
+        render: function() {
+            this.$el.empty().append(_.map(this.controls, function(control) {
+                return control.render().$el;
+            }, this));
+            return this;
+        },
+        getTableControls() {
+            return _.filter(this.controls, function (control) {
+                return control.tagName === 'table';
+            });
+        }
+    });
+
+    var FormGroupInline = FormBlock.extend({
+        className: 'inline form-group'
+    });
+
+    var FormButton = Backbone.View.extend({
+        tagName: 'button',
+        initialize: function(options) {
+            this.type = options.type;
+            this.disabled = options.disabled === true;
+            this.required = options.required === true;
+            this.text = options.text;
+        },
+        render: function() {
+            this.$el.html(this.text)
+                    .prop('type', this.type)
+                    .prop('disabled', this.disabled)
+                    .prop('required', this.required);
+            return this;
+        }
+    });
+
+    var FormField = Backbone.View.extend({
+        tagName: 'span',
+        initialize: function(options) {
+            this.fieldId = options.fieldId;
+            this.fieldClassName = options.fieldClassName;
+            this.name = options.name;
+            this.type = options.type;
+            this.label = options.label;
+            this.disabled = options.disabled === true;
+            this.required = options.required === true;
+            this.value = options.value;
+            this.size = options.size;
+            this.pattern = options.pattern;
+            this.title = options.title;
+        },
+        getFieldHtmlId_() {
+            return this.fieldId || this.name;
+        },
+        getLabelHtml_() {
+            return _.template('<label for="<%= id %>"><%= label %></label>')({
+                id: this.getFieldHtmlId_(),
+                label: this.label
+            });
+        },
+        getControlHtml_() {
+            var template;
+            if (this.type == 'text' || this.type == 'date') {
+                template = '<input id="<%= id %>" class="<%= className %>" name="<%= name %>" <%= title ? \'title="\' + title + \'"\' : "" %> type="<%= type %>" value="<%= value %>" <%= required ? "required" : "" %> <%= pattern ? \'pattern="\' + pattern + \'"\' : "" %> <%= disabled ? "disabled" : "" %> />';
+            } else {
+                throw 'Unknown type ' + this.type;
+            }
+            return _.template(template)({
+                id: this.getFieldHtmlId_(),
+                className: this.fieldClassName,
+                name: this.name,
+                type: this.type,
+                disabled: this.disabled,
+                required: this.required,
+                size: this.size,
+                value: this.value,
+                pattern: this.pattern,
+                title: this.title
+            });
+        },
+        render: function() {
+            this.$el.empty().append([this.getLabelHtml_(), this.getControlHtml_()]);
+            return this;
+        }
+    });
+
+    var FormSelectField = FormField.extend({
+        initialize: function(options) {
+            FormField.prototype.initialize.apply(this, arguments);
+            this.selectList = options.selectList;
+        },
+        getControlHtml_() {
+            return this.selectList.render().$el.attr('id', this.getFieldHtmlId_());
+        }
+    });
+
+    var SelectListData = Backbone.Model.extend({});
+
+    var SelectList = Backbone.View.extend({
+        tagName: 'select',
+        initialize: function(options) {
+            this.model = options.model || [];
+            this.name = options.name;
+            this.title = options.title;
+            this.placeholder = options.placeholder;
+            this.required = options.required;
+            this.listenTo(this.model, 'change', this.render);
+        },
+        render: function() {
+            this.$el.empty().append(this.placeholder ? '<option value="">' + this.placeholder + '</option>' : '')
+                    .append(_.map(this.model.get('options'), function(option) {
+                        var $el = $(document.createElement('option'));
+                        if (_.isString(option)) {
+                            $el.html(option);
+                        } else if (_.isArray(option)) {
+                            $el.attr('value', option[0]).html(option[1] || option[0]);
+                        } else if (_.isObject(option)) {
+                            $el.attr('value', option.value).html(option.text || option.value);
+                        }
+                        return $el;
+                    }, this))
+                    .attr('name', this.name).attr('title', this.title);
+            this.$el.prop('required', this.required === true);
+            return this;
+        },
+        getSelectedValue: function() {
+            return this.el.options[this.el.selectedIndex];
+        },
+        getSelectedText: function() {
+            return this.$el.val();
+        }
+    });
+
+</script>

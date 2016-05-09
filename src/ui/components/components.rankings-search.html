@@ -1,0 +1,189 @@
+<style type="text/css">
+    .rankings-search-form input[type="search"] {
+        width: 250px;
+    }
+    .rankings-search-results {
+        margin-top: 16px;
+    }
+    .rankings-search-results tbody tr {
+        cursor: pointer;
+    }
+    .rankings-search-results tbody tr.selected {
+        background-color: #ffc;
+    }
+</style>
+<script>
+
+    var HaslerRankingDetails = function(options) {
+        this.raceDate = new Date();
+        this.bcuRegexp = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|ET [A-Z]{3})$';
+        this.classListData = options.classListData;
+        this.clubListData = options.clubListData;
+    };
+
+    HaslerRankingDetails.prototype = {
+        nameCellRenderer: function(value, index, object) {
+            return object['Surname'] + ', ' + object['First name'];
+        },
+        isBCUCurrent: function(value, object) {
+            return new Date(object['Expiry']) >= this.raceDate;
+        },
+        isBCUNumberValid: function(value, object) {
+            return object['BCU Number'] && new RegExp(this.bcuRegexp).test(object['BCU Number']);
+        },
+        wrapIfInvalid: function(value, object, validatorFn) {
+            if (!validatorFn(value, object)) {
+                return '<span class="warning">' + value + '</span>';
+            } else {
+                return value;
+            }
+        },
+        addTitle: function(value, options) {
+            if (value === '') {
+                return '';
+            }
+            var matches = _.filter(options, function(option) {
+                return value === option[0];
+            });
+            return matches.length > 0 ? '<abbr title="' + matches[0][1] + '">' + value + '</abbr>' : value;
+        },
+        getCellRenders: function() {
+            return {
+                'Name': this.nameCellRenderer,
+                'Class': _.bind(function (value, index, object) {
+                    return this.addTitle(object['Club'], this.clubListData.get('options')) +
+                            ', ' +
+                            this.addTitle(object['Class'], this.classListData.get('options'));
+                }, this),
+                'Div': function (value, index, object) {
+                    return object['Division'];
+                },
+                'BCU #': _.bind(function (value, index, object) {
+                    return this.wrapIfInvalid(object['BCU Number'], object, _.bind(this.isBCUNumberValid, this));
+                }, this),
+                'Expiry': _.bind(function (value, index, object) {
+                    if (value) {
+                        var parts = new Date(value).toDateString().split(' ');
+                        return parts.length == 4 ? this.wrapIfInvalid([parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' '), object, _.bind(this.isBCUCurrent, this)) : '';
+                    } else {
+                        return '';
+                    }
+                }, this)
+            };
+        }
+    };
+
+    var RankingsSearch = BaseComponent.extend({
+
+        events: {
+            'click button[type=button]': 'onEditClick'
+        },
+
+        initialize: function(options) {
+            this.dispatcher = options.dispatcher;
+            var childOpts = this.createOptionsForSubView(options, {
+                data: new TableData({
+                    columns: options.columns,
+                    values: []
+                })
+            });
+            this.searchForm = new RankingsSearchForm(_.extend({}, childOpts, {
+                id: 'rankings-search-form',
+                className: 'rankings-search-form',
+                scriptMethod: 'sidebar_entries_search',
+                searchPrompt: 'Search by name or BCU number',
+                disabled: options.searchDisabled
+            }));
+            this.resultsForm = new DataTableForm(_.extend({}, childOpts, {
+                id: 'results-form',
+                className: 'rankings-search-results',
+                blocks: [
+                    new FormBlock({
+                        controls: [
+                                new DataTable(_.extend({}, childOpts, {
+                                    id: 'rankings-search-results',
+                                    inputType: 'checkbox'
+                                }))
+                        ]
+                    }),
+                    new FormBlock({
+                        controls: options.resultsButtons || [
+                            new FormButton({
+                                type: 'submit',
+                                text: 'Add'
+                            }),
+                            new FormButton({
+                                type: 'reset',
+                                text: 'Clear'
+                            })
+                        ]
+                    })
+                ]
+            }));
+            this.dispatcher.bind('selectedDataChange', this.onSelectedDataChange, this);
+
+            this.dispatcher.bind('submitSuccess', function(payload) {
+                this.searchForm.reset();
+            }, this);
+            this.dispatcher.bind('reset', function() {
+                this.searchForm.reset(false).focus();
+            }, this);
+        },
+
+        render: function() {
+            this.$el.empty().append([this.searchForm.render().$el, this.resultsForm.render().$el, this.createDiv_('-messages')]);
+            return this;
+        },
+
+        onSelectedDataChange: function(payload) {
+            this.selected = payload && payload.selected ? payload.selected : [];
+            this.$('#edit-member').prop('disabled', this.selected.length != 1);
+        },
+
+        onEditClick: function(event) {
+            this.dispatcher.trigger('editMember', {
+                selected: this.selected
+            });
+        }
+
+    });
+
+    var RankingsSearchForm = DataForm.extend({
+
+        initialize: function(options) {
+
+            DataForm.prototype.initialize.call(this, options);
+
+            this.scriptMethod = options.scriptMethod;
+            this.searchPrompt = options.searchPrompt;
+            this.spreadsheetId = options.spreadsheetId;
+            this.disabled = options.disabled === true;
+
+            this.data = options.data;
+        },
+
+        render: function() {
+            this.$el.html('<div class="block form-group">' +
+                    '<label for="name">' + this.searchPrompt + '</label>' +
+                    '<input type="search" name="name" id="name" value="" required aria-valuemin="2" autocomplete="off">' +
+                    '</div>');
+            this.$('input').prop('disabled', this.disabled);
+            return this;
+        },
+
+        submit: function(event) {
+            event.preventDefault();
+            var term = this.$('input').val();
+            if (term && term.length > 1) {
+                google.script.run
+                        .withSuccessHandler(_.bind(this.onSearchResultsLoaded, this))
+                        [this.scriptMethod](this.spreadsheetId, term);
+            }
+        },
+
+        onSearchResultsLoaded: function (resp) {
+            this.data.set('values', resp);
+        }
+
+    });
+</script>
