@@ -72,7 +72,7 @@
 
     function formatSummary(data) {
         if (typeof data.rankingsSize == 'number') {
-            var text = data.rankingsSize > 0 ? ('There are ' +
+            var text = data.rankingsSize > 0 ? ('Spreadsheet has ' +
                     (data.rankingsSize.toLocaleString ? data.rankingsSize.toLocaleString(): data.rankingsSize) +
                     ' known marathon rankings') : 'No marathon rankings have been imported';
             if (data.lastUpdated) {
@@ -92,7 +92,7 @@
                 .withSuccessHandler(function (webLastUpdated) {
                     if (webLastUpdated !== null && lastUpdated !== null && webLastUpdated != lastUpdated) {
                         $('#rankings-update').css('display', 'block');
-                        $('#rankings-update span').html(webLastUpdated);
+                        $('#rankings-update span').html('updated ' + webLastUpdated);
                     } else {
                         $('#rankings-update').css('display', 'none');
                     }
