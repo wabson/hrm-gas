@@ -5,80 +5,103 @@
         <?!= include('forms.head.include'); ?>
     </head>
     <body>
-        <div id="messages"></div>
-        <form>
-            <div class="block form-group">
-                <label for="input-race-name">Race name</label>
-                <input type="text" id="input-race-name" name="name" required style="width: 250px;">
-            </div>
-            <div class="block">
-                <div class="inline form-group">
-                    <label for="select-race-type">Race type</label>
-                    <select id="select-race-type" name="type" disabled required>
-                        <option value="" selected>Select</option>
-                    </select>
+        <div id="start-dialog">
+            <div id="messages"></div>
+            <form>
+                <div class="block form-group">
+                    <label for="input-race-name">Race name</label>
+                    <input type="text" id="input-race-name" name="name" required style="width: 250px;">
                 </div>
-                <div class="inline form-group">
-                    <label for="select-race-region">Region</label>
-                    <select id="select-race-region" name="region" disabled>
-                        <option value="" selected>Select</option>
-                        <option value="EA">Eastern</option>
-                        <option value="LS">London & South East</option>
-                        <option value="MID">Midlands</option>
-                        <option value="NO">Northern</option>
-                        <option value="NW">North West</option>
-                        <option value="SCOE">Scotland East</option>
-                        <option value="SCOW">Scotland West</option>
-                        <option value="SO">Southern</option>
-                        <option value="SW">South West</option>
-                        <option value="WA">Wales</option>
-                        <option value="YH">Yorkshire</option>
-                        <option value="CS">Services</option>
-                    </select>
+                <div class="block">
+                    <div class="inline form-group">
+                        <label for="select-race-type">Race type</label>
+                        <select id="select-race-type" name="type" disabled required>
+                            <option value="" selected>Select</option>
+                        </select>
+                    </div>
+                    <div class="inline form-group">
+                        <label for="select-race-region">Region</label>
+                        <select id="select-race-region" name="region" disabled>
+                            <option value="" selected>Select</option>
+                            <option value="EA">Eastern</option>
+                            <option value="LS">London & South East</option>
+                            <option value="MID">Midlands</option>
+                            <option value="NO">Northern</option>
+                            <option value="NW">North West</option>
+                            <option value="SCOE">Scotland East</option>
+                            <option value="SCOW">Scotland West</option>
+                            <option value="SO">Southern</option>
+                            <option value="SW">South West</option>
+                            <option value="WA">Wales</option>
+                            <option value="YH">Yorkshire</option>
+                            <option value="CS">Services</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <div class="block form-group">
-                <input type="checkbox" id="checkbox-rankings" name="importRankings" value="y" checked>
-                <label for="checkbox-rankings">Import rankings automatically</label>
-            </div>
-            <div class="block form-group">
-                <input id="btn-start" type="submit" value="Start" class="action" disabled />
-                <input id="btn-cancel" type="button" value="Close" />
-            </div>
-        </form>
+                <div class="block form-group">
+                    <input type="checkbox" id="checkbox-rankings" name="importRankings" value="y" checked>
+                    <label for="checkbox-rankings">Import rankings automatically</label>
+                </div>
+                <div class="block form-group">
+                    <input id="btn-start" type="submit" value="Start" class="action" disabled />
+                    <input id="btn-cancel" type="button" value="Close" />
+                </div>
+            </form>
+        </div>
 
         <?!= include('forms.script.include'); ?>
+        <?!= include('components.base'); ?>
         <script>
             var spreadSheetId = '<?= spreadsheetId ?>';
 
-            function onRaceTemplatesLoaded(data) {
-                var selectEl = $('#select-race-type'), sheets = data, sheet, html = '';
-                for (var i = 0; i<sheets.length; i++) {
-                    sheet = sheets[i];
-                    html += '<option value="'+sheet.id+'">' + sheet.name + '</option>';
-                }
-                selectEl.append(html).prop('disabled', false);
-                $('#btn-start').prop('disabled', false);
-            }
-            function onFailure(error) {
-                $('#messages').html('Sorry, an error occurred');
-            }
-            function onRaceTemplateSelected(e) {
-                var regionSelectEl = $('#select-race-region'),
-                        raceTypeSelectEl = $('#select-race-type option:selected'),
-                        raceTypeName = raceTypeSelectEl.text(),
-                        regionInUse = raceTypeName == 'Hasler Race';
-                regionSelectEl.prop('disabled', !regionInUse);
-                regionSelectEl.prop('required', regionInUse);
-            }
+            var StartDialog = BaseComponent.extend({
 
-            $(function() {
+                events: {
+                    'change #select-race-type': 'onRaceTemplateSelected',
+                    'submit form': 'onFormSubmit',
+                    'click #btn-cancel': 'onCloseClick'
+                },
 
-                $('#input-race-name').focus();
+                initialize: function(options) {
+                    this.spreadsheetId = options.spreadsheetId;
+                },
 
-                $('form').submit(function(event) {
+                render: function() {
+                    google.script.run
+                            .withSuccessHandler(_.bind(this.onRaceTemplatesLoaded, this))
+                            .withFailureHandler(_.bind(this.onFailure, this))
+                            .dialog_start_getRaceTemplates();
+                },
+
+                onRaceTemplatesLoaded: function(data) {
+                    var selectEl = this.$('#select-race-type'), sheets = data, sheet, html = '';
+                    for (var i = 0; i<sheets.length; i++) {
+                        sheet = sheets[i];
+                        html += '<option value="'+sheet.id+'">' + sheet.name + '</option>';
+                    }
+                    selectEl.append(html).prop('disabled', false);
+                    this.$('#btn-start').prop('disabled', false);
+                    this.$('#input-race-name').focus();
+                },
+
+                onFailure: function(error) {
+                    this.$('#messages').html('Sorry, an error occurred');
+                    this.$('input[type="submit"]').val('Start').prop('disabled', false);
+                },
+
+                onRaceTemplateSelected: function(event) {
                     event.preventDefault();
-                    var $form = $(this);
+                    var regionSelectEl = this.$('#select-race-region'),
+                            raceTypeSelectEl = this.$('#select-race-type option:selected'),
+                            raceTypeName = raceTypeSelectEl.text(),
+                            regionInUse = raceTypeName == 'Hasler Race';
+                    regionSelectEl.prop('disabled', !regionInUse);
+                    regionSelectEl.prop('required', regionInUse);
+                },
+
+                onFormSubmit: function(event) {
+                    event.preventDefault();
+                    var $form = $(event.target);
                     $form.addClass('validate');
                     var failedFields = $form.invalidFields();
                     if (failedFields.length > 0) {
@@ -86,26 +109,33 @@
                     } else {
                         var formData = $form.serializeObject();
                         console.log(formData);
-                        google.script.run.withSuccessHandler(function() {
-                            google.script.host.close();
-                        }).dialog_start_submit(spreadSheetId, formData);
+                        this.$('input[type="submit"]').val('Processing').prop('disabled', true);
+                        google.script.run
+                                .withSuccessHandler(_.bind(function() {
+                                    this.closeDialog_();
+                                }, this))
+                                .withFailureHandler(_.bind(this.onFailure, this))
+                                .dialog_start_submit(this.spreadsheetId, formData);
                     }
-                });
+                },
 
-                $('#btn-cancel').click(function(event) {
+                onCloseClick: function(event) {
                     event.preventDefault();
+                    this.closeDialog_();
+                },
+
+                closeDialog_: function() {
                     google.script.host.close();
-                });
+                }
+            });
 
-                $('#select-race-type').change(function(event) {
-                    event.preventDefault();
-                    onRaceTemplateSelected(event);
-                });
+            $(function() {
 
-                google.script.run
-                        .withSuccessHandler(onRaceTemplatesLoaded)
-                        .withFailureHandler(onFailure)
-                        .dialog_start_getRaceTemplates();
+                new StartDialog({
+                    el: '#start-dialog',
+                    spreadsheetId: spreadSheetId
+                }).render();
+
             });
         </script>
         <!--=include mock-services.html -->
