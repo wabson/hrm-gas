@@ -55,150 +55,173 @@
 </head>
 <body>
 <div class="sidebar-content">
-    <div id="rankings-messages" class="error"></div>
-    <p id="rankings-info"></p>
-    <div id="rankings-update"><p class="icon icon-info"></p></div>
-    <form id="import-form">
-        <div class="block form-group">
-            <input id="btn-import" type="submit" value="Update Rankings" class="action" />
-        </div>
-        <div class="block form-group">
-            <div id="import-messages"></div>
-        </div>
-    </form>
-    <h2>Search Rankings</h2>
-    <div id="rankings-search"></div>
-    <div id="rankings-search-errors" class="message error"></div>
+    <div id="rankings-sidebar">
+        <div id="rankings-messages" class="error"></div>
+        <p id="rankings-info"></p>
+        <div id="rankings-update"><p class="icon icon-info"></p></div>
+        <form id="import-form">
+            <div class="block form-group">
+                <input id="btn-import" type="submit" value="Update Rankings" class="action" />
+            </div>
+            <div class="block form-group">
+                <div id="import-messages"></div>
+            </div>
+        </form>
+        <h2>Search Rankings</h2>
+        <div id="rankings-search"></div>
+        <div id="rankings-search-errors" class="message error"></div>
+    </div>
 </div>
 
 <?!= include('forms.script.include'); ?>
-<?!= include('component.rankings-search'); ?>
-<?!= include('component.crew-list'); ?>
+<?!= include('components.base'); ?>
+<?!= include('components.forms'); ?>
+<?!= include('components.rankings-search'); ?>
 <script>
     var spreadSheetId = '<?= spreadsheetId ?>';
 
-    function formatSummary(data) {
-        if (typeof data.rankingsSize == 'number') {
-            var text = data.rankingsSize > 0 ? ('Spreadsheet has ' +
-                    (data.rankingsSize.toLocaleString ? data.rankingsSize.toLocaleString(): data.rankingsSize) +
-                    ' known marathon rankings') : 'No marathon rankings have been imported';
-            if (data.lastUpdated) {
-                text += ', last updated on ' + data.lastUpdated;
-            }
-            return text;
-        } else {
-            return 'A problem occurred when looking up the rankings';
-        }
-    }
-    function onSpreadsheetInfoSuccess(data) {
-        var lastUpdated = data.lastUpdated;
+    var RankingsView = BaseComponent.extend({
 
-        $('#rankings-info').html(formatSummary(data), false);
+        events: {
+            'submit #import-form': 'onImportClick'
+        },
 
-        google.script.run
-                .withSuccessHandler(function (webLastUpdated) {
-                    if (webLastUpdated !== null && lastUpdated !== null && webLastUpdated != lastUpdated) {
-                        $('#rankings-update')
-                                .css('display', 'block')
-                                .removeClass()
-                                .addClass('message-box info')
-                                .find('p')
-                                    .html('A new version of the ranking list may be available updated ' + webLastUpdated);
-                    } else {
-                        $('#rankings-update')
-                                .css('display', 'block')
-                                .removeClass()
-                                .addClass('message info')
-                                .find('p')
-                                    .html('You have the latest version of the ranking list');
-                    }
-                })
-                .withFailureHandler(onFailure)
-                .sidebar_rankings_last_updated(spreadSheetId)
-    }
-    function onImportRankingsSuccess(data) {
-        onSpreadsheetInfoSuccess(data);
-        $('#import-form').restoreSubmit();
-    }
-    function onImportRankingsFailure(error) {
-        $('#rankings-messages').html('Sorry, an error occurred importing the ranking data. Please try again later.');
-        $('#import-form').restoreSubmit();
-    }
-    function onFailure(error) {
-        $('#rankings-messages').html('Sorry, an error occurred. Please try again later.');
-    }
+        initialize: function (options) {
 
-    $(function() {
+            this.spreadsheetId = options.spreadsheetId;
 
-        $('#import-form').submit(function(event) {
+            var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
+            var displayCols = ['Name', 'Class', 'Div', 'BCU #', 'Expiry'];
+            var classListData = new SelectListData({
+                options: []
+            });
+            var clubListData = new SelectListData({
+                options: []
+            });
+            var rankingDetails = new HaslerRankingDetails({
+                classListData: classListData,
+                clubListData: clubListData
+            });
+            this.rankingDispatcher = _.extend({}, Backbone.Events);
+            this.search = new RankingsSearch({
+                el: '#rankings-search',
+                dispatcher: this.rankingDispatcher,
+                spreadsheetId: spreadSheetId,
+                columns: headings,
+                displayColumns: displayCols,
+                cellRenderers: rankingDetails.getCellRenders(),
+                classListData: this.classListData,
+                clubListData: this.clubListData,
+                divisionsListData: this.divisionsListData,
+                resultsButtons: [
+                    new FormButton({
+                        id: 'add-member',
+                        type: 'submit',
+                        text: 'Insert into Sheet',
+                        className: 'action'
+                    }),
+                    new FormButton({
+                        type: 'reset',
+                        text: 'Clear'
+                    })
+                ]
+            });
+            this.rankingDispatcher.bind('submit', function(payload) {
+                $('#rankings-search-errors').empty();
+                var newRows = payload.tableData['rankings-search-results'];
+                google.script.run
+                        .withSuccessHandler(_.bind(this.onInsertRowsSuccess, this))
+                        .withFailureHandler(_.bind(this.onInsertRowsFailure, this))
+                        .sidebar_rankings_insert(newRows, headings);
+            }, this);
+        },
+
+        render: function() {
+            this.$('#rankings-search').empty().append(this.search.render().$el);
+            google.script.run
+                    .withSuccessHandler(_.bind(this.onSpreadsheetInfoSuccess, this))
+                    .withFailureHandler(_.bind(this.onFailure, this))
+                    .sidebar_rankings_info(this.spreadsheetId);
+            return this;
+        },
+
+        onImportClick: function(event) {
             event.preventDefault();
-            var $form = $(this);
+            var $form = $(event.target);
             var formData = $form.serializeObject();
             $form.disableSubmit();
             google.script.run
-                    .withSuccessHandler(onImportRankingsSuccess)
-                    .withFailureHandler(onImportRankingsFailure)
-                    .sidebar_rankings_import(spreadSheetId, formData);
-        });
+                    .withSuccessHandler(_.bind(this.onImportRankingsSuccess, this))
+                    .withFailureHandler(_.bind(this.onImportRankingsFailure, this))
+                    .sidebar_rankings_import(this.spreadsheetId, formData);
+        },
 
-        google.script.run
-                .withSuccessHandler(onSpreadsheetInfoSuccess)
-                .withFailureHandler(onFailure)
-                .sidebar_rankings_info(spreadSheetId)
+        formatSummary: function(data) {
+            if (typeof data.rankingsSize == 'number') {
+                var text = data.rankingsSize > 0 ? ('Spreadsheet has ' +
+                (data.rankingsSize.toLocaleString ? data.rankingsSize.toLocaleString(): data.rankingsSize) +
+                ' known marathon rankings') : 'No marathon rankings have been imported';
+                if (data.lastUpdated) {
+                    text += ', last updated on ' + data.lastUpdated;
+                }
+                return text;
+            } else {
+                return 'A problem occurred when looking up the rankings';
+            }
+        },
+        onSpreadsheetInfoSuccess: function(data) {
+            var lastUpdated = data.lastUpdated;
 
-        var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
-        var displayCols = ['Name', 'Class', 'Div', 'BCU #', 'Expiry'];
-        var classListData = new SelectListData({
-            options: []
-        });
-        var clubListData = new SelectListData({
-            options: []
-        });
-        var rankingDetails = new HaslerRankingDetails({
-            classListData: classListData,
-            clubListData: clubListData
-        });
-        var rankingDispatcher = _.extend({}, Backbone.Events);
-        var search = new RankingsSearch({
-            el: '#rankings-search',
-            dispatcher: rankingDispatcher,
-            spreadsheetId: spreadSheetId,
-            columns: headings,
-            displayColumns: displayCols,
-            cellRenderers: rankingDetails.getCellRenders(),
-            classListData: this.classListData,
-            clubListData: this.clubListData,
-            divisionsListData: this.divisionsListData,
-            resultsButtons: [
-                new FormButton({
-                    id: 'add-member',
-                    type: 'submit',
-                    text: 'Insert into Sheet',
-                    className: 'action'
-                }),
-                new FormButton({
-                    type: 'reset',
-                    text: 'Clear'
-                })
-            ]
-        });
-        function onInsertRowsSuccess(data) {
-            rankingDispatcher.trigger('submitSuccess', this);
-        }
-        function onInsertRowsFailure(err) {
-            $('#rankings-search-errors').html('<p class="icon icon-error">Could not insert crew member: ' + err.message+ '</p>');
-            rankingDispatcher.trigger('submitFailure', this);
-        }
-        rankingDispatcher.bind('submit', function(payload) {
-            $('#rankings-search-errors').empty();
-            var newRows = payload.tableData['rankings-search-results'];
+            this.$('#rankings-info').html(this.formatSummary(data), false);
+
             google.script.run
-                    .withSuccessHandler(onInsertRowsSuccess)
-                    .withFailureHandler(onInsertRowsFailure)
-                    .sidebar_rankings_insert(newRows, headings);
-        }, this);
+                    .withSuccessHandler(_.bind(function (webLastUpdated) {
+                        if (webLastUpdated !== null && lastUpdated !== null && webLastUpdated != lastUpdated) {
+                            this.$('#rankings-update')
+                                    .css('display', 'block')
+                                    .removeClass()
+                                    .addClass('message-box info')
+                                    .find('p')
+                                    .html('A new version of the ranking list may be available updated ' + webLastUpdated);
+                        } else {
+                            this.$('#rankings-update')
+                                    .css('display', 'block')
+                                    .removeClass()
+                                    .addClass('message info')
+                                    .find('p')
+                                    .html('You have the latest version of the ranking list');
+                        }
+                    }, this))
+                    .withFailureHandler(_.bind(this.onFailure, this))
+                    .sidebar_rankings_last_updated(this.spreadsheetId)
+        },
+        onImportRankingsSuccess: function(data) {
+            this.onSpreadsheetInfoSuccess(data);
+            this.$('#import-form').restoreSubmit();
+        },
+        onImportRankingsFailure: function(error) {
+            this.$('#rankings-messages').html('Sorry, an error occurred importing the ranking data. Please try again later.');
+            this.$('#import-form').restoreSubmit();
+        },
+        onFailure: function (error) {
+            this.$('#rankings-messages').html('Sorry, an error occurred. Please try again later.');
+        },
+        onInsertRowsSuccess: function(data) {
+            this.rankingDispatcher.trigger('submitSuccess', this);
+        },
+        onInsertRowsFailure: function(err) {
+            this.$('#rankings-search-errors').html('<p class="icon icon-error">Could not insert crew member: ' + err.message+ '</p>');
+            this.rankingDispatcher.trigger('submitFailure', this);
+        }
 
-        search.render();
+    });
+
+    $(function() {
+
+        new RankingsView({
+            el: '#rankings-sidebar',
+            spreadsheetId: spreadSheetId
+        }).render();
 
     });
 </script>
