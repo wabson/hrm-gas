@@ -350,7 +350,7 @@
                                 headings,
                                 raceName
                         );
-                this.$('#' + this.el.id + '-messages').empty();
+                this.$('#' + this.el.id + '-messages').empty().removeClass();
             },
 
             onAddCrewSuccess: function(result, ctx) {
@@ -362,8 +362,10 @@
                 this.search.searchForm.focus();
             },
 
-            onAddCrewFailure: function(result) {
-                this.$('#' + this.el.id + '-messages').html('Sorry, a problem occurred adding the crew to the selected race');
+            onAddCrewFailure: function(error) {
+                this.$('#' + this.el.id + '-messages')
+                        .addClass('message error')
+                        .html('<p class="icon icon-error">Sorry, a problem occurred adding the crew to the selected race: ' + error.message + '</p>');
                 this.crewDispatcher.trigger('submitFailure');
             },
 

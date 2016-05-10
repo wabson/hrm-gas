@@ -141,6 +141,7 @@
                     event.preventDefault();
                     var $form = $(event.target);
                     $form.addClass('validate');
+                    this.$('#messages').empty().removeClass();
                     var failedFields = $form.invalidFields();
                     if (failedFields.length > 0) {
                         console.log('Validation failed for some fields', failedFields);
