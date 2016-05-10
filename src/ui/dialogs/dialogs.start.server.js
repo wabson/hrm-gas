@@ -40,5 +40,7 @@ function dialog_start_submit(spreadsheetId, formData) {
         raceName: formData.name
     });
 
-    // TODO open entries sidebar if requested
+    if (formData.openEntries == 'y') {
+        openEntriesSidebar();
+    }
 }
