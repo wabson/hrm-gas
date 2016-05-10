@@ -648,6 +648,33 @@ function importClubs_(sheet) {
   }
 }
 
+function getRaceInfoCellRange_(sheet) {
+  sheet = sheet || SpreadsheetApp.getActiveSpreadsheet();
+  var clubsSheet = sheet.getSheetByName("Clubs");
+  if (clubsSheet) {
+    return clubsSheet.getRange(1, 19, 1, 2);
+  } else {
+    return null;
+  }
+}
+
+function setRaceInfo_(info, sheet) {
+  getRaceInfoCellRange_(sheet).setValues([[info.regionId || '', info.raceName || '']]);
+}
+
+function getRaceInfo_(sheet) {
+  var range =  getRaceInfoCellRange_(sheet);
+  if (range !== null) {
+    var values = range.getValues();
+    return {
+      regionId: values[0][0],
+      raceName: values[0][1]
+    };
+  } else {
+    return {};
+  }
+}
+
 function getRaceNameCellRange_(sheet) {
   sheet = sheet || SpreadsheetApp.getActiveSpreadsheet();
   var clubsSheet = sheet.getSheetByName("Clubs");
@@ -662,18 +689,6 @@ function getRegionCellRange_(sheet) {
   if (clubsSheet) {
     return clubsSheet.getRange(1, 19);
   }
-}
-
-function setRegionId_(sheet, regionId) {
-  getRegionCellRange_(sheet).setValue(regionId);
-}
-
-function setRaceName_(sheet, raceName) {
-  getRaceNameCellRange_(sheet).setValue(raceName);
-}
-
-function getRegionId_(sheet) {
-  getRegionCellRange_(sheet).getValue();
 }
 
 function getClubsFromGoogleSheet_(clubsFile) {
@@ -3566,13 +3581,10 @@ function setupRaceFromTemplate_(spreadsheet, template, options) {
     loadRankingsXLS(spreadsheet);
   }
 
-  if (options.raceRegion) {
-    setRegionId_(spreadsheet, options.raceRegion);
-  }
-
-  if (options.raceName) {
-    setRaceName_(spreadsheet, options.raceName);
-  }
+  setRaceInfo_({
+    regionId: options.raceRegion,
+    raceName: options.raceName
+  }, spreadsheet);
 
   var sourceRaceType = getRaceType_(template.getId());
   Logger.log(sourceRaceType);
@@ -3652,6 +3664,14 @@ function getDriveProperty_(spreadsheetId, name) {
   return Drive.Properties.get(spreadsheetId, name, {
     visibility: 'PUBLIC'
   });
+}
+
+function getDriveProperties_(spreadsheetId) {
+  var driveResp = Drive.Properties.list(spreadsheetId), propertyMap = {};
+  driveResp.items.forEach(function(p) {
+    propertyMap[p.key] = p.value;
+  });
+  return propertyMap;
 }
 
 function setRaceType_(spreadsheetId, raceType) {

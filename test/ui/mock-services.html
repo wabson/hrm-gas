@@ -22,11 +22,18 @@
     var runner = new Runner();
     runner.addData('dialog_start_getRaceTemplates', [{
         id: '1',
+        type: 'HRM',
         name: 'Hasler Race'
     }, {
         id: '2',
+        type: 'NRM',
         name: 'Nationals'
     }]);
+    runner.addData('dialog_start_getRaceInfo', {
+        raceName: 'Test Race',
+        raceType: 'HRM',
+        regionId: 'MID'
+    });
     runner.addData('sidebar_rankings_import', {
         lastUpdated: '26/04/2016',
         rankingsSize: 48910

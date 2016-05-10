@@ -8,11 +8,23 @@ function dialog_start_getRaceTemplates() {
             sheet = sheets.next();
             data.push({
                 id: sheet.getId(),
+                type: getDriveProperties_(sheet.getId()).hrmType || '',
                 name: sheet.getName()
             });
         }
     }
     return data;
+}
+
+function dialog_start_getRaceInfo(spreadsheetId) {
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    var inlineInfo = getRaceInfo_(spreadsheet);
+    var driveProps = getDriveProperties_(spreadsheetId);
+    return {
+        raceName: inlineInfo.raceName || spreadsheet.getName(),
+        raceType: driveProps.hrmType || '',
+        regionId: inlineInfo.regionId || ''
+    };
 }
 
 function dialog_start_submit(spreadsheetId, formData) {

@@ -73,28 +73,57 @@
                             .dialog_start_getRaceTemplates();
                 },
 
+                setFormValues_: function(values) {
+                    var elName;
+                    _.each(this.$('input[type=text], input[type=date], select'), (function(el) {
+                        elName = el.name;
+                        if (elName && values[elName]) {
+                            $(el).val(values[elName]);
+                        }
+                    }));
+                },
+
                 onRaceTemplatesLoaded: function(data) {
                     var selectEl = this.$('#select-race-type'), sheets = data, sheet, html = '';
                     for (var i = 0; i<sheets.length; i++) {
                         sheet = sheets[i];
-                        html += '<option value="'+sheet.id+'">' + sheet.name + '</option>';
+                        html += '<option value="'+sheet.type+'" data-drive-file-id="' + sheet.id + '">' + sheet.name + '</option>';
                     }
                     selectEl.append(html).prop('disabled', false);
                     this.$('#btn-start').prop('disabled', false);
+
+                    google.script.run
+                            .withSuccessHandler(_.bind(this.onRaceInfoLoaded, this))
+                            .withFailureHandler(_.bind(this.onRaceInfoFailure, this))
+                            .dialog_start_getRaceInfo(this.spreadsheetId);
+
                     this.$('#input-race-name').focus();
                 },
 
                 onFailure: function(error) {
-                    this.$('#messages').html('Sorry, an error occurred');
-                    this.$('input[type="submit"]').val('Start').prop('disabled', false);
+                    this.$('#messages').addClass('message error').html('<p class="icon icon-error">Sorry, an error occurred</p>');
+                },
+
+                onRaceInfoLoaded: function(data) {
+                    this.setFormValues_({
+                        name: data.raceName,
+                        type: data.raceType,
+                        region: data.regionId
+                    });
+                    this.$('select[name=type]').trigger('change');
+                },
+
+                onRaceInfoFailure: function(error) {
+                    this.$('#messages').addClass('message error').html('<p class="icon icon-error">Sorry, an error occurred looking up race info</p>');
+                    console.error(error);
                 },
 
                 onRaceTemplateSelected: function(event) {
                     event.preventDefault();
                     var regionSelectEl = this.$('#select-race-region'),
                             raceTypeSelectEl = this.$('#select-race-type option:selected'),
-                            raceTypeName = raceTypeSelectEl.text(),
-                            regionInUse = raceTypeName == 'Hasler Race';
+                            raceTypeName = raceTypeSelectEl.val(),
+                            regionInUse = raceTypeName == 'HRM';
                     regionSelectEl.prop('disabled', !regionInUse);
                     regionSelectEl.prop('required', regionInUse);
                 },
@@ -108,6 +137,10 @@
                         console.log('Validation failed for some fields', failedFields);
                     } else {
                         var formData = $form.serializeObject();
+                        var typeSelectEl = this.$('select[name=type]')[0];
+                        if (typeSelectEl) {
+                            formData.type = $(typeSelectEl.options[typeSelectEl.selectedIndex]).attr('data-drive-file-id');
+                        }
                         console.log(formData);
                         this.$('input[type="submit"]').val('Processing').prop('disabled', true);
                         google.script.run
