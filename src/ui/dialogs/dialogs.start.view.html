@@ -152,9 +152,10 @@
                             formData.type = $(typeSelectEl.options[typeSelectEl.selectedIndex]).attr('data-drive-file-id');
                         }
                         console.log(formData);
-                        this.$('input[type="submit"]').val('Processing').prop('disabled', true);
+                        $form.disableSubmit();
                         google.script.run
                                 .withSuccessHandler(_.bind(function() {
+                                    this.$('form').restoreSubmit();
                                     this.closeDialog_();
                                 }, this))
                                 .withFailureHandler(_.bind(this.onFailure, this))
