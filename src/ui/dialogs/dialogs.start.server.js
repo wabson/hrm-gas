@@ -23,7 +23,8 @@ function dialog_start_getRaceInfo(spreadsheetId) {
     return {
         raceName: inlineInfo.raceName || spreadsheet.getName(),
         raceType: driveProps.hrmType || '',
-        regionId: inlineInfo.regionId || ''
+        regionId: inlineInfo.regionId || '',
+        hasContent: spreadsheet.getNumSheets() > 1 || spreadsheet.getSheets()[0].getLastRow() > 0
     };
 }
 

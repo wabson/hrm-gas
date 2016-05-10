@@ -3,9 +3,15 @@
     <head>
         <base target="_top">
         <?!= include('forms.head.include'); ?>
+        <style type="text/css">
+            #warning-content {
+                display: none;
+            }
+        </style>
     </head>
     <body>
         <div id="start-dialog">
+            <div id="warning-content" class="message-box warning"><p class="icon icon-warning">It seems this spreadsheet already has some content. If you continue then all existing data will be lost.</p></div>
             <div id="messages"></div>
             <form>
                 <div class="block form-group">
@@ -111,6 +117,9 @@
                         region: data.regionId
                     });
                     this.$('select[name=type]').trigger('change');
+                    if (data.hasContent === true) {
+                        this.$('#warning-content').css('display', 'block');
+                    }
                 },
 
                 onRaceInfoFailure: function(error) {
