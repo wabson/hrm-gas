@@ -3556,8 +3556,6 @@ function setupRaceFromTemplate_(spreadsheet, template, options) {
 
   options = options || {};
 
-  Logger.log(options);
-
   // Delete preexisting sheets
   for (var i = 0; i < sheets.length; i++) {
     spreadsheet.deleteSheet(sheets[i]);
@@ -3578,7 +3576,6 @@ function setupRaceFromTemplate_(spreadsheet, template, options) {
   }
 
   if (options.importRankings === true) {
-    Logger.log('Import rankings');
     loadRankingsXLS(spreadsheet);
   }
 
@@ -3588,7 +3585,6 @@ function setupRaceFromTemplate_(spreadsheet, template, options) {
   }, spreadsheet);
 
   var sourceRaceType = getRaceType_(template.getId());
-  Logger.log(sourceRaceType);
   if (sourceRaceType) {
     Logger.log('Setting race type ' + sourceRaceType.value);
     setRaceType_(spreadsheet.getId(), sourceRaceType.value);
