@@ -1288,7 +1288,8 @@ function addRowsToSheet_(rows, headers, sheet, rowPosition) {
     var rowValues = rows.map(function(row) {
       convertedRow = rankingToEntryData_(row);
       return applyHeaders.map(function (header) {
-        return convertedRow.hasOwnProperty(header) ? convertedRow[header] : '';
+        var value = convertedRow.hasOwnProperty(header) ? convertedRow[header] : '';
+        return value.toUpperCase ? value.toUpperCase() : value;
       });
     });
     var rowRange = sheet.getRange(rowPosition, minIndex + 1, rowValues.length, applyHeaders.length);
