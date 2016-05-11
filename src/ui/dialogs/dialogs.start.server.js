@@ -34,7 +34,7 @@ function dialog_start_submit(spreadsheetId, formData) {
     Logger.log('Setting race region ' + formData.region || 'ALL');
 
     setupRaceFromTemplate_(spreadsheet, template, {
-        importClubs: true,
+        importClubs: false,
         importRankings: formData.importRankings == 'y',
         raceRegion: formData.region || 'ALL',
         raceName: formData.name
