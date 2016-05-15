@@ -89,7 +89,7 @@
                 return this.generateDataRowHtml_(row, count);
             }, this));
 
-            if (this.data.values.length == 1) {
+            if (this.data.get('values').length == 1) {
                 this.$el.find('input[type=' + this.inputType + ']').prop('checked', true).change();
             }
         },
