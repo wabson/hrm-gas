@@ -78,19 +78,19 @@
         },
 
         renderTableHeadings_: function() {
-            this.$el.find('thead tr').html('<th></th>').append(this.headingsRenderer(this.data.get('columns')));
+            this.$('thead tr').html('<th></th>').append(this.headingsRenderer(this.data.get('columns')));
         },
 
         renderTableData_: function () {
 
             var count = -1;
-            this.$el.find('tbody').empty().append(_.map(this.data.get('values'), function(row) {
+            this.$('tbody').empty().append(_.map(this.data.get('values'), function(row) {
                 count ++;
                 return this.generateDataRowHtml_(row, count);
             }, this));
 
             if (this.data.get('values').length == 1) {
-                this.$el.find('input[type=' + this.inputType + ']').prop('checked', true).change();
+                this.$('input[type=' + this.inputType + ']').prop('checked', true).change();
             }
         },
 
