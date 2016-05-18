@@ -3657,6 +3657,14 @@ function setDriveProperty_(spreadsheetId, name, value) {
   }, spreadsheetId);
 }
 
+function setDriveProperties_(spreadsheetId, values) {
+  for (var p in values) {
+    if (values.hasOwnProperty(p)) {
+      setDriveProperty_(spreadsheetId, p, values[p]);
+    }
+  }
+}
+
 function getDriveProperty_(spreadsheetId, name) {
   return Drive.Properties.get(spreadsheetId, name, {
     visibility: 'PUBLIC'

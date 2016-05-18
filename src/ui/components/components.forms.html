@@ -1,5 +1,100 @@
 <script>
 
+    var FormDialog = Backbone.View.extend({
+
+        events: {
+            'click button[type=button]': 'onCloseClick'
+        },
+
+        initialize: function(options) {
+            this.spreadsheetId = options.spreadsheetId;
+            this.dataGetFn = options.dataGetFn;
+            this.dataSetFn = options.dataSetFn;
+
+            this.dispatcher = _.extend({}, Backbone.Events);
+            this.dispatcher.bind('submit', this.onFormSubmit, this);
+            this.form = this.buildFormComponent_(options, this.dispatcher);
+        },
+
+        render: function() {
+            this.$el.append(this.form.render().$el);
+            if (this.dataGetFn) {
+                google.script.run
+                        .withSuccessHandler(_.bind(this.onDataGetSuccess, this))
+                        .withFailureHandler(_.bind(this.onDataGetFailure, this))
+                        [this.dataGetFn](this.spreadsheetId);
+            }
+            return this;
+        },
+
+        onDataGetSuccess: function(data) {
+            this.form.setFormData({
+                values: data
+            });
+        },
+
+        onDataGetFailure: function(error) {
+            this.$('#messages').addClass('message error').html('<p class="icon icon-error">Sorry, an error occurred: ' + error.message + '</p>');
+        },
+
+        onDataSetSuccess: function(data) {
+            this.closeDialog_();
+        },
+
+        onDataSetFailure: function(error) {
+            this.$('#messages').addClass('message error').html('<p class="icon icon-error">Sorry, an error occurred: ' + error.message + '</p>');
+        },
+
+        onFormSubmit: function(payload) {
+            google.script.run
+                    .withSuccessHandler(_.bind(this.onDataSetSuccess, this))
+                    .withFailureHandler(_.bind(this.onDataSetFailure, this))
+                    [this.dataSetFn](this.spreadsheetId, payload.data);
+        },
+
+        onCloseClick: function(event) {
+            event.preventDefault();
+            this.closeDialog_();
+        },
+
+        buildFormComponent_: function(options, dispatcher) {
+            var formFields = options.formFields;
+            var buttons = options.buttons;
+            return new DataForm({
+                dispatcher: dispatcher,
+                blocks: _.map(formFields, this.buildFormBlock_, this).concat([new FormBlock({
+                    controls: buttons
+                })])
+            });
+        },
+
+        buildFormBlock_: function(block) {
+            return _.isArray(block) ? this.buildFormBlockFromArray_(block) : new FormFieldSet({
+                label: block.label,
+                controls: _.map(block.fields, this.buildFormBlockFromArray_, this)
+            });
+        },
+
+        buildFormBlockFromArray_: function(controls) {
+            return new FormBlock({
+                controls: _.map(controls, function(control) {
+                    return new FormGroupInline({
+                        controls: [control]
+                    });
+                })
+            });
+        },
+
+        setFormData: function(values) {
+            this.form.setFormData(values)
+        },
+
+        closeDialog_: function() {
+            google.script.host.close();
+        }
+
+    });
+
     var DataForm = Backbone.View.extend({
 
         tagName: 'form',
@@ -18,9 +113,11 @@
             delete childOpts.id;
             this.blocks = options.blocks || [];
 
-            this.dispatcher.bind('submitSuccess', this.onSubmitSuccess, this);
-            this.dispatcher.bind('submitFailure', this.onSubmitFailure, this);
-            this.dispatcher.bind('formData', this.setFormData, this);
+            if (this.dispatcher) {
+                this.dispatcher.bind('submitSuccess', this.onSubmitSuccess, this);
+                this.dispatcher.bind('submitFailure', this.onSubmitFailure, this);
+                this.dispatcher.bind('formData', this.setFormData, this);
+            }
         },
 
         render: function() {
@@ -32,11 +129,13 @@
 
         submit: function(event) {
             event.preventDefault();
-            this.setButtonsDisabled_(true, 'submit');
-            var formData = this.$el.serializeObject();
-            this.dispatcher.trigger('submit', {
-                data: formData
-            });
+            if (this.dispatcher) {
+                this.setButtonsDisabled_(true, 'submit');
+                var formData = this.$el.serializeObject();
+                this.dispatcher.trigger('submit', {
+                    data: formData
+                });
+            }
         },
 
         onClickReset: function() {
@@ -144,11 +243,13 @@
         submit: function(event) {
             event.preventDefault();
             var formData = this.$el.serializeObject();
-            this.dispatcher.trigger('submit', {
-                data: formData,
-                tableData: this.getTableData()
-            });
-            this.setButtonsDisabled_(true, 'submit');
+            if (this.dispatcher) {
+                this.dispatcher.trigger('submit', {
+                    data: formData,
+                    tableData: this.getTableData()
+                });
+                this.setButtonsDisabled_(true, 'submit');
+            }
         },
 
         reset: function() {
@@ -181,6 +282,20 @@
         className: 'inline form-group'
     });
 
+    var FormFieldSet = FormBlock.extend({
+        tagName: 'fieldset',
+        className: 'block',
+        initialize: function(options) {
+            FormBlock.prototype.initialize.call(this, options);
+            this.label = options.label;
+        },
+        render: function() {
+            FormBlock.prototype.render.call(this);
+            this.$el.prepend('<label>' + this.label + '</label>');
+            return this;
+        }
+    });
+
     var FormButton = Backbone.View.extend({
         tagName: 'button',
         initialize: function(options) {
@@ -206,11 +321,14 @@
             this.name = options.name;
             this.type = options.type;
             this.label = options.label;
+            this.prefix = options.prefix;
             this.disabled = options.disabled === true;
             this.required = options.required === true;
             this.value = options.value;
             this.size = options.size;
             this.pattern = options.pattern;
+            this.step = options.step;
+            this.placeholder = options.placeholder;
             this.title = options.title;
         },
         getFieldHtmlId_() {
@@ -224,8 +342,8 @@
         },
         getControlHtml_() {
             var template;
-            if (this.type == 'text' || this.type == 'date') {
-                template = '<input id="<%= id %>" class="<%= className %>" name="<%= name %>" <%= title ? \'title="\' + title + \'"\' : "" %> type="<%= type %>" value="<%= value %>" <%= required ? "required" : "" %> <%= pattern ? \'pattern="\' + pattern + \'"\' : "" %> <%= disabled ? "disabled" : "" %> />';
+            if (this.type == 'text' || this.type == 'date' || this.type == 'number') {
+                template = '<input id="<%= id %>" class="<%= className %>" name="<%= name %>" <%= title ? \'title="\' + title + \'"\' : "" %> type="<%= type %>" value="<%= value %>" <%= required ? "required" : "" %> <%= pattern ? \'pattern="\' + pattern + \'"\' : "" %> <%= step ? \'step="\' + step + \'"\' : "" %> <%= placeholder ? \'placeholder="\' + placeholder + \'"\' : "" %> <%= disabled ? "disabled" : "" %> />';
             } else {
                 throw 'Unknown type ' + this.type;
             }
@@ -239,6 +357,8 @@
                 size: this.size,
                 value: this.value,
                 pattern: this.pattern,
+                step: this.step,
+                placeholder: this.placeholder,
                 title: this.title
             });
         },

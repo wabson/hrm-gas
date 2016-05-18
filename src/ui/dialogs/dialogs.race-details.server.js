@@ -1,0 +1,27 @@
+function dialog_raceDetails_get(spreadsheetId) {
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    var inlineInfo = getRaceInfo_(spreadsheet);
+    var driveProps = getDriveProperties_(spreadsheetId);
+    return jsonSafeObj({
+        raceName: inlineInfo.raceName || spreadsheet.getName(),
+        raceRegion: inlineInfo.regionId || '',
+        raceDate: driveProps.raceDate || '',
+        entrySenior: driveProps.entrySenior || '',
+        entryJunior: driveProps.entryJunior || '',
+        entryLightning: driveProps.entryLightning || ''
+    });
+}
+
+function dialog_raceDetails_set(spreadsheetId, formData) {
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId), data = objFromJson(formData);
+    setRaceInfo_({
+        regionId: data.raceRegion,
+        raceName: data.raceName
+    }, spreadsheet);
+    setDriveProperties_(spreadsheetId, {
+        raceDate: data.raceDate,
+        entrySenior: data.entrySenior,
+        entryJunior: data.entryJunior,
+        entryLightning: data.entryLightning
+    });
+}

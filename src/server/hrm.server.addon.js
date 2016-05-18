@@ -19,6 +19,7 @@ function onOpen(e) {
     .addItem('Start', 'openStartDialog')
     .addItem('Rankings', 'openRankingsSidebar')
     .addItem('Entries', 'openEntriesSidebar')
+    .addItem('Race Details', 'openRaceDetailsDialog')
     .addSubMenu(ui.createMenu('New')
       .addItem('HRM Sheet', 'createHRMSheet')
       .addItem('ARM Sheet', 'createARMSheet')
@@ -52,8 +53,7 @@ function onOpen(e) {
        .addSeparator()
        .addItem('Live Results', 'showResultsURL')
        .addItem('Publish Results', 'saveResultsHTML')
-       .addItem('Print Results', 'createPrintableResults'))
-    .addItem('Race Details', 'showEditRaceDetails');
+       .addItem('Print Results', 'createPrintableResults'));
 
   addonMenu.addToUi();
 }

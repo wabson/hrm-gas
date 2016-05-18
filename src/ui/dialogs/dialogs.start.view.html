@@ -25,23 +25,7 @@
                             <option value="" selected>Select</option>
                         </select>
                     </div>
-                    <div class="inline form-group">
-                        <label for="select-race-region">Region</label>
-                        <select id="select-race-region" name="region" disabled>
-                            <option value="" selected>Select</option>
-                            <option value="EA">Eastern</option>
-                            <option value="LS">London & South East</option>
-                            <option value="MID">Midlands</option>
-                            <option value="NO">Northern</option>
-                            <option value="NW">North West</option>
-                            <option value="SCOE">Scotland East</option>
-                            <option value="SCOW">Scotland West</option>
-                            <option value="SO">Southern</option>
-                            <option value="SW">South West</option>
-                            <option value="WA">Wales</option>
-                            <option value="YH">Yorkshire</option>
-                            <option value="CS">Services</option>
-                        </select>
+                    <div class="inline form-group" id="form-group-region">
                     </div>
                 </div>
                 <div class="block form-group">
@@ -63,6 +47,8 @@
 
         <?!= include('forms.script.include'); ?>
         <?!= include('components.base'); ?>
+        <?!= include('components.forms'); ?>
+        <?!= include('components.hasler'); ?>
         <script>
             var spreadSheetId = '<?= spreadsheetId ?>';
 
@@ -79,6 +65,19 @@
                 },
 
                 render: function() {
+                    var regionSelect = new FormSelectField({
+                        fieldId: 'select-race-region',
+                        label: 'Race Region',
+                        selectList: new SelectList({
+                            id: 'select-race-region',
+                            name: 'region',
+                            model: haslerRegionsData,
+                            placeholder: 'Select',
+                            required: true,
+                            disabled: true
+                        })
+                    });
+                    this.$('#form-group-region').empty().append(regionSelect.render().$el);
                     google.script.run
                             .withSuccessHandler(_.bind(this.onRaceTemplatesLoaded, this))
                             .withFailureHandler(_.bind(this.onFailure, this))

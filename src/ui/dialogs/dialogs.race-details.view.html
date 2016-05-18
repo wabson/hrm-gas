@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <base target="_top">
+        <?!= include('forms.head.include'); ?>
+        <style type="text/css">
+            #warning-content {
+                display: none;
+            }
+            form input[type="date"] {
+                width: 140px;
+            }
+            form fieldset input {
+                width: 60px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="edit-form-dialog">
+            <div id="warning-content" class="message-box warning"></p></div>
+            <div id="messages"></div>
+            <form>
+            </form>
+        </div>
+
+        <?!= include('forms.script.include'); ?>
+        <?!= include('components.base'); ?>
+        <?!= include('components.forms'); ?>
+        <?!= include('components.hasler'); ?>
+        <script>
+            var spreadSheetId = '<?= spreadsheetId ?>';
+
+            $(function() {
+
+                var regionListData = new SelectListData({
+                    options: []
+                });
+                new FormDialog({
+                    el: '#edit-form-dialog',
+                    spreadsheetId: spreadSheetId,
+                    formFields: [
+                        [
+                            new FormField({
+                                type: 'text',
+                                label: 'Race Name',
+                                name: 'raceName',
+                                required: true
+                            }),
+                            new FormSelectField({
+                                fieldId: 'region',
+                                label: 'Race Region',
+                                selectList: new SelectList({
+                                    id: 'select-region',
+                                    name: 'raceRegion',
+                                    model: haslerRegionsData,
+                                    placeholder: 'Select',
+                                    required: true
+                                })
+                            })
+                        ],
+                        [
+                            new FormField({
+                                type: 'date',
+                                label: 'Race Date',
+                                name: 'raceDate',
+                                required: true
+                            })
+                        ],
+                        {
+                            label: 'Race Fees (£)',
+                            fields: [[
+                                new FormField({
+                                    type: 'number',
+                                    label: 'Senior',
+                                    name: 'entrySenior',
+                                    placeholder: '0.00',
+                                    step: '0.01'
+                                }),
+                                new FormField({
+                                    type: 'number',
+                                    label: 'Junior',
+                                    name: 'entryJunior',
+                                    placeholder: '0.00',
+                                    step: '0.01'
+                                }),
+                                new FormField({
+                                    type: 'number',
+                                    label: 'Lightning',
+                                    name: 'entryLightning',
+                                    placeholder: '0.00',
+                                    step: '0.01'
+                                })
+                            ]]
+                        }
+                    ],
+                    buttons: [
+                        new FormButton({
+                            type: 'submit',
+                            text: 'Save',
+                            className: 'action'
+                        }),
+                        new FormButton({
+                            type: 'button',
+                            text: 'Cancel'
+                        })
+                    ],
+                    dataGetFn: 'dialog_raceDetails_get',
+                    dataSetFn: 'dialog_raceDetails_set'
+                }).render();
+
+            });
+        </script>
+        <!--=include mock-services.html -->
+
+    </body>
+</html>

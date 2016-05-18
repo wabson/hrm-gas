@@ -3,6 +3,11 @@ function openStartDialog() {
     template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
     SpreadsheetApp.getUi().showModalDialog(template.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME), 'Start project');
 }
+function openRaceDetailsDialog() {
+    var template = HtmlService.createTemplateFromFile('dialogs.race-details.view');
+    template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
+    SpreadsheetApp.getUi().showModalDialog(template.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME), 'Race details');
+}
 function openRankingsSidebar() {
     var template = HtmlService.createTemplateFromFile('sidebar.rankings.view');
     template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
