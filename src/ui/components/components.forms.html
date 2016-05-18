@@ -19,6 +19,8 @@
         render: function() {
             this.$el.append(this.form.render().$el);
             if (this.dataGetFn) {
+                this.form.setFormFieldsDisabled(true);
+                this.form.setButtonsDisabled_(true, 'submit');
                 google.script.run
                         .withSuccessHandler(_.bind(this.onDataGetSuccess, this))
                         .withFailureHandler(_.bind(this.onDataGetFailure, this))
@@ -31,6 +33,8 @@
             this.form.setFormData({
                 values: data
             });
+            this.form.setFormFieldsDisabled(false);
+            this.form.setButtonsDisabled_(false, 'submit');
         },
 
         onDataGetFailure: function(error) {
