@@ -11,7 +11,7 @@
             this.dataGetFn = options.dataGetFn;
             this.dataSetFn = options.dataSetFn;
 
-            this.dispatcher = _.extend({}, Backbone.Events);
+            this.dispatcher = options.dispatcher || _.extend({}, Backbone.Events);
             this.dispatcher.bind('submit', this.onFormSubmit, this);
             this.form = this.buildFormComponent_(options, this.dispatcher);
         },
@@ -35,6 +35,9 @@
             });
             this.form.setFormFieldsDisabled(false);
             this.form.setButtonsDisabled_(false, 'submit');
+            this.dispatcher.trigger('formData', {
+                data: data
+            });
         },
 
         onDataGetFailure: function(error) {

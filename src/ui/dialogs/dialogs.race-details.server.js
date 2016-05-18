@@ -5,6 +5,7 @@ function dialog_raceDetails_get(spreadsheetId) {
     return jsonSafeObj({
         raceName: inlineInfo.raceName || spreadsheet.getName(),
         raceRegion: inlineInfo.regionId || '',
+        raceType: driveProps.hrmType || '',
         raceDate: driveProps.raceDate || '',
         entrySenior: driveProps.entrySenior || '',
         entryJunior: driveProps.entryJunior || '',
@@ -15,7 +16,7 @@ function dialog_raceDetails_get(spreadsheetId) {
 function dialog_raceDetails_set(spreadsheetId, formData) {
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId), data = objFromJson(formData);
     setRaceInfo_({
-        regionId: data.raceRegion,
+        regionId: data.raceRegion || 'ALL',
         raceName: data.raceName
     }, spreadsheet);
     setDriveProperties_(spreadsheetId, {
