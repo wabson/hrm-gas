@@ -19,10 +19,15 @@ function dialog_raceDetails_set(spreadsheetId, formData) {
         regionId: data.raceRegion || 'ALL',
         raceName: data.raceName
     }, spreadsheet);
-    setDriveProperties_(spreadsheetId, {
+    var driveProps = {
         raceDate: data.raceDate,
         entrySenior: data.entrySenior,
         entryJunior: data.entryJunior,
         entryLightning: data.entryLightning
-    });
+    };
+    setDriveProperties_(spreadsheetId, driveProps);
+
+    if (formData.setValidation == 'y') {
+        setValidation(spreadsheet);
+    }
 }

@@ -3164,8 +3164,8 @@ function setSheetSpecificFormulas_(sheet) {
  *
  * @public
  */
-function setValidation() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+function setValidation(ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var sheets = getRaceSheets(ss);
   var props = getDriveProperties_(ss.getId());
   for (var i=0; i<sheets.length; i++) {
