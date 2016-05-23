@@ -186,4 +186,41 @@
         }
 
     });
+
+    var RankingsUpdateCheck = BaseComponent.extend({
+
+        initialize: function(options) {
+            this.spreadsheetId = options.spreadsheetId;
+            this.lastUpdated = options.lastUpdated;
+            this.displayUpToDateConfirmation = options.displayUpToDateConfirmation !== false;
+        },
+
+        render: function() {
+            google.script.run
+                    .withSuccessHandler(_.bind(function (webLastUpdated) {
+                        if (webLastUpdated !== null && this.lastUpdated !== null && webLastUpdated != this.lastUpdated) {
+                            this.$el.css('display', 'block')
+                                    .removeClass()
+                                    .addClass('message-box info')
+                                    .find('p')
+                                    .html('A new version of the ranking list may be available updated ' + webLastUpdated);
+                        } else {
+                            if (this.displayUpToDateConfirmation) {
+                                this.$el.css('display', 'block')
+                                        .removeClass()
+                                        .addClass('message info')
+                                        .find('p')
+                                        .html('You have the latest version of the ranking list');
+                            }
+                        }
+                    }, this))
+                    .withFailureHandler(_.bind(this.onFailure, this))
+                    .sidebar_rankings_last_updated(this.spreadsheetId);
+            return this;
+        },
+
+        onFailure: function (error) {
+            this.$el.html('Sorry, an error occurred. Please try again later.');
+        }
+    });
 </script>

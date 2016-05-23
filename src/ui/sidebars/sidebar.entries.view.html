@@ -32,6 +32,9 @@
         #manual-entry-form input[type=text], #manual-entry-form input[type=date] {
             width: 126px;
         }
+        #rankings-update {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -43,6 +46,7 @@
     var spreadSheetId = '<?= spreadsheetId ?>';
 </script>
 <div class="sidebar-content">
+    <div id="rankings-update"><p class="icon icon-info"></p></div>
     <div id="add-entry-widget"></div>
 </div>
 <script>
@@ -334,6 +338,12 @@
                     return [clubArr[1], clubArr[0]];
                 }));
                 this.divisionsListData.set('options', resp.divisions);
+                new RankingsUpdateCheck({
+                    el: '#rankings-update',
+                    spreadsheetId: this.spreadsheetId,
+                    lastUpdated: resp.lastUpdated,
+                    displayUpToDateConfirmation: false
+                }).render();
             },
 
             onCrewFormSubmit: function(payload) {

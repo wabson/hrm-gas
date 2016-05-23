@@ -127,30 +127,12 @@
             }
         },
         onSpreadsheetInfoSuccess: function(data) {
-            var lastUpdated = data.lastUpdated;
-
             this.$('#rankings-info').html(this.formatSummary(data), false);
-
-            google.script.run
-                    .withSuccessHandler(_.bind(function (webLastUpdated) {
-                        if (webLastUpdated !== null && lastUpdated !== null && webLastUpdated != lastUpdated) {
-                            this.$('#rankings-update')
-                                    .css('display', 'block')
-                                    .removeClass()
-                                    .addClass('message-box info')
-                                    .find('p')
-                                    .html('A new version of the ranking list may be available updated ' + webLastUpdated);
-                        } else {
-                            this.$('#rankings-update')
-                                    .css('display', 'block')
-                                    .removeClass()
-                                    .addClass('message info')
-                                    .find('p')
-                                    .html('You have the latest version of the ranking list');
-                        }
-                    }, this))
-                    .withFailureHandler(_.bind(this.onFailure, this))
-                    .sidebar_rankings_last_updated(this.spreadsheetId)
+            new RankingsUpdateCheck({
+                el: '#rankings-update',
+                spreadsheetId: this.spreadsheetId,
+                lastUpdated: data.lastUpdated
+            }).render();
         },
         onImportRankingsSuccess: function(data) {
             this.onSpreadsheetInfoSuccess(data);

@@ -3,10 +3,20 @@
 function sidebar_entries_race_info(spreadsheetId) {
 
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+
+    var rankingsSheet = spreadsheet.getSheetByName('Rankings'),
+        rankingsSize = 0, rankingsLastUpdated = null;
+
+    if (rankingsSheet !== null) {
+        rankingsSize = getNumRankings_(rankingsSheet);
+        rankingsLastUpdated = rankingsSize > 0 ? getRankingsLastUpdated_(rankingsSheet) : null;
+    }
     return {
         classes: CLASSES_DEFS,
         divisions: DIVS_ALL,
-        clubs: getClubRows(spreadsheet.getSheetByName("Clubs"))
+        clubs: getClubRows(spreadsheet.getSheetByName("Clubs")),
+        rankingsSize: rankingsSize,
+        lastUpdated: rankingsLastUpdated !== null ? Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null
     };
 }
 
