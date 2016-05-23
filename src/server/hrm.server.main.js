@@ -3164,11 +3164,13 @@ function setSheetSpecificFormulas_(sheet) {
  *
  * @public
  */
-function setValidation(scriptProps) {
-  var sheets = getRaceSheets();
+function setValidation() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = getRaceSheets(ss);
+  var props = getDriveProperties_(ss.getId());
   for (var i=0; i<sheets.length; i++) {
-    setSheetValidation_(sheets[i], null, scriptProps);
-    setSheetSpecificValidation_(sheets[i]);
+    setSheetValidation_(sheets[i], null, props);
+    setSheetSpecificValidation_(sheets[i], null, props);
   }
 }
 
