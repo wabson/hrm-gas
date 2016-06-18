@@ -26,6 +26,8 @@ var path = require('path');
 var include = require('gulp-include');
 var webserver = require('gulp-webserver');
 var flatten = require('gulp-flatten');
+var sass = require('gulp-sass');
+var gulpIgnore = require('gulp-ignore');
 
 // minimist structure and defaults for this task configuration
 var knownOptions = {
@@ -51,7 +53,7 @@ gulp.task('upload-latest', ['copy-latest'], shell.task(['../../node_modules/node
 // Copies all files based on the current target environment.
 // Completion of "clean-deployment" is a prerequisite for starting the copy
 // process.
-gulp.task('copy-latest', ['clean-deployment'], function() {
+gulp.task('copy-latest', ['clean-deployment', 'sass'], function() {
     copyEnvironmentSpecific();
     copyServerCode();
     copyClientCode();
@@ -70,16 +72,15 @@ function copyServerCode() {
 // Then copies those .html files to the upload staging folder.
 function copyClientCode() {
     return gulp.src([
-            srcRoot + '/ui/**/*.html',
-            srcRoot + '/ui/**/*.css',
-            srcRoot + '/ui/**/*.client.js'])
-        .pipe(
-            rename(function(path) {
-                if (path.extname !== '.html') {
-                    path.extname = path.extname + '.html';
-                }
-                return path;
-            }))
+            'build/css/**/*.css',
+            srcRoot + 'ui/**/*.client.js',
+            srcRoot + '/ui/**/*.html'])
+        .pipe(include({
+            includePaths: [__dirname + '/build/css']
+        }))
+        //.on('error', function(e) {
+        //    console.warn(e.message, e);
+        //})
         .pipe(gulp.dest(dstRoot));
 }
 
@@ -112,15 +113,15 @@ function copyEnvironmentSpecific() {
 // Utility tasks
 gulp.task('clean-deployment', function(cb) {
     return del([
-        dstRoot + '/*.*'
+        dstRoot + '/**/*'
     ]);
 });
 
 gulp.task('clean-deployments', function(cb) {
     return del([
-        'build/dev/src/*.*',
-        'build/test/src/*.*' ,
-        'build/prod/src/*.*'
+        'build/dev/src/**/*',
+        'build/test/src/**/*' ,
+        'build/prod/src/**/*'
     ]);
 });
 
@@ -128,6 +129,13 @@ gulp.task('lint', function() {
     return gulp.src(srcRoot + '/**/*.js')
         .pipe(jshint())
         .pipe(jshint.reporter('jshint-stylish'));
+});
+
+gulp.task('sass', function () {
+    return gulp.src(srcRoot + '/**/*.scss')
+        .pipe(sass().on('error', sass.logError))
+        .pipe(flatten())
+        .pipe(gulp.dest('build/css'));
 });
 
 gulp.task('lint-ui-server', function() {
@@ -162,7 +170,7 @@ gulp.task('ui-server', ['lint-ui-server', 'includes'], function() {
         }));
 });
 
-gulp.task('watch', ['includes'], function() {
+gulp.task('watch', ['lint-ui-server', 'includes'], function() {
     gulp.watch([srcRoot + '/ui/**/*.html', testRoot + '/ui/**/*.html'], ['includes']);
 });
 
