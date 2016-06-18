@@ -153,7 +153,7 @@
         initialize: function (options) {
             this.dispatcher = options.dispatcher;
             this.tabs = options.tabs;
-            this.dispatcher.bind('select', this.selectTab, this)
+            this.dispatcher.bind('select', this.selectTab, this);
         },
 
         render: function () {
