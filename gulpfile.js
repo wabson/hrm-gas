@@ -161,7 +161,7 @@ gulp.task('ui-server', ['lint', 'compile-latest'], function() {
 });
 
 gulp.task('watch', function() {
-    gulp.watch([srcRoot + '/ui/**/*.html', srcRoot + '/ui/**/*.client.js', srcRoot + '/ui/**/*.css', testRoot + '/ui/**/*.html'], ['lint', 'compile-latest']);
+    gulp.watch([srcRoot + '/ui/**/*.html', srcRoot + '/ui/**/*.client.js', srcRoot + '/ui/**/*.scss', testRoot + '/ui/**/*.html'], ['lint', 'compile-latest']);
 });
 
 gulp.task('ui-server-watch', ['ui-server', 'watch']);
