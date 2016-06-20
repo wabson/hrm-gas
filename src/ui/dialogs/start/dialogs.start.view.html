@@ -2,7 +2,7 @@
 <html>
     <head>
         <base target="_top">
-        <?!= include('../forms.head.include'); ?>
+        <?!= include('../../forms.head.include'); ?>
         <style type="text/css">
             #warning-content {
                 display: none;
@@ -45,10 +45,10 @@
             </form>
         </div>
 
-        <?!= include('../forms.script.include'); ?>
-        <?!= include('../components/components.base'); ?>
-        <?!= include('../components/components.forms'); ?>
-        <?!= include('../components/components.hasler'); ?>
+        <?!= include('../../forms.script.include'); ?>
+        <?!= include('../../components/components.base'); ?>
+        <?!= include('../../components/components.forms'); ?>
+        <?!= include('../../components/components.hasler'); ?>
         <script>
             var spreadSheetId = '<?= spreadsheetId ?>';
 
@@ -187,7 +187,7 @@
 
             });
         </script>
-        <!--=include ../mock-services.html -->
+        <!--=include ../../mock-services.html -->
 
     </body>
 </html>
