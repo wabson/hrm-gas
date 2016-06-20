@@ -21,7 +21,8 @@
  *  @return {String} HTML markup for the requested file.
  */
 function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename)
+  var baseName = filename.substring(filename.lastIndexOf('/') + 1);
+  return HtmlService.createHtmlOutputFromFile(baseName)
       .getContent();
 }
 

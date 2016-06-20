@@ -33,7 +33,7 @@ var gulpIgnore = require('gulp-ignore');
 var knownOptions = {
     string: ['env'],
     'default': {
-        env: 'dev'
+        env: 'local'
     }
 };
 var options = minimist(process.argv.slice(2), knownOptions);
@@ -43,62 +43,64 @@ var srcRoot = 'src';
 var testRoot = 'test';
 // The root staging folder for gapps configurations
 var dstRoot = 'build/' + options.env + '/src';
+var compileRoot = 'build/' + options.env + '/includes';
 
 // Runs the copy-latest task, then calls gapps upload in the correct
 // configuration directory based on the target environment
-gulp.task('upload-latest', ['copy-latest'], shell.task(['../../node_modules/node-google-apps-script/bin/gapps upload'],
-    {cwd: 'build/' + options.env}));
+gulp.task('upload-latest', ['compile-latest'], shell.task(['../../node_modules/node-google-apps-script/bin/gapps upload'],
+    {cwd: compileRoot}));
 
+// Compiles all HTML files by processing build-time includes
+gulp.task('compile-latest', ['copy-latest'], function() {
+    return gulp.src(dstRoot + '/**')
+        .pipe(include())
+        .pipe(gulp.dest(compileRoot))
+});
 
 // Copies all files based on the current target environment.
 // Completion of "clean-deployment" is a prerequisite for starting the copy
 // process.
-gulp.task('copy-latest', ['clean-deployment', 'sass'], function() {
-    copyEnvironmentSpecific();
-    copyServerCode();
-    copyClientCode();
-});
+gulp.task('copy-latest', ['clean-deployment', 'sass', 'copy-code']);
+gulp.task('copy-code', ['copy-server-code', 'copy-client-code', 'copy-environment-specific-code']);
 
 // Copies all .js that will be run by the Apps Script runtime
-function copyServerCode() {
+gulp.task('copy-server-code', function copyServerCode() {
     return gulp.src([
             srcRoot + '/server/*.js',
             srcRoot + '/libs/*.js',
             srcRoot + '/ui/**/*.server.js'])
         .pipe(gulp.dest(dstRoot));
-}
+});
 
-// Appends ".html" to any css, and any js that will be included in client code
-// Then copies those .html files to the upload staging folder.
-function copyClientCode() {
-    return gulp.src([
-            'build/css/**/*.css',
-            srcRoot + 'ui/**/*.client.js',
-            srcRoot + '/ui/**/*.html'])
-        .pipe(include({
-            includePaths: [__dirname + '/build/css']
-        }))
-        //.on('error', function(e) {
-        //    console.warn(e.message, e);
-        //})
-        .pipe(gulp.dest(dstRoot));
-}
+gulp.task('copy-client-code', function copyClientCode() {
 
-// Does any environment specific work.
-// the "lint" step is also here, as that is only done on "dev"
-// targeted updates.
-function copyEnvironmentSpecific() {
-    // Do target environment specific work
+    var src = gulp.src([
+            'build/css/ui/**/*.css',
+            srcRoot + '/ui/**/*.client.js',
+            srcRoot + '/ui/**/*.html']);
+
+    // Emulate runtime includes for local env
+    return options.env === 'local' ? src
+            .pipe(replace(/<\?!= ?include\('([-\.\/\w]+)'\);? ?\?>/g, '<!--=include $1.html -->'))
+            .pipe(gulp.dest(dstRoot))
+        : src.pipe(gulp.dest(dstRoot));
+});
+
+// Does any environment specific work
+gulp.task('copy-environment-specific-code', function copyEnvironmentSpecific() {
+    var envFiles = srcRoot + '/env/' + options.env + '/*.js';
+    var mockFiles = testRoot + '/ui/**/*.html';
+    var testFiles = srcRoot + '/tests/*.js';
     switch (options.env) {
+        case 'local':
+            return gulp.src([envFiles, mockFiles])
+                .pipe(gulp.dest(dstRoot));
+
         case 'dev':
-            gulp.src(srcRoot + '/**/*.js')
-                .pipe(jshint())
-                .pipe(jshint.reporter('jshint-stylish'));
             break;
 
         case 'test':
-            //Copy test scripts, if target is "test"
-            gulp.src(srcRoot + '/tests/*.js')
+            return gulp.src([envFiles, testFiles])
                 .pipe(gulp.dest(dstRoot));
             break;
 
@@ -106,27 +108,32 @@ function copyEnvironmentSpecific() {
             break;
     }
 
-    return gulp.src(srcRoot + '/env/' + options.env + '/*.js')
-        .pipe(gulp.dest(dstRoot));
-}
+    return gulp.src(envFiles).pipe(gulp.dest(dstRoot));
+});
 
-// Utility tasks
 gulp.task('clean-deployment', function(cb) {
     return del([
-        dstRoot + '/**/*'
+        dstRoot + '/**/*',
+        compileRoot + '/**/*'
     ]);
 });
 
 gulp.task('clean-deployments', function(cb) {
     return del([
+        'build/local/src/**/*',
         'build/dev/src/**/*',
         'build/test/src/**/*' ,
-        'build/prod/src/**/*'
+        'build/prod/src/**/*',
+        'build/local/includes/**/*',
+        'build/dev/includes/**/*',
+        'build/test/includes/**/*',
+        'build/prod/includes/**/*'
     ]);
 });
 
 gulp.task('lint', function() {
     return gulp.src(srcRoot + '/**/*.js')
+        .pipe(jshint.extract())
         .pipe(jshint())
         .pipe(jshint.reporter('jshint-stylish'));
 });
@@ -134,44 +141,23 @@ gulp.task('lint', function() {
 gulp.task('sass', function () {
     return gulp.src(srcRoot + '/**/*.scss')
         .pipe(sass().on('error', sass.logError))
-        .pipe(flatten())
         .pipe(gulp.dest('build/css'));
 });
 
-gulp.task('lint-ui-server', function() {
-    return gulp.src(['build/ui-test' + '/**/*.js', 'build/ui-test' + '/**/*.html'])
-        .pipe(jshint.extract())
-        .pipe(jshint())
-        .pipe(jshint.reporter('jshint-stylish'));
-});
-
-gulp.task('copy-ui', function() {
-    return gulp.src([srcRoot + '/ui/**/*.html', testRoot + '/ui/**/*.html'])
-        .pipe(flatten())
-        .pipe(gulp.dest('build/ui-test'));
-});
-
-gulp.task('includes', ['copy-ui'], function() {
-    return gulp.src('build/ui-test/**/*.html')
-        .pipe(replace(/<\?!= ?include\('([-\.\w]+)'\);? ?\?>/g, '<!--=include $1.html -->'))
-        .pipe(include())
-        .pipe(gulp.dest('build/ui-test-includes'));
-});
-
-gulp.task('ui-server', ['lint-ui-server', 'includes'], function() {
-    return gulp.src('build/ui-test-includes')
+gulp.task('ui-server', ['lint', 'compile-latest'], function() {
+    return gulp.src(compileRoot)
         .pipe(webserver({
             livereload: true,
             directoryListing: {
                 enable: true,
-                path: 'build/ui-test-includes'
+                path: compileRoot
             },
             open: false
         }));
 });
 
-gulp.task('watch', ['lint-ui-server', 'includes'], function() {
-    gulp.watch([srcRoot + '/ui/**/*.html', testRoot + '/ui/**/*.html'], ['includes']);
+gulp.task('watch', function() {
+    gulp.watch([srcRoot + '/ui/**/*.html', srcRoot + '/ui/**/*.client.js', srcRoot + '/ui/**/*.css', testRoot + '/ui/**/*.html'], ['lint', 'compile-latest']);
 });
 
 gulp.task('ui-server-watch', ['ui-server', 'watch']);
