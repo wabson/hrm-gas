@@ -1,0 +1,123 @@
+.validate input:required:invalid:not(:focus), .validate select:required:invalid:not(:focus) {
+    /* insert your own styles for invalid form input */
+    -moz-box-shadow: none;
+    border: 1px solid red;
+}
+h2 {
+    text-transform: uppercase;
+    color: #666;
+    font-size: 15px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 16px;
+}
+form {
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        thead tr:last-child th {
+            padding: 2px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #666;
+            border-bottom: 1px solid #ebebeb;
+            white-space: nowrap;
+        }
+        td {
+            padding: 2px;
+            .warning {
+                color: #c22;
+            }
+            abbr {
+                border-bottom: 1px dotted #222;
+            }
+        }
+    }
+    fieldset {
+        padding: 0;
+        border-width: 0;
+        & > label {
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #666;
+        }
+    }
+}
+span.tab {
+    text-transform: uppercase;
+    padding: 4px 5px;
+    font-size: 1em;
+    &.selected {
+        font-weight: bold;
+        border-bottom: 2px solid #d22;
+    }
+    a {
+        color: #222;
+        text-decoration: none;
+    }
+}
+.message-box {
+    margin: 1em 0;
+    &.info, &.warning {
+        padding: 10px;
+        background-color: #ffffcc;
+        border: 1px solid #cccc11;
+    }
+    &.error {
+        padding: 10px;
+        background-color: #ffcccc;
+        border: 1px solid #cc6666;
+    }
+    p {
+        margin: 0 0 0;
+        &.icon:before, &.icon:before {
+            color: rgba(0, 0, 0, 0.54);
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;  /* Preferred icon size */
+            display: block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+            /* Support for all WebKit browsers. */
+            -webkit-font-smoothing: antialiased;
+            /* Support for Safari and Chrome. */
+            text-rendering: optimizeLegibility;
+            /* Support for Firefox. */
+            -moz-osx-font-smoothing: grayscale;
+            /* Support for IE. */
+            font-feature-settings: 'liga';
+            float: left;
+            width: 24px;
+            padding-right: 5px;
+        }
+        &.icon-error:before, &.icon-error:before {
+            color: #dd4b39;
+            content: 'error';
+        }
+    }
+}
+p.icon-info:before {
+    content: 'info outline';
+}
+p.icon-warning:before {
+    content: 'warning';
+}
+.message p.icon-info {
+    color: #666;
+    vertical-align: middle;
+    &:before {
+        color: #999;
+    }
+}
+/* Material design icon rules */
+.material-icons { color: rgba(0, 0, 0, 0.54); }
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
