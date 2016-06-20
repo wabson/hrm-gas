@@ -80,12 +80,17 @@ gulp.task('copy-client-code', function copyClientCode() {
 
     var src = gulp.src([
             cssRoot + '/ui/**/*.css',
+            srcRoot + '/ui/**/*.css',
             srcRoot + '/ui/**/*.client.js',
             srcRoot + '/ui/**/*.html']);
 
-    // Emulate runtime includes for local env
+    // Emulate runtime includes for local env and replace JS libs with local equivalents
     return options.env === 'local' ? src
             .pipe(replace(/<\?!= ?include\('([-\.\/\w]+)'\);? ?\?>/g, '<!--=include $1.html -->'))
+            .pipe(replace('https://ssl.gstatic.com/docs/script/css', ''))
+            .pipe(replace('//ajax.googleapis.com/ajax/libs/jquery/3.0.0', '/jquery/dist/'))
+            .pipe(replace('//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3', '/underscore/'))
+            .pipe(replace('//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.3.3', '/backbone/'))
             .pipe(gulp.dest(dstRoot))
         : src.pipe(gulp.dest(dstRoot));
 });
@@ -149,7 +154,7 @@ gulp.task('sass', function () {
 });
 
 gulp.task('ui-server', ['lint', 'compile-latest'], function() {
-    return gulp.src(compileRoot)
+    return gulp.src([compileRoot, 'node_modules'])
         .pipe(webserver({
             livereload: true,
             directoryListing: {
