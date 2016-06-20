@@ -1,3 +1,4 @@
+/* jshint camelcase: false */
 /* globals Logger, SpreadsheetApp, Utilities */
 
 function sidebar_rankings_import(spreadsheetId) {
@@ -22,7 +23,8 @@ function sidebar_rankings_info(spreadsheetId) {
 
     return {
         rankingsSize: rankingsSize,
-        lastUpdated: rankingsLastUpdated !== null ? Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null
+        lastUpdated: rankingsLastUpdated !== null ?
+            Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null
     };
 }
 
@@ -35,6 +37,7 @@ function sidebar_rankings_last_updated(spreadsheetId) {
 }
 
 function sidebar_rankings_insert(rows, headers) {
-    var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(), range = SpreadsheetApp.getActiveRange();
+    var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet(),
+        range = SpreadsheetApp.getActiveRange();
     addRowsToSheet_(rows, headers, sheet, range.getRow());
 }

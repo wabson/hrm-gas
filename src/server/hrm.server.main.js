@@ -1,4 +1,13 @@
-/*jshint sub:true*/
+/* jshint
+  sub: true,
+  curly: false,
+  eqeqeq: false,
+  quotmark: false,
+  maxdepth: false,
+  maxstatements: false,
+  maxlen: false
+  */
+
 /*
  * Hasler Race Management Spreadsheet functions
  *
@@ -109,6 +118,16 @@ var EXTRA_SHEETS_NON_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Resul
 var EXTRA_SHEETS_NATIONALS = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Divisional Results', 'Singles Results', 'Doubles Results', 'Summary'];
 
 var PROTECTED_SHEETS = ['Rankings'];
+
+var ListUtils = {
+  trim: function(input) {
+    var output = input.slice();
+    while (output.length > 0 && (output[output.length - 1] === '' || output[output.length - 1] === null)) {
+      output.pop();
+    }
+    return output;
+  }
+};
 
 /**
  * Button handler for load rankings dialog
@@ -323,8 +342,8 @@ function setRankingsLastUpdated_(rankingsSheet, headers, sourceRowValues) {
 /**
  * Clear all Hasler rankings in the current spreadsheet
  */
-function clearRankings_(ss, p_addColumns) {
-  var addColumns = (p_addColumns !== undefined) ? p_addColumns : true;
+function clearRankings_(ss, addColumns) {
+  addColumns = (addColumns !== undefined) ? addColumns : true;
   // Locate Rankings sheet or create it if it doesn't already exist
   var sheet = (ss || SpreadsheetApp.getActiveSpreadsheet()).getSheetByName(rankingsSheetName);
   if (!sheet) {
@@ -336,22 +355,12 @@ function clearRankings_(ss, p_addColumns) {
   }
 }
 
-function clearRankingsIfSheetExists_(ss, p_addColumns) {
+function clearRankingsIfSheetExists_(ss, addColumns) {
   var sheet = ss || SpreadsheetApp.getActiveSpreadsheet().getSheetByName(rankingsSheetName);
   if (sheet !== null) {
-    clearRankings_(ss, p_addColumns);
+    clearRankings_(ss, addColumns);
   }
 }
-
-var ListUtils = {
-  trim: function(input) {
-    var output = input.slice();
-    while (output.length > 0 && (output[output.length - 1] === '' || output[output.length - 1] === null)) {
-      output.pop();
-    }
-    return output;
-  }
-};
 
 /**
  * Clear all entries in the specified sheet
@@ -3763,7 +3772,7 @@ function createNRMSheet() {
 function getElementsByTagName(element, tagName) {  
   var data = [];
   var descendants = element.getDescendants();  
-  for(var i in descendants) {
+  for (var i = 0; i< descendants.length; i++) {
     var elt = descendants[i].asElement();     
     if ( elt !== null && elt.getName() == tagName) {
       data.push(elt);
@@ -3898,10 +3907,10 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
     }
   }
   var sortFn = function(a,b) {return (parseInt(a.rows[0][sortColumn])||999) - (parseInt(b.rows[0][sortColumn])||999);};
-  var entriesIter = function(a) {
-    values.push(objUnzip(a.rows[0], columnNames, false, ''));
+  var entriesReduce = function(previous, a) {
+    previous.push(objUnzip(a.rows[0], columnNames, false, ''));
     if (a.rows.length > 1) {
-      values.push(objUnzip(a.rows[1], columnNames, false, ''));
+      previous.push(objUnzip(a.rows[1], columnNames, false, ''));
     }
   };
   // Copy existing sheets
@@ -3911,14 +3920,16 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
     }
     var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[j]) - 1 : srcSheets[j].getLastRow();
     if (lastRow > 1) {
-      var newSheet = newss.insertSheet(srcSheets[j].getName()), srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()), values = [columnNames],
+      var newSheet = newss.insertSheet(srcSheets[j].getName()),
+          srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()), values = [columnNames],
           entries = getEntryRowData(srcRange, !truncateEmpty);
       // Sort entries
       if (sortColumn !== null) {
         entries.sort(sortFn); // Sort by position, ascending then blanks (non-finishers)
       }
       // Add entries into the table
-      entries.forEach(entriesIter);
+      var dataValues = entries.reduce(entriesReduce, []);
+      values = values.concat(dataValues);
       var targetRange = newSheet.getRange(1, 1, values.length, values[0].length);
       targetRange.setValues(values);
       targetRange.setFontFamily(SHEET_FONT_FAMILY);
@@ -3970,7 +3981,7 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
       newss.deleteSheet(oldSheets[i]);
     }
   }
-  var clubCounts = {}, clubDue = {}, clubPaid = {}, paddlerType,
+  var clubCounts = {}, clubDue = {}, clubPaid = {}, lastRaceNum, raceName, paddlerType,
     fees = { seniors: scriptProps.entrySenior, juniors: scriptProps.entryJunior, lightnings: scriptProps.entryLightning };
   var rowIter = function(b) {
     currClub = b['Club'];
@@ -4016,9 +4027,10 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
     if (srcSheets[j].isSheetHidden()) {
       continue;
     }
-    var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[j]) - 1 : srcSheets[j].getLastRow(), lastRaceNum;
+    var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[j]) - 1 : srcSheets[j].getLastRow();
     if (lastRow > 1) {
-      var raceName = srcSheets[j].getName(), srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()),
+      raceName = srcSheets[j].getName();
+      var srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()),
           entries = getEntryRowData(srcRange, true);
       entries.forEach(entriesIter);
     }

@@ -5,5 +5,21 @@
     "Logger",
     "SpreadsheetApp",
     "Utilities"
-  ]
+  ],
+  "bitwise": true,
+  "camelcase": true,
+  "curly": true,
+  "eqeqeq": true,
+  "freeze": true,
+  "forin": true,
+  "indent": 4,
+  "latedef": "nofunc",
+  "newcap": true,
+  "quotmark": "single",
+  "maxdepth": 3,
+  "maxstatements": 15,
+  "maxlen": 120,
+  "notypeof": true,
+  "eqnull": true,
+  "funcscope": true
 }

@@ -1,3 +1,4 @@
+/* jshint camelcase: false */
 /* globals Logger, SpreadsheetApp, Utilities */
 
 function sidebar_entries_race_info(spreadsheetId) {
@@ -14,9 +15,10 @@ function sidebar_entries_race_info(spreadsheetId) {
     return {
         classes: CLASSES_DEFS,
         divisions: DIVS_ALL,
-        clubs: getClubRows(spreadsheet.getSheetByName("Clubs")),
+        clubs: getClubRows(spreadsheet.getSheetByName('Clubs')),
         rankingsSize: rankingsSize,
-        lastUpdated: rankingsLastUpdated !== null ? Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null
+        lastUpdated: rankingsLastUpdated !== null ?
+            Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null
     };
 }
 

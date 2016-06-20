@@ -136,7 +136,9 @@ gulp.task('lint', function() {
     return gulp.src(srcRoot + '/**/*.js')
         .pipe(jshint.extract())
         .pipe(jshint())
-        .pipe(jshint.reporter('jshint-stylish'));
+        .pipe(jshint.reporter('jshint-stylish', {
+            verbose: true
+        }));
 });
 
 gulp.task('sass', function () {

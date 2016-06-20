@@ -1,3 +1,5 @@
+/* jshint camelcase: false */
+
 $(function() {
 
     var headings = ['Surname', 'First name', 'Club', 'Class', 'Division', 'BCU Number', 'Expiry'];
@@ -20,6 +22,8 @@ $(function() {
         },
 
         initialize: function (options) {
+
+            /* jshint maxstatements: false */
 
             this.spreadsheetId = options.spreadsheetId;
             var rankingDispatcher = _.extend({}, Backbone.Events);
@@ -104,7 +108,8 @@ $(function() {
                                         label: 'BCU Number',
                                         required: true,
                                         pattern: rankingDetails.bcuRegexp,
-                                        title: 'Must be in the format XXX, CLB/XXX, WCA XXX, SCA XXX, INT or ET EVENT, where XXX is a number and CLB is a valid club code e.g. RIC'
+                                        title: 'Must be in the format XXX, CLB/XXX, WCA XXX, SCA XXX, INT or ET ' +
+                                            'EVENT, where XXX is a number and CLB is a valid club code e.g. RIC'
                                     })
                                 ]
                             }),
@@ -259,19 +264,30 @@ $(function() {
         },
 
         render: function () {
-            this.$el.empty().append([this.tabs.render().$el, this.search.render().$el, this.manualForm.render().$el, this.crewForm.render().$el, this.createDiv_('-messages'), this.createDiv_('-results', {
-                className: 'results'
-            })]);
+            this.$el.empty().append([
+                this.tabs.render().$el,
+                this.search.render().$el,
+                this.manualForm.render().$el,
+                this.crewForm.render().$el,
+                this.createDiv_('-messages'),
+                this.createDiv_('-results', {
+                    className: 'results'
+                })
+            ]);
             this.loadRaceNames_();
             this.loadRaceInfo_();
         },
 
         loadRaceNames_: function() {
-            google.script.run.withSuccessHandler(_.bind(this.onRaceNamesLoaded, this)).getRaceSheetNamesHTML(this.spreadsheetId);
+            google.script.run
+                .withSuccessHandler(_.bind(this.onRaceNamesLoaded, this))
+                .getRaceSheetNamesHTML(this.spreadsheetId);
         },
 
         loadRaceInfo_: function() {
-            google.script.run.withSuccessHandler(_.bind(this.onRaceInfoLoaded, this)).sidebar_entries_race_info(this.spreadsheetId);
+            google.script.run
+                .withSuccessHandler(_.bind(this.onRaceInfoLoaded, this))
+                .sidebar_entries_race_info(this.spreadsheetId);
         },
 
         onRaceNamesLoaded: function(resp) {
@@ -322,7 +338,8 @@ $(function() {
         onAddCrewFailure: function(error) {
             this.$('#' + this.el.id + '-messages')
                 .addClass('message error')
-                .html('<p class="icon icon-error">Sorry, a problem occurred adding the crew to the selected race: ' + error.message + '</p>');
+                .html('<p class="icon icon-error">Sorry, a problem occurred adding the crew to the selected race: ' +
+                    error.message + '</p>');
             this.crewDispatcher.trigger('submitFailure');
         },
 

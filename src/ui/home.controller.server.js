@@ -1,4 +1,4 @@
-/*jshint sub:true*/
+/* jshint sub: true, quotmark: false, maxstatements: false */
 
 function checkFinishDuplicates_(ss) {
   var sheet = ss.getSheetByName('Finishes');

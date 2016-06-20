@@ -1,4 +1,11 @@
-/*jshint sub:true*/
+/* jshint
+ sub: true,
+ eqeqeq: false,
+ quotmark: false,
+ maxdepth: false,
+ maxstatements: false,
+ maxlen: false
+ */
 
 var rankingsSheetName = "Rankings";
 var ENTRIES_HTML_FILENAME_TMPL = "%s Entries";
@@ -54,8 +61,10 @@ function saveResultsHTML(ss) {
   template.title = title;
   data = getResultsFromSpreadsheet(ss);
   for (var k in data) {
-    template[k] = data[k];
-    template.isHaslerFinal = scriptProps.haslerRegion == "HF";
+    if (data.hasOwnProperty(k)) {
+      template[k] = data[k];
+      template.isHaslerFinal = scriptProps.haslerRegion == "HF";
+    }
   }
   outputHtml = template.evaluate().getContent();
   var htmlFile = scriptProps.publishedResultsId ? DriveApp.getFileById(scriptProps.publishedResultsId) : DriveApp.createFile(Utilities.formatString(RESULTS_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
@@ -110,7 +119,9 @@ function saveEntriesHTML(ss) {
   template.title = title;
   data = getRaceEntriesFromSpreadsheet(ss, scriptProps.raceDate);
   for (var k in data) {
-    template[k] = data[k];
+    if (data.hasOwnProperty(k)) {
+      template[k] = data[k];
+    }
   }
   var outputHtml = template.evaluate().getContent();
   var htmlFile = scriptProps.publishedEntriesId ? DriveApp.getFileById(scriptProps.publishedEntriesId) : DriveApp.createFile(Utilities.formatString(ENTRIES_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
@@ -177,14 +188,16 @@ function listFiles(e) {
 function printResults(e) {
   var key = null, scroll = false, showNotes = false;
   for(var k in e.parameter) {
-    if ("key" == k) {
-      key = e.parameter[k];
-    }
-    if ("scroll" == k) {
-      scroll = e.parameter[k];
-    }
-    if ("showNotes" == k) {
-      showNotes = e.parameter[k];
+    if (e.parameter.hasOwnProperty(k)) {
+      if ("key" === k) {
+        key = e.parameter[k];
+      }
+      if ("scroll" === k) {
+        scroll = e.parameter[k];
+      }
+      if ("showNotes" === k) {
+        showNotes = e.parameter[k];
+      }
     }
   }
   if (!key) {

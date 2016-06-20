@@ -1,3 +1,5 @@
+/* jshint camelcase: false */
+
 function dialog_start_getRaceTemplates() {
     var config = Configuration.getCurrent(), 
         templatesFolder = DriveApp.getFolderById(config.app.raceTemplatesFolderId),
@@ -35,12 +37,12 @@ function dialog_start_submit(spreadsheetId, formData) {
 
     setupRaceFromTemplate_(spreadsheet, template, {
         importClubs: false,
-        importRankings: formData.importRankings == 'y',
+        importRankings: formData.importRankings === 'y',
         raceRegion: formData.region || 'ALL',
         raceName: formData.name
     });
 
-    if (formData.openEntries == 'y') {
+    if (formData.openEntries === 'y') {
         openEntriesSidebar();
     }
 }

@@ -75,7 +75,7 @@ function objFromJson(source) {
   for (var p in source) {
     if (source.hasOwnProperty(p)) {
       val = source[p];
-      isDate = typeof val == 'string' && dateRe.test(val);
+      isDate = typeof val === 'string' && dateRe.test(val);
       copy[p] = isDate ? new Date(val) : val;
     }
   }

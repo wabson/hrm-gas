@@ -1,3 +1,5 @@
+/* jshint eqeqeq: false, quotmark: false, maxdepth: false, maxstatements: false, maxlen: false */
+
 /**
  * Called when an add-on is installed.
  * @param {Object} e Apps Script onInstall event object

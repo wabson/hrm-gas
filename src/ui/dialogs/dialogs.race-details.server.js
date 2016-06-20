@@ -1,3 +1,5 @@
+/* jshint camelcase: false */
+
 function dialog_raceDetails_get(spreadsheetId) {
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
     var inlineInfo = getRaceInfo_(spreadsheet);
@@ -27,7 +29,7 @@ function dialog_raceDetails_set(spreadsheetId, formData) {
     };
     setDriveProperties_(spreadsheetId, driveProps);
 
-    if (formData.setValidation == 'y') {
+    if (formData.setValidation === 'y') {
         setValidation(spreadsheet);
     }
 }
