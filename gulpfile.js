@@ -42,13 +42,15 @@ var options = minimist(process.argv.slice(2), knownOptions);
 var srcRoot = 'src';
 var testRoot = 'test';
 // The root staging folder for gapps configurations
-var dstRoot = 'build/' + options.env + '/src';
-var compileRoot = 'build/' + options.env + '/includes';
+var buildRoot = 'build/' + options.env;
+var dstRoot = buildRoot + '/src';
+var compileRoot = buildRoot + '/includes';
+var cssRoot = buildRoot + '/css';
 
 // Runs the copy-latest task, then calls gapps upload in the correct
 // configuration directory based on the target environment
 gulp.task('upload-latest', ['compile-latest'], shell.task(['../../node_modules/node-google-apps-script/bin/gapps upload'],
-    {cwd: compileRoot}));
+    {cwd: buildRoot}));
 
 // Compiles all HTML files by processing build-time includes
 gulp.task('compile-latest', ['copy-latest'], function() {
@@ -75,7 +77,7 @@ gulp.task('copy-server-code', function copyServerCode() {
 gulp.task('copy-client-code', function copyClientCode() {
 
     var src = gulp.src([
-            'build/css/ui/**/*.css',
+            cssRoot + '/ui/**/*.css',
             srcRoot + '/ui/**/*.client.js',
             srcRoot + '/ui/**/*.html']);
 
@@ -141,7 +143,7 @@ gulp.task('lint', function() {
 gulp.task('sass', function () {
     return gulp.src(srcRoot + '/**/*.scss')
         .pipe(sass().on('error', sass.logError))
-        .pipe(gulp.dest('build/css'));
+        .pipe(gulp.dest(cssRoot));
 });
 
 gulp.task('ui-server', ['lint', 'compile-latest'], function() {
