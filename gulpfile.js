@@ -128,16 +128,7 @@ gulp.task('clean-deployment', function(cb) {
 });
 
 gulp.task('clean-deployments', function(cb) {
-    return del([
-        'build/local/src/**/*',
-        'build/dev/src/**/*',
-        'build/test/src/**/*' ,
-        'build/prod/src/**/*',
-        'build/local/includes/**/*',
-        'build/dev/includes/**/*',
-        'build/test/includes/**/*',
-        'build/prod/includes/**/*'
-    ]);
+    return del('build/*/@(src|includes|css)');
 });
 
 gulp.task('lint', function() {
