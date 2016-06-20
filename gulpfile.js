@@ -54,8 +54,10 @@ gulp.task('upload-latest', ['compile-latest'], shell.task(['../../node_modules/n
 
 // Compiles all HTML files by processing build-time includes
 gulp.task('compile-latest', ['copy-latest'], function() {
+    var clientExcludes = '**/*.client.js';
     return gulp.src(dstRoot + '/**')
         .pipe(include())
+        .pipe(gulpIgnore.exclude(clientExcludes))
         .pipe(gulp.dest(compileRoot))
 });
 
