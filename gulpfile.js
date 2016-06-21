@@ -47,6 +47,9 @@ var dstRoot = buildRoot + '/src';
 var compileRoot = buildRoot + '/includes';
 var cssRoot = buildRoot + '/css';
 
+var clientJsFilesGlob = '**/*.@(client|spec).js';
+var cssFilesGlob = '**/*.css';
+
 // Runs the copy-latest task, then calls gapps upload in the correct
 // configuration directory based on the target environment
 gulp.task('upload-latest', ['compile-latest'], shell.task(['../../node_modules/node-google-apps-script/bin/gapps upload'],
@@ -54,9 +57,11 @@ gulp.task('upload-latest', ['compile-latest'], shell.task(['../../node_modules/n
 
 // Compiles all HTML files by processing build-time includes
 gulp.task('compile-latest', ['copy-latest'], function() {
-    var clientExcludes = '**/*.client.js';
+    var clientExcludes = options.env === 'local' ? '' : clientJsFilesGlob;
     return gulp.src(dstRoot + '/**')
-        .pipe(include())
+        .pipe(include({
+            includePaths: dstRoot
+        }))
         .pipe(gulpIgnore.exclude(clientExcludes))
         .pipe(gulp.dest(compileRoot))
 });
@@ -79,9 +84,9 @@ gulp.task('copy-server-code', function copyServerCode() {
 gulp.task('copy-client-code', function copyClientCode() {
 
     var src = gulp.src([
-            cssRoot + '/ui/**/*.css',
-            srcRoot + '/ui/**/*.css',
-            srcRoot + '/ui/**/*.client.js',
+            cssRoot + '/ui/' + cssFilesGlob,
+            srcRoot + '/ui/' + cssFilesGlob,
+            srcRoot + '/ui/' + clientJsFilesGlob,
             srcRoot + '/ui/**/*.html']);
 
     // Emulate runtime includes for local env and replace JS libs with local equivalents
@@ -100,9 +105,10 @@ gulp.task('copy-environment-specific-code', function copyEnvironmentSpecific() {
     var envFiles = srcRoot + '/env/' + options.env + '/*.js';
     var mockFiles = testRoot + '/ui/**/*.html';
     var testFiles = srcRoot + '/tests/*.js';
+    var unitTestRunner = srcRoot + '/unit-tests.html';
     switch (options.env) {
         case 'local':
-            return gulp.src([envFiles, mockFiles])
+            return gulp.src([envFiles, mockFiles, unitTestRunner])
                 .pipe(gulp.dest(dstRoot));
 
         case 'dev':
@@ -160,7 +166,7 @@ gulp.task('ui-server', ['lint', 'compile-latest'], function() {
 });
 
 gulp.task('watch', function() {
-    gulp.watch([srcRoot + '/ui/**/*.html', srcRoot + '/ui/**/*.client.js', srcRoot + '/ui/**/*.scss', testRoot + '/ui/**/*.html'], ['lint', 'compile-latest']);
+    gulp.watch([srcRoot + '/ui/**/*.html', srcRoot + '/ui/' + clientJsFilesGlob, srcRoot + '/ui/**/*.scss', testRoot + '/ui/**/*.html'], ['lint', 'compile-latest']);
 });
 
 gulp.task('ui-server-watch', ['ui-server', 'watch']);

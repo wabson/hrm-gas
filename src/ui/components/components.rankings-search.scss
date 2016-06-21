@@ -1,0 +1,12 @@
+.rankings-search-form input[type="search"] {
+     width: 250px;
+ }
+.rankings-search-results {
+    margin-top: 16px;
+}
+.rankings-search-results tbody tr {
+    cursor: pointer;
+}
+.rankings-search-results tbody tr.selected {
+    background-color: #ffc;
+}
