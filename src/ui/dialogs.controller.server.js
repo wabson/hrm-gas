@@ -1,30 +1,35 @@
-function openStartDialog() {
-    var template = HtmlService.createTemplateFromFile('dialogs.start.view');
+function openModalDialog_(templateFile, options) {
+    var template = HtmlService.createTemplateFromFile(templateFile);
     template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
     SpreadsheetApp.getUi()
-        .showModalDialog(template.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME), 'Start project');
+        .showModalDialog(template.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME), options.title);
+}
+function openSidebar_(templateFile, options) {
+    var template = HtmlService.createTemplateFromFile(templateFile);
+    template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
+    var html = template.evaluate()
+        .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+        .setTitle(options.title)
+        .setWidth(300);
+    SpreadsheetApp.getUi().showSidebar(html);
+}
+function openStartDialog() {
+    openModalDialog_('dialogs.start.view', {
+        title: 'Start project'
+    });
 }
 function openRaceDetailsDialog() {
-    var template = HtmlService.createTemplateFromFile('dialogs.race-details.view');
-    template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
-    SpreadsheetApp.getUi()
-        .showModalDialog(template.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME), 'Race details');
+    openModalDialog_('dialogs.race-details.view', {
+        title: 'Race details'
+    });
 }
 function openRankingsSidebar() {
-    var template = HtmlService.createTemplateFromFile('sidebar.rankings.view');
-    template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
-    var html = template.evaluate()
-        .setSandboxMode(HtmlService.SandboxMode.IFRAME)
-        .setTitle('Rankings')
-        .setWidth(300);
-    SpreadsheetApp.getUi().showSidebar(html);
+    openSidebar_('sidebar.rankings.view', {
+        title: 'Rankings'
+    });
 }
 function openEntriesSidebar() {
-    var template = HtmlService.createTemplateFromFile('sidebar.entries.view');
-    template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
-    var html = template.evaluate()
-        .setSandboxMode(HtmlService.SandboxMode.IFRAME)
-        .setTitle('Add Entries')
-        .setWidth(300);
-    SpreadsheetApp.getUi().showSidebar(html);
+    openSidebar_('sidebar.entries.view', {
+        title: 'Add Entries'
+    });
 }
