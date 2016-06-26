@@ -38,7 +38,7 @@ var DataTable = Backbone.View.extend({
 
         this.data = options.data;
 
-        this.displayColumns = options.displayColumns || this.data.get('columns');
+        this.displayColumns = options.displayColumns;
         this.headingsRenderer = options.headingsRenderer || this.defaultHeadingsRenderer;
         this.cellRenderers = options.cellRenderers || {};
 
@@ -53,13 +53,14 @@ var DataTable = Backbone.View.extend({
     },
 
     onDataChanged: function(data) {
-        if (data.changed.columns) {
-            this.displayColumns = data.changed.columns;
-        }
         this.render();
         if (this.dispatcher) {
             this.dispatcher.trigger('selectedDataChange');
         }
+    },
+
+    getDisplayColumns: function() {
+        return this.displayColumns || this.data.get('columns');
     },
 
     getSelectedData: function() {
@@ -73,14 +74,14 @@ var DataTable = Backbone.View.extend({
     },
 
     dataRenderer: function(row) {
-        return _.map(this.displayColumns, function (colName, index) {
+        return _.map(this.getDisplayColumns(), function (colName, index) {
             var cellRenderer = this.cellRenderers[colName] || this.defaultCellRenderer;
             return '<td>' + cellRenderer(row[colName], index, row) + '</td>';
         }, this);
     },
 
     renderTableHeadings_: function() {
-        this.$('thead tr').html('<th></th>').append(this.headingsRenderer(this.displayColumns));
+        this.$('thead tr').html('<th></th>').append(this.headingsRenderer(this.getDisplayColumns()));
     },
 
     renderTableData_: function () {
@@ -155,7 +156,9 @@ var TabsList = Backbone.View.extend({
     initialize: function (options) {
         this.dispatcher = options.dispatcher;
         this.tabs = options.tabs;
-        this.dispatcher.bind('select', this.selectTab, this);
+        if (this.dispatcher) {
+            this.dispatcher.bind('select', this.selectTab, this);
+        }
     },
 
     render: function () {
