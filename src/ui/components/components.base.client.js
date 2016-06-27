@@ -55,7 +55,9 @@ var DataTable = Backbone.View.extend({
     onDataChanged: function(data) {
         this.render();
         if (this.dispatcher) {
-            this.dispatcher.trigger('selectedDataChange');
+            this.dispatcher.trigger('selectedDataChange', {
+                selected: this.getSelectedData()
+            });
         }
     },
 
@@ -115,9 +117,11 @@ var DataTable = Backbone.View.extend({
         } else {
             $row.removeClass('selected');
         }
-        this.dispatcher.trigger('selectedDataChange', {
-            selected: this.getSelectedData()
-        });
+        if (this.dispatcher) {
+            this.dispatcher.trigger('selectedDataChange', {
+                selected: this.getSelectedData()
+            });
+        }
     },
 
     clickResult: function(event) {
@@ -135,12 +139,6 @@ var DataTable = Backbone.View.extend({
         return _.map(names, function (colName) {
             return '<th>' + colName + '</th>';
         }, this);
-    },
-
-    defaultDataRenderer: function(values) {
-        return values.map(function (value) {
-            return '<td>' + value + '</td>';
-        });
     }
 
 });

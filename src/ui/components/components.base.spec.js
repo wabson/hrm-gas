@@ -1,5 +1,87 @@
 describe('Base components', function() {
 
+    describe('Base component', function() {
+
+        it('should exist', function () {
+            expect(BaseComponent).toBeDefined();
+        });
+
+        describe('Utility methods', function() {
+
+            beforeEach(function() {
+                var TestView = BaseComponent.extend({
+                    initialize: function(options) {
+                    },
+                    render: function() {
+                    }
+                });
+                this.view = new TestView({
+                    id: 'my-test-view'
+                });
+                this.view.render();
+            });
+
+            it('should create new DOM elements based on the parent ID', function() {
+                var newEl = this.view.createDiv_('-child1');
+                expect(newEl).not.toBeNull();
+                expect(newEl.length).toBe(1);
+                expect(newEl[0].id).toBe('my-test-view-child1');
+            });
+
+            it('should add specified class names to new DOM elements', function() {
+                var newEl = this.view.createDiv_('-child2', {
+                    className: 'myClassXYZ'
+                });
+                expect(newEl).not.toBeNull();
+                expect(newEl.length).toBe(1);
+                expect(newEl[0].className).toBe('myClassXYZ');
+            });
+
+            it('should pass through custom options for sub-views init', function() {
+                var options = this.view.createOptionsForSubView({
+                    prop1: 'value1',
+                    prop2: 1234
+                });
+                expect(options.prop1).toBe('value1');
+                expect(options.prop2).toBe(1234);
+            });
+
+            it('should augment options with the specified additional options', function() {
+                var options = this.view.createOptionsForSubView({
+                    prop1: 'value1',
+                    prop2: 1234
+                }, {
+                    prop3: 'abc',
+                    id: 'myView',
+                    className: 'myClass2'
+                });
+                expect(options.prop1).toBe('value1');
+                expect(options.prop2).toBe(1234);
+                expect(options.prop3).toBe('abc');
+                expect(options.id).toBe('myView');
+                expect(options.className).toBe('myClass2');
+            });
+
+            it('should filter element-specific view options from the list generated for sub-views init', function() {
+                var options = this.view.createOptionsForSubView({
+                    id: 'my-element',
+                    className: 'my-class',
+                    myCustomOpt: 'yes'
+                });
+                expect(options.id).toBeUndefined();
+                expect(options.className).toBeUndefined();
+            });
+
+            it('should filter any element reference from the list generated for sub-views init', function() {
+                var options = this.view.createOptionsForSubView({
+                    el: document.createElement('DIV')
+                });
+                expect(options.el).toBeUndefined();
+            });
+
+        });
+    });
+
     describe('Data table', function() {
 
         it('should exist', function() {
@@ -54,6 +136,203 @@ describe('Base components', function() {
                 expect(thEls[0].innerHTML).toEqual('');
                 expect(thEls[1].innerHTML).toEqual('b1');
                 expect(thEls[2].innerHTML).toEqual('b2');
+            });
+
+        });
+
+        describe('Data rendering', function() {
+
+            beforeEach(function() {
+                this.data = new TableData({
+                    columns: ['Name', 'Age', 'Gender'],
+                    values: [
+                        {
+                            'Name': 'Bob',
+                            'Age': 32,
+                            'Gender': 'M',
+                            'Eyes': 'Blue'
+                        },
+                        {
+                            'Name': 'Christine',
+                            'Age': 37,
+                            'Gender': 'F',
+                            'Eyes': 'Green'
+                        }
+                    ]
+                });
+                this.view = new DataTable({
+                    data: this.data
+                });
+                this.view.render();
+            });
+
+            it('should render a table row for each set of values', function() {
+                var rowEls = this.view.$el.find('tbody tr');
+                expect(rowEls.length).toBe(2);
+            });
+
+            it('should render a hidden input field in the first column of each row', function() {
+                var rowEls = this.view.$el.find('tbody tr');
+                expect(rowEls[0].children[0]).toContainElement('input[type=hidden]');
+            });
+
+            it('should return all rows in response to a query about what is selected, with hidden inputs', function() {
+                var data = this.view.getSelectedData();
+                expect(data.length).toBe(2);
+            });
+
+            it('should allow a checkbox input field to be displayed in the first column of each row', function() {
+                this.view.inputType = 'checkbox';
+                this.view.render();
+                var rowEls = this.view.$el.find('tbody tr');
+                expect(rowEls[0].children[0]).toContainElement('input[type=checkbox]');
+            });
+
+            it('should initially render checkboxes unchecked if more than one row', function() {
+                this.view.inputType = 'checkbox';
+                this.view.render();
+                var rowEls = this.view.$el.find('tbody tr td input[type=checkbox]');
+                expect(rowEls.length).toBe(2);
+                expect(rowEls[0]).not.toBeChecked();
+                expect(rowEls[1]).not.toBeChecked();
+            });
+
+            it('should initially render checkbox checked if only one row', function() {
+                this.view.inputType = 'checkbox';
+                this.view.render();
+                this.data.set('values', this.data.get('values').slice(0, 1));
+                var rowEls = this.view.$el.find('tbody tr td input[type=checkbox]');
+                expect(rowEls.length).toBe(1);
+                expect(rowEls[0]).toBeChecked();
+            });
+
+            it('should return no rows in response to a query about what is selected, with checkbox inputs', function() {
+                this.view.inputType = 'checkbox';
+                this.view.render();
+                var data = this.view.getSelectedData();
+                expect(data.length).toBe(0);
+            });
+
+            it('should fire a dispatcher event when row checkbox is clicked', function() {
+                var dispatcher = _.extend({}, Backbone.Events);
+                var eventPayload, callCount = 0;
+                dispatcher.on('selectedDataChange', function(payload) {
+                    eventPayload = payload;
+                    callCount ++;
+                });
+                this.view.initialize({
+                    data: this.data,
+                    dispatcher: dispatcher,
+                    inputType: 'checkbox'
+                });
+                this.view.render();
+                this.view.$el.find('input[type=checkbox]:first').prop('checked', true).trigger('change');
+                expect(eventPayload).toBeDefined();
+                expect(eventPayload.selected).toBeDefined();
+                expect(eventPayload.selected.length).toBe(1);
+                expect(callCount).toBe(1);
+                this.view.$el.find('input[type=checkbox]:first').prop('checked', false).trigger('change');
+                expect(eventPayload.selected.length).toBe(0);
+                expect(callCount).toBe(2);
+            });
+
+            it('should check/uncheck row and fire a dispatcher event when a row is clicked', function() {
+                var dispatcher = _.extend({}, Backbone.Events);
+                var eventPayload, callCount = 0;
+                dispatcher.on('selectedDataChange', function(payload) {
+                    eventPayload = payload;
+                    callCount ++;
+                });
+                this.view.initialize({
+                    data: this.data,
+                    dispatcher: dispatcher,
+                    inputType: 'checkbox'
+                });
+                this.view.render();
+                this.view.$el.find('tbody tr:first').trigger('click');
+                expect(eventPayload).toBeDefined();
+                expect(eventPayload.selected).toBeDefined();
+                expect(eventPayload.selected.length).toBe(1);
+                expect(callCount).toBe(1);
+                this.view.$el.find('tbody tr:first').trigger('click');
+                expect(eventPayload.selected.length).toBe(0);
+                expect(callCount).toBe(2);
+            });
+
+            it('should fill out the row with a cell for each property specified in the columns list', function() {
+                var rowEls = this.view.$el.find('tbody tr');
+                expect(rowEls[0].children.length).toBe(4);
+                expect(rowEls[1].children.length).toBe(4);
+            });
+
+            it('should re-render automatically when data updated', function() {
+                this.data.set('values', this.data.get('values').concat([
+                    {
+                        'Name': 'Robert',
+                        'Age': 22,
+                        'Gender': 'M',
+                        'Eyes': 'Blue'
+                    }
+                ]));
+                var rowEls = this.view.$el.find('tbody tr');
+                expect(rowEls.length).toBe(3);
+            });
+
+            it('should fire an event when table data is updated', function() {
+                var dispatcher = _.extend({}, Backbone.Events);
+                var eventPayload, callCount = 0;
+                dispatcher.on('selectedDataChange', function(payload) {
+                    eventPayload = payload;
+                    callCount ++;
+                });
+                this.view.dispatcher = dispatcher;
+                this.view.inputType = 'checkbox';
+                this.view.render();
+                this.data.set('values', this.data.get('values').concat([
+                    {
+                        'Name': 'Robert',
+                        'Age': 22,
+                        'Gender': 'M',
+                        'Eyes': 'Blue'
+                    }
+                ]));
+                expect(eventPayload).toBeDefined();
+                expect(eventPayload.selected).toBeDefined();
+                expect(eventPayload.selected.length).toBe(0);
+                expect(callCount).toBe(1);
+            });
+
+        });
+
+        describe('Data operations', function() {
+
+            beforeEach(function() {
+                this.data = new TableData({
+                    columns: ['Name', 'Age', 'Gender'],
+                    values: [
+                        {
+                            'Name': 'Bob',
+                            'Age': 32,
+                            'Gender': 'M',
+                            'Eyes': 'Blue'
+                        },
+                        {
+                            'Name': 'Christine',
+                            'Age': 37,
+                            'Gender': 'F',
+                            'Eyes': 'Green'
+                        }
+                    ]
+                });
+                this.view = new DataTable({
+                    data: this.data
+                });
+                this.view.render();
+            });
+
+            it('should truncate the input data values list when requested to do so', function() {
+                this.view.truncateBody();
+                expect(this.data.get('values').length).toEqual(0);
             });
 
         });
