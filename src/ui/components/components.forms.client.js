@@ -10,10 +10,6 @@ var DataForm = Backbone.View.extend({
     initialize: function(options) {
 
         this.dispatcher = options.dispatcher;
-
-        var childOpts = _.clone(options);
-        delete childOpts.el;
-        delete childOpts.id;
         this.blocks = options.blocks || [];
 
         if (this.dispatcher) {
