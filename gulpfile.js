@@ -154,7 +154,7 @@ gulp.task('sass', function () {
 });
 
 gulp.task('ui-server', ['lint', 'compile-latest'], function() {
-    return gulp.src([compileRoot, 'node_modules'])
+    return gulp.src([compileRoot, 'node_modules', 'coverage'])
         .pipe(webserver({
             livereload: true,
             directoryListing: {
