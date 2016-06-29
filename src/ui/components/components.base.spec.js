@@ -341,7 +341,7 @@ describe('Base components', function() {
 
     describe('Tabs list', function() {
 
-        var mockView = Backbone.View.extend();
+        var MockView = Backbone.View.extend();
 
         it('should exist', function () {
             expect(TabsList).toBeDefined();
@@ -366,8 +366,8 @@ describe('Base components', function() {
             it('should create tabs based on constructor options tabs property', function() {
                 this.view = new TabsList({
                     tabs: {
-                        'Tab1': new mockView({id: 'view1'}).render(),
-                        'Tab2': new mockView({id: 'view2'}).render()
+                        'Tab1': new MockView({id: 'view1'}).render(),
+                        'Tab2': new MockView({id: 'view2'}).render()
                     }
                 });
                 this.view.render();
@@ -390,8 +390,8 @@ describe('Base components', function() {
         describe('Click interactions', function() {
 
             beforeEach(function () {
-                this.mock1 = new mockView({id: 'view1'});
-                this.mock2 = new mockView({id: 'view2'});
+                this.mock1 = new MockView({id: 'view1'});
+                this.mock2 = new MockView({id: 'view2'});
                 this.view = new TabsList({
                     tabs: {
                         'Tab1': this.mock1.render(),
@@ -420,8 +420,8 @@ describe('Base components', function() {
         describe('Dispatcher notifications', function() {
 
             beforeEach(function () {
-                this.mock1 = new mockView({id: 'view1'});
-                this.mock2 = new mockView({id: 'view2'});
+                this.mock1 = new MockView({id: 'view1'});
+                this.mock2 = new MockView({id: 'view2'});
                 this.dispatcher = _.extend({}, Backbone.Events);
                 this.view = new TabsList({
                     tabs: {
