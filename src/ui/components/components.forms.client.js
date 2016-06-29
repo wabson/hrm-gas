@@ -30,11 +30,26 @@ var DataForm = Backbone.View.extend({
         event.preventDefault();
         if (this.dispatcher) {
             this.setButtonsDisabled_(true, 'submit');
-            var formData = this.$el.serializeObject();
+            var formData = this.serializeFields();
             this.dispatcher.trigger('submit', {
                 data: formData
             });
         }
+    },
+
+    serializeFields: function() {
+        var o = {};
+        _.each(this.$el.serializeArray(), function(arrItem) {
+            if (o[arrItem.name] !== undefined) {
+                if (!o[arrItem.name].push) {
+                    o[arrItem.name] = [o[arrItem.name]];
+                }
+                o[arrItem.name].push(arrItem.value || '');
+            } else {
+                o[arrItem.name] = arrItem.value || '';
+            }
+        });
+        return o;
     },
 
     onClickReset: function() {
