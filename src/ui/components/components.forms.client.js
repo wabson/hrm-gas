@@ -85,7 +85,7 @@ var DataForm = Backbone.View.extend({
     },
 
     setFormFieldsDisabled: function (disabled) {
-        this.$el.find('input[type=text], input[type=date], input[type=search]').prop('disabled', disabled);
+        this.$el.find('input[type=text], input[type=date], input[type=search], select').prop('disabled', disabled);
         return this;
     },
 

@@ -210,11 +210,13 @@ describe('Forms components', function() {
             it('should set fields disabled when setFormFieldsDisabled(true) called', function() {
                 this.view.setFormFieldsDisabled(true);
                 expect(this.view.el.querySelector('input[name=field1]')).toBeDisabled();
+                expect(this.view.el.querySelector('select[name=field3]')).toBeDisabled();
             });
 
             it('should set fields enabled when setFormFieldsDisabled(true) called', function() {
                 this.view.setFormFieldsDisabled(false);
                 expect(this.view.el.querySelector('input[name=field1]')).not.toBeDisabled();
+                expect(this.view.el.querySelector('select[name=field3]')).not.toBeDisabled();
             });
 
         });
