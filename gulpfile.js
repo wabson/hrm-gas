@@ -103,7 +103,7 @@ gulp.task('copy-client-code', function copyClientCode() {
 // Does any environment specific work
 gulp.task('copy-environment-specific-code', function copyEnvironmentSpecific() {
     var envFiles = srcRoot + '/env/' + options.env + '/*.js';
-    var mockFiles = testRoot + '/ui/**/*.html';
+    var mockFiles = testRoot + '/ui/**/*.@(html|client.js)';
     var testFiles = srcRoot + '/tests/*.js';
     var unitTestRunner = srcRoot + '/unit-tests.html';
     switch (options.env) {

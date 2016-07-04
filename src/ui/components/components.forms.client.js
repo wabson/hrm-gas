@@ -158,6 +158,12 @@ var FormDialog = Backbone.View.extend({
     },
 
     render: function() {
+        var messagesDiv = this.$('.messages');
+        if (messagesDiv.length === 0) {
+            messagesDiv = document.createElement('DIV');
+            messagesDiv.className = 'messages';
+            this.$el.append(messagesDiv);
+        }
         this.$el.append(this.form.render().$el);
         if (this.dataGetFn) {
             this.form.setFormFieldsDisabled(true);
@@ -182,7 +188,7 @@ var FormDialog = Backbone.View.extend({
     },
 
     onDataGetFailure: function(error) {
-        this.$('#messages')
+        this.$('.messages')
             .addClass('message error')
             .html('<p class="icon icon-error">Sorry, an error occurred: ' + error.message + '</p>');
     },
@@ -192,9 +198,10 @@ var FormDialog = Backbone.View.extend({
     },
 
     onDataSetFailure: function(error) {
-        this.$('#messages')
+        this.$('.messages')
             .addClass('message error')
             .html('<p class="icon icon-error">Sorry, an error occurred: ' + error.message + '</p>');
+        this.dispatcher.trigger('submitFailure');
     },
 
     onFormSubmit: function(payload) {
@@ -298,7 +305,7 @@ var DataTableForm = DataForm.extend({
 
     submit: function(event) {
         event.preventDefault();
-        var formData = this.$el.serializeObject();
+        var formData = this.serializeFields();
         if (this.dispatcher) {
             this.dispatcher.trigger('submit', {
                 data: formData,
