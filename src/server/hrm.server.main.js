@@ -3238,11 +3238,6 @@ function setSheetValidation_(sheet, ss, scriptProps) {
         r.setDataValidation(clubRule);
       }
     }
-    r = sheet.getRange(startRow, getRaceColumnNumber("BCU Number", sheet), lastRow-startRow+1);
-    if (r) {
-      r.clearDataValidations();
-      r.setDataValidation(classRule);
-    }
     r = sheet.getRange(startRow, getRaceColumnNumber("Class", sheet), lastRow-startRow+1);
     if (r) {
       r.clearDataValidations();
@@ -3253,10 +3248,12 @@ function setSheetValidation_(sheet, ss, scriptProps) {
       r.clearDataValidations();
       r.setDataValidation(divRule);
     }
-    r = sheet.getRange(startRow, getRaceColumnNumber("BCU Number", sheet), lastRow-startRow+1);
-    if (r) {
-      r.clearDataValidations();
-      r.setDataValidation(bcuNumberRule);
+    if ( getRaceColumnNumber("BCU Number", sheet) > 0) {
+      r = sheet.getRange(startRow, getRaceColumnNumber("BCU Number", sheet), lastRow - startRow + 1);
+      if (r) {
+        r.clearDataValidations();
+        r.setDataValidation(bcuNumberRule);
+      }
     }
     if (expiryCol > 0) {
       r = sheet.getRange(startRow, expiryCol, lastRow-startRow+1);
