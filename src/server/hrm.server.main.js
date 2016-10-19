@@ -2899,7 +2899,7 @@ function calculatePoints(scriptProps) {
       notes1 = entries[l].values[0][notesColIndex];
       notes2 = entries[l].values[1] ? entries[l].values[1][notesColIndex] : null;
       if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0) && notes1 != "ill" && notes2 != "ill") {
-        if (isHaslerRace && boundary && time instanceof Date && boundary < timeInMillis(time)) {
+        if (isHaslerRace && (divStr > "3" || isDoublesRace) && boundary && time instanceof Date && boundary < timeInMillis(time)) {
           pointsAwarded = minPoints;
         } else {
           // If two or more crews cross the line together then the counter gets decremented for each but they all get the same score as each other
