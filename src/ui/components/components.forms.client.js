@@ -258,7 +258,9 @@ var DataTableForm = DataForm.extend({
 
     initialize: function(options) {
         DataForm.prototype.initialize.call(this, options);
-        this.dispatcher.bind('selectedDataChange', this.onTableSelectedDataChange, this);
+        if (this.dispatcher) {
+            this.dispatcher.bind('selectedDataChange', this.onTableSelectedDataChange, this);
+        }
     },
 
     render: function() {
@@ -326,16 +328,14 @@ var DataTableForm = DataForm.extend({
 var FormButton = Backbone.View.extend({
     tagName: 'button',
     initialize: function(options) {
-        this.type = options.type;
+        this.type = options.type || 'submit';
         this.disabled = options.disabled === true;
-        this.required = options.required === true;
-        this.text = options.text;
+        this.text = options.text || 'Submit';
     },
     render: function() {
         this.$el.html(this.text)
-                .prop('type', this.type)
-                .prop('disabled', this.disabled)
-                .prop('required', this.required);
+                .attr('type', this.type)
+                .prop('disabled', this.disabled);
         return this;
     }
 });
@@ -344,15 +344,13 @@ var FormField = Backbone.View.extend({
     tagName: 'span',
     initialize: function(options) {
         this.fieldId = options.fieldId;
-        this.fieldClassName = options.fieldClassName;
+        this.fieldClassName = options.fieldClassName || '';
         this.name = options.name;
         this.type = options.type;
         this.label = options.label;
-        this.prefix = options.prefix;
         this.disabled = options.disabled === true;
         this.required = options.required === true;
-        this.value = options.value;
-        this.size = options.size;
+        this.value = options.value || '';
         this.pattern = options.pattern;
         this.step = options.step;
         this.placeholder = options.placeholder;
@@ -392,7 +390,6 @@ var FormField = Backbone.View.extend({
             type: this.type,
             disabled: this.disabled,
             required: this.required,
-            size: this.size,
             value: this.value,
             pattern: this.pattern,
             step: this.step,
@@ -423,7 +420,7 @@ var SelectListData = Backbone.Model.extend({});
 var SelectList = Backbone.View.extend({
     tagName: 'select',
     initialize: function(options) {
-        this.model = options.model || [];
+        this.model = options.model;
         this.name = options.name;
         this.title = options.title;
         this.placeholder = options.placeholder;
@@ -432,7 +429,7 @@ var SelectList = Backbone.View.extend({
     },
     render: function() {
         this.$el.empty().append(this.placeholder ? '<option value="">' + this.placeholder + '</option>' : '')
-                .append(_.map(this.model.get('options'), function(option) {
+                .append(this.model ? _.map(this.model.get('options'), function(option) {
                     var $el = $(document.createElement('option'));
                     if (_.isString(option)) {
                         $el.html(option);
@@ -442,15 +439,15 @@ var SelectList = Backbone.View.extend({
                         $el.attr('value', option.value).html(option.text || option.value);
                     }
                     return $el;
-                }, this))
+                }, this) : [])
                 .attr('name', this.name).attr('title', this.title);
         this.$el.prop('required', this.required === true);
         return this;
     },
     getSelectedValue: function() {
-        return this.el.options[this.el.selectedIndex];
+        return this.el.options[this.el.selectedIndex].value;
     },
     getSelectedText: function() {
-        return this.$el.val();
+        return this.el.options[this.el.selectedIndex].innerHTML;
     }
 });

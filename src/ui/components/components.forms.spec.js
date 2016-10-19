@@ -452,6 +452,39 @@ describe('Forms components', function() {
                 expect(messagesEl[0].innerText).toBe('Sorry, an error occurred: Error text 777');
             });
 
+            it('should allow form values to be set programatically', function() {
+                var dialog = new FormDialog({
+                    spreadsheetId: '123456',
+                    formFields: [
+                        [
+                            new MockInput({
+                                type: 'text',
+                                name: 'field1',
+                                value: ''
+                            }),
+                            new MockInput({
+                                type: 'hidden',
+                                name: 'field2',
+                                value: ''
+                            }),
+                            new MockButton({
+                                type: 'submit',
+                                name: 'action',
+                                value: 'Submit'
+                            })
+                        ]
+                    ]
+                }).render();
+                dialog.setFormData({
+                    values: {
+                        field1: 'Diamond',
+                        field2: 'Bob'
+                    }
+                });
+                expect(dialog.el.querySelector('input[name=field1]').value).toBe('Diamond');
+                expect(dialog.el.querySelector('input[name=field2]').value).toBe('Bob');
+            });
+
         });
 
         describe('Form submission', function() {
@@ -560,6 +593,521 @@ describe('Forms components', function() {
                 var messagesEl = dialog.el.getElementsByClassName('messages');
                 expect(messagesEl.length).toBe(1);
                 expect(messagesEl[0].innerText).toBe('Sorry, an error occurred: Error text 888');
+            });
+
+        });
+
+    });
+
+    describe('Data table form', function() {
+
+        it('should exist', function () {
+            expect(DataTableForm).toBeDefined();
+        });
+
+        it('should render a form element', function () {
+            var form = new DataTableForm({}).render();
+            expect(form.el).toEqual('form');
+        });
+
+        it('should render the blocks specified', function () {
+            var form = new DataTableForm({
+                blocks: [new MyBlock({id: 'a'}), new MyBlock({id: 'b'}), new MyBlock({id: 'c'})]
+            }).render();
+            expect(form.el).toContainHtml('<div id="a"></div><div id="b"></div><div id="c"></div>');
+        });
+
+        it('should render submit buttons disabled by default', function () {
+            var form = new DataTableForm({
+                blocks: [
+                    new MockButton({
+                        type: 'submit',
+                        name: 'action',
+                        value: 'Submit'
+                    }),
+                    new MockButton({
+                        type: 'reset',
+                        name: 'action',
+                        value: 'Reset'
+                    })
+                ]
+            }).render();
+            expect(form.el).toContain('button[type=submit]');
+            expect(form.el.querySelector('button[type=submit]')).toBeDisabled();
+        });
+
+        describe('forms with tables present', function() {
+
+            beforeEach(function() {
+                this.dispatcher = _.clone(Backbone.Events);
+                var data = new TableData({
+                    columns: ['Name', 'Age', 'Gender'],
+                    values: [
+                        {
+                            'Name': 'Bob',
+                            'Age': 32,
+                            'Gender': 'M',
+                            'Eyes': 'Blue'
+                        },
+                        {
+                            'Name': 'Christine',
+                            'Age': 37,
+                            'Gender': 'F',
+                            'Eyes': 'Green'
+                        }
+                    ]
+                });
+                var tableView = new DataTable({
+                    id: 'table1',
+                    dispatcher: this.dispatcher,
+                    data: data,
+                    inputType: 'checkbox'
+                });
+                this.formView = new DataTableForm({
+                    dispatcher: this.dispatcher,
+                    blocks: [
+                        new FormBlock({
+                            controls: [
+                                tableView
+                            ]
+                        }),
+                        new FormBlock({
+                            controls: [
+                                new MockButton({
+                                    type: 'submit',
+                                    name: 'action',
+                                    value: 'Submit'
+                                }),
+                                new MockButton({
+                                    type: 'reset',
+                                    name: 'action',
+                                    value: 'Reset'
+                                })
+                            ]
+                        })
+                    ]
+                }).render();
+
+            });
+
+            it('should leave submit buttons disabled initially', function() {
+                expect(this.formView.getNumTableRowsSelected_()).toBe(0);
+                expect(this.formView.el.querySelector('button[type=submit]')).toBeDisabled();
+
+            });
+
+            it('should enable submit buttons when table with valid ID has data selected', function() {
+                this.formView.$el.find('input[type="checkbox"]:first').prop('checked', true).trigger('change');
+                expect(this.formView.getNumTableRowsSelected_()).toBe(1);
+                expect(this.formView.el.querySelector('button[type=submit]')).not.toBeDisabled();
+
+            });
+
+            it('should clear table data when reset button clicked', function() {
+                this.formView.$el.find('input[type="checkbox"]:first').prop('checked', true).trigger('change');
+                expect(this.formView.$el.find('input[type="checkbox"]:first')[0]).toBeChecked();
+                var e = jQuery.Event('click', { target: this.formView.$el.find('button[type=reset]')[0] } );
+                this.formView.$el.trigger(e);
+                expect(this.formView.$el.find('input[type="checkbox"]:first')[0]).not.toBeChecked();
+
+            });
+
+            it('should disable submit buttons during submit', function() {
+                this.formView.$el.find('input[type="checkbox"]:first').prop('checked', true).trigger('change');
+                expect(this.formView.$el.find('input[type="checkbox"]:first')[0]).toBeChecked();
+                this.formView.$el.submit();
+                expect(this.formView.el.querySelector('button[type=submit]')).toBeDisabled();
+
+            });
+
+            it('should clear table data after submit', function() {
+                this.formView.$el.find('input[type="checkbox"]:first').prop('checked', true).trigger('change');
+                expect(this.formView.$el.find('input[type="checkbox"]:first')[0]).toBeChecked();
+                this.dispatcher.trigger('submitSuccess', {});
+                expect(this.formView.$el.find('input[type="checkbox"]:first')[0]).not.toBeChecked();
+
+            });
+
+        });
+
+    });
+
+    describe('Form button', function() {
+
+        it('should exist', function () {
+            expect(FormButton).toBeDefined();
+        });
+
+        it('should render a button element', function () {
+            var form = new FormButton({}).render();
+            expect(form.el).toEqual('button');
+        });
+
+        it('should enable the button initially if not specified otherwise', function () {
+            var form = new FormButton({}).render();
+            expect(form.$el.prop('disabled')).toBe(false);
+        });
+
+        it('should disable the button if the options specify this', function () {
+            var form = new FormButton({
+                disabled: true
+            }).render();
+            expect(form.$el.prop('disabled')).toBe(true);
+        });
+
+        it('should render a submit button by default', function () {
+            var form = new FormButton({}).render();
+            expect(form.$el.attr('type')).toBe('submit');
+        });
+
+        it('should render a reset button if the options specify this', function () {
+            var form = new FormButton({
+                type: 'reset'
+            }).render();
+            expect(form.$el.attr('type')).toBe('reset');
+        });
+
+        it('should render the button text "Submit" by default', function () {
+            var form = new FormButton({}).render();
+            expect(form.el.innerHTML).toBe('Submit');
+        });
+
+        it('should render the supplied button text', function () {
+            var form = new FormButton({
+                text: 'My Custom Button'
+            }).render();
+            expect(form.el.innerHTML).toBe('My Custom Button');
+        });
+
+    });
+
+    describe('Form select list', function() {
+
+        it('should exist', function () {
+            expect(SelectList).toBeDefined();
+        });
+
+        it('should render a select element', function () {
+            var select = new SelectList({}).render();
+            expect(select.el).toEqual('select');
+        });
+
+        it('should render options correctly when passed a string list', function () {
+            var data = new SelectListData({
+                options: [
+                    'optionA',
+                    'optionB',
+                    'optionC'
+                ]
+            });
+            var select = new SelectList({
+                model: data
+            }).render();
+            expect(select.el).toEqual('select');
+            expect(select.el.children.length).toBe(3);
+            expect(select.el).toContainHtml('<option>optionA</option>');
+            expect(select.el).toContainHtml('<option>optionB</option>');
+            expect(select.el).toContainHtml('<option>optionC</option>');
+        });
+
+        it('should render options correctly when passed a array list with just values', function () {
+            var data = new SelectListData({
+                options: [
+                    ['optionA'],
+                    ['optionB'],
+                    ['optionC']
+                ]
+            });
+            var select = new SelectList({
+                model: data
+            }).render();
+            expect(select.el).toEqual('select');
+            expect(select.el.children.length).toBe(3);
+            expect(select.el).toContainHtml('<option value="optionA">optionA</option>');
+            expect(select.el).toContainHtml('<option value="optionB">optionB</option>');
+            expect(select.el).toContainHtml('<option value="optionC">optionC</option>');
+        });
+
+        it('should render options correctly when passed a array list with contents and values', function () {
+            var data = new SelectListData({
+                options: [
+                    ['optionA', 'Option AA'],
+                    ['optionB', 'Option BB'],
+                    ['optionC', 'Option CC']
+                ]
+            });
+            var select = new SelectList({
+                model: data
+            }).render();
+            expect(select.el).toEqual('select');
+            expect(select.el.children.length).toBe(3);
+            expect(select.el).toContainHtml('<option value="optionA">Option AA</option>');
+            expect(select.el).toContainHtml('<option value="optionB">Option BB</option>');
+            expect(select.el).toContainHtml('<option value="optionC">Option CC</option>');
+        });
+
+        it('should render options correctly when passed an object list', function () {
+            var data = new SelectListData({
+                options: [
+                    {
+                        value: 'optionA',
+                        text: 'Option AA'
+                    },
+                    {
+                        value: 'optionB',
+                        text: 'Option BB'
+                    }
+                ]
+            });
+            var select = new SelectList({
+                model: data
+            }).render();
+            expect(select.el).toEqual('select');
+            expect(select.el.children.length).toBe(2);
+            expect(select.el).toContainHtml('<option value="optionA">Option AA</option>');
+            expect(select.el).toContainHtml('<option value="optionB">Option BB</option>');
+        });
+
+        it('should render options correctly when passed an object list with value only', function () {
+            var data = new SelectListData({
+                options: [
+                    {
+                        value: 'optionA'
+                    },
+                    {
+                        value: 'optionB'
+                    }
+                ]
+            });
+            var select = new SelectList({
+                model: data
+            }).render();
+            expect(select.el).toEqual('select');
+            expect(select.el.children.length).toBe(2);
+            expect(select.el).toContainHtml('<option value="optionA">optionA</option>');
+            expect(select.el).toContainHtml('<option value="optionB">optionB</option>');
+        });
+
+        it('should render a placeholder before the options', function () {
+            var data = new SelectListData({
+                options: [
+                    {
+                        value: 'optionA',
+                        text: 'Option AA'
+                    }
+                ]
+            });
+            var select = new SelectList({
+                model: data,
+                placeholder: 'Select an option'
+            }).render();
+            expect(select.el).toEqual('select');
+            expect(select.el.children.length).toBe(2);
+            expect(select.el.children[0].outerHTML).toBe('<option value="">Select an option</option>');
+        });
+
+        describe('querying', function() {
+
+            beforeEach(function() {
+                var data = new SelectListData({
+                    options: [
+                        {
+                            value: 'optionA',
+                            text: 'Option AA'
+                        }
+                    ]
+                });
+                this.select = new SelectList({
+                    model: data
+                }).render();
+            });
+
+            it('should return the currently-selected value', function () {
+                expect(this.select.getSelectedValue()).toEqual('optionA');
+            });
+
+            it('should return the currently-selected text', function () {
+                expect(this.select.getSelectedText()).toEqual('Option AA');
+            });
+
+        });
+
+    });
+
+    describe('Form field', function() {
+
+        it('should exist', function () {
+            expect(FormField).toBeDefined();
+        });
+
+        it('should render a span element', function () {
+            var field = new FormField({
+                type: 'text'
+            }).render();
+            expect(field.el).toEqual('span');
+        });
+
+        it('should throw an exception when type not specified', function () {
+            expect(function() {
+                new FormField({}).render();
+            }).toThrow('Unknown type undefined');
+        });
+
+        it('should throw an exception when bad type specified', function () {
+            expect(function() {
+                new FormField({
+                    type: 'dsss'
+                }).render();
+            }).toThrow('Unknown type dsss');
+        });
+
+        describe('field label', function() {
+
+            it('should render a label', function () {
+                var field = new FormField({
+                    type: 'text'
+                }).render();
+                expect(field.el).toContainElement('label');
+                expect(field.el.querySelector('label').innerHTML).toBe('');
+            });
+
+            it('should populate the label with the supplied text', function () {
+                var field = new FormField({
+                    type: 'text',
+                    label: 'Custom Field 123'
+                }).render();
+                expect(field.el).toContainElement('label');
+                expect(field.el.querySelector('label').innerHTML).toBe('Custom Field 123');
+            });
+
+        });
+
+        describe('text control', function() {
+
+            it('should render a basic text control', function () {
+                var field = new FormField({
+                    type: 'text'
+                }).render();
+                expect(field.el.children[0]).toEqual('label');
+                expect(field.el.children[1]).toEqual('input[type=text]');
+            });
+
+            it('should link label and input when supplied with an ID', function () {
+                var field = new FormField({
+                    type: 'text',
+                    fieldId: 'abc'
+                }).render();
+                var inputEl = field.el.querySelector('input'), labelEl = field.el.querySelector('label');
+                expect(inputEl.getAttribute('id')).toBe('abc');
+                expect(labelEl.getAttribute('for')).toBe('abc');
+            });
+
+            it('should link label and input when supplied with a name', function () {
+                var field = new FormField({
+                    type: 'text',
+                    name: 'abc'
+                }).render();
+                var inputEl = field.el.querySelector('input'), labelEl = field.el.querySelector('label');
+                expect(inputEl.getAttribute('id')).toBe('abc');
+                expect(labelEl.getAttribute('for')).toBe('abc');
+            });
+
+            it('should render a text control with validation', function () {
+                var field = new FormField({
+                    type: 'text',
+                    required: true,
+                    pattern: '[0-9]+',
+                    title: 'Must be a number'
+                }).render();
+                var inputEl = field.el.querySelector('input');
+                expect(inputEl.hasAttribute('required'));
+                expect(inputEl.getAttribute('pattern')).toBe('[0-9]+');
+                expect(inputEl.getAttribute('title')).toBe('Must be a number');
+            });
+
+        });
+
+        describe('number control', function() {
+
+            it('should render a basic number control', function () {
+                var field = new FormField({
+                    type: 'number'
+                }).render();
+                expect(field.el.children[1]).toEqual('input[type=number]');
+            });
+
+            it('should render a number control with validation', function () {
+                var field = new FormField({
+                    type: 'number',
+                    required: true,
+                    step: '0.1'
+                }).render();
+                var inputEl = field.el.querySelector('input');
+                expect(inputEl.hasAttribute('required'));
+                expect(inputEl.getAttribute('step')).toBe('0.1');
+            });
+
+        });
+
+        describe('date control', function() {
+
+            it('should render a basic date control', function () {
+                var field = new FormField({
+                    type: 'date'
+                }).render();
+                expect(field.el.children[1]).toEqual('input[type=date]');
+            });
+
+        });
+
+        describe('checkbox control', function() {
+
+            it('should render a basic checkbox control', function () {
+                var field = new FormField({
+                    type: 'checkbox'
+                }).render();
+                expect(field.el.children[0]).toEqual('input[type=checkbox]');
+                expect(field.el.children[1]).toEqual('label');
+            });
+
+        });
+
+    });
+
+    describe('Select form field', function() {
+
+        it('should exist', function () {
+            expect(FormSelectField).toBeDefined();
+        });
+
+        describe('rendering', function() {
+
+            beforeEach(function() {
+                var data = new SelectListData({
+                    options: [
+                        {
+                            value: 'optionA',
+                            text: 'Option AA'
+                        }
+                    ]
+                });
+                var select = new SelectList({
+                    model: data,
+                    placeholder: 'Select an option'
+                });
+                this.field = new FormSelectField({
+                    fieldId: 'my-field',
+                    selectList: select
+                }).render();
+            });
+
+            it('should render a span element', function () {
+                expect(this.field.el).toEqual('span');
+            });
+
+            it('should render a select control with label', function () {
+                expect(this.field.el.children[0]).toEqual('label[for=my-field]');
+                expect(this.field.el.children[1]).toEqual('select#my-field');
             });
 
         });
