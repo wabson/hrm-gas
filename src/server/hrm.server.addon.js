@@ -43,6 +43,7 @@ function onOpen(e) {
       .addSeparator()
       .addItem('Live Entries', 'showEntriesURL')
       .addItem('Publish Entries', 'saveEntriesHTML')
+      .addItem('Print Entries', 'createPrintableEntries')
       .addItem('Club Entries', 'createClubEntries')
       .addSeparator()
       .addItem('Finance Summary', 'showRaceLevies'))
