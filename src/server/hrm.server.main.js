@@ -2692,6 +2692,7 @@ function setPromotionsDiv789(ss, isHaslerFinal) {
  * @param scriptProps
  */
 function calculatePromotions(scriptProps) {
+  scriptProps = scriptProps || {};
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
       pdSheet = ss.getSheetByName("PandD");
   var raceRegion = scriptProps.haslerRegion, isHaslerFinal = raceRegion == "HF";
