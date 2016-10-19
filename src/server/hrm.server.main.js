@@ -60,6 +60,8 @@ var DIVS_8_MILE = ["4","5","6","7","8","9"];
 var DIVS_4_MILE = ["5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_LIGHTNING = ["U12M","U12F","U10M","U10F"];
 
+var LEVY_SENIOR = 2, LEVY_JUNIOR = 2;
+
 var COLOR_YELLOW = "#ffff99"; // Key columns
 var COLOR_BLUE = "#ccffff"; // Value columns
 
@@ -1632,7 +1634,7 @@ function showRaceLevies(scriptProps) {
     }
   }
   
-  var totalLevies = totalSnr * 2 + totalJnr + totalUnknown * 2;
+  var totalLevies = totalSnr * LEVY_SENIOR + totalJnr * LEVY_JUNIOR;
   var grandTotal = totalSnr + totalJnr + totalLightning + totalUnknown;
   
   // Dialog height in pixels
