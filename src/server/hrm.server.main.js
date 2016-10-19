@@ -3898,12 +3898,14 @@ function autoResizeColumns(sheet) {
  * @param scriptProps
  */
 function createPrintableEntries(scriptProps) {
+  scriptProps = scriptProps || {};
   var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, false, scriptProps.printableEntriesId, scriptProps);
   showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Entries", "_blank");
   return ss;
 }
 
 function createPrintableResults(scriptProps) {
+  scriptProps = scriptProps || {};
   // 'autoResizeColumn' is not available yet in the new version of Google Sheets
   var columnNames = isHaslerRace() ? printableResultColumnNamesHasler : printableResultColumnNames,
     ss = createPrintableSpreadsheet(null, columnNames, "Posn", true, false, scriptProps.printableResultsId, scriptProps);
@@ -3931,6 +3933,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
     if (a.rows.length > 1) {
       previous.push(objUnzip(a.rows[1], columnNames, false, ''));
     }
+    return previous;
   };
   // Copy existing sheets
   for (var j = 0; j < srcSheets.length; j++) {
@@ -3989,6 +3992,7 @@ function createClubEntries(scriptProps) {
 
 function createClubSpreadsheet_(name, columnNames, scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var driveProps = getDriveProperties_(ss.getId());
   var truncateEmpty = true;
   name = name || ss.getName() + " (Clubs)";
   var newss = scriptProps && scriptProps.clubEntriesId ? SpreadsheetApp.openById(scriptProps.clubEntriesId) : SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss), clubValues = {}, currClub, currDue, currPaid, currClubValues;
@@ -4001,7 +4005,7 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
     }
   }
   var clubCounts = {}, clubDue = {}, clubPaid = {}, lastRaceNum, raceName, paddlerType,
-    fees = { seniors: scriptProps.entrySenior, juniors: scriptProps.entryJunior, lightnings: scriptProps.entryLightning };
+    fees = { seniors: driveProps.entrySenior, juniors: driveProps.entryJunior, lightnings: driveProps.entryLightning };
   var rowIter = function(b) {
     currClub = b['Club'];
     currDue = b['Due'];
