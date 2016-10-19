@@ -909,12 +909,34 @@ function addEntry_(items, headers, selectedClass, spreadsheet) {
     if (sheetName === null) {
       throw 'Could not find a suitable race';
     }
+    var crewsAddedDue = addDueAmountToEntry_(items, selectedClass);
+    if (crewsAddedDue) {
+      headers.push('Due');
+    }
     var result = addEntryToSheet_(items, headers, sheetName, spreadsheet);
     result.sheetName = sheetName;
     return result;
   } else {
     throw("Nobody was selected");
   }
+}
+
+function addDueAmountToEntry_(members, raceName) {
+  var sheetUtils = new SheetsUtilitiesLibrary({});
+  var driveProps = getDriveProperties_(sheetUtils.getCurrentActiveSpreadsheet().getId()), member;
+  if (driveProps.entrySenior && driveProps.entryJunior) {
+    for (var i = 0; i<members.length; i++) {
+      member = members[i];
+      if (isLightningRaceName_(raceName)) {
+        member['Due'] = driveProps.entryLightning || null;
+      }
+      if (member['Class']) {
+        member['Due'] = member['Class'].indexOf('J') > -1 ? driveProps.entryJunior : driveProps.entrySenior;
+      }
+    }
+    return members;
+  }
+  return null;
 }
 
 /**
