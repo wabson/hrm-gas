@@ -1,15 +1,33 @@
 /*jshint sub:true*/
 
 var HaslerRankingDetails = function(options) {
-    this.raceDate = new Date();
+    this.raceDate = options.raceDate ? new Date(options.raceDate) : new Date();
     this.bcuRegexp = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|ET [A-Z]{3})$';
-    this.classListData = options.classListData;
-    this.clubListData = options.clubListData;
+    this.classListData = options.classListData || new Backbone.Model();
+    this.clubListData = options.clubListData || new Backbone.Model();
+};
+
+var dateFormatters = {
+    short: function(d) {
+        var parts = d.toDateString().split(' ');
+        return parts.length === 4 ? [parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' ') : '';
+    }
 };
 
 HaslerRankingDetails.prototype = {
     nameCellRenderer: function(value, index, object) {
         return object['Surname'] + ', ' + object['First name'];
+    },
+    classCellRenderer: function(value, index, object) {
+        return this.addTitle(object['Club'], this.clubListData.get('options')) +
+            ', ' + this.addTitle(object['Class'], this.classListData.get('options'));
+    },
+    bcuCellRenderer: function(value, index, object) {
+        return this.wrapIfInvalid(object['BCU Number'], object, _.bind(this.isBCUNumberValid, this));
+    },
+    expiryCellRenderer: function(value, index, object) {
+        return value ?
+            this.wrapIfInvalid(dateFormatters.short(new Date(value)), object, _.bind(this.isBCUCurrent, this)) : '';
     },
     isBCUCurrent: function(value, object) {
         return new Date(object['Expiry']) >= this.raceDate;
@@ -36,29 +54,12 @@ HaslerRankingDetails.prototype = {
     getCellRenders: function() {
         return {
             'Name': this.nameCellRenderer,
-            'Class': _.bind(function (value, index, object) {
-                return this.addTitle(object['Club'], this.clubListData.get('options')) +
-                        ', ' +
-                        this.addTitle(object['Class'], this.classListData.get('options'));
-            }, this),
+            'Class': _.bind(this.classCellRenderer, this),
             'Div': function (value, index, object) {
                 return object['Division'];
             },
-            'BCU #': _.bind(function (value, index, object) {
-                return this.wrapIfInvalid(object['BCU Number'], object, _.bind(this.isBCUNumberValid, this));
-            }, this),
-            'Expiry': _.bind(function (value, index, object) {
-                if (value) {
-                    var parts = new Date(value).toDateString().split(' ');
-                    return parts.length === 4 ?
-                        this.wrapIfInvalid(
-                            [parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' '),
-                            object, _.bind(this.isBCUCurrent, this)
-                        ) : '';
-                } else {
-                    return '';
-                }
-            }, this)
+            'BCU #': _.bind(this.bcuCellRenderer, this),
+            'Expiry': _.bind(this.expiryCellRenderer, this)
         };
     }
 };
@@ -70,7 +71,7 @@ var RankingsSearchForm = DataForm.extend({
         DataForm.prototype.initialize.call(this, options);
 
         this.scriptMethod = options.scriptMethod;
-        this.searchPrompt = options.searchPrompt;
+        this.searchPrompt = options.searchPrompt || 'Search rankings';
         this.spreadsheetId = options.spreadsheetId;
         this.disabled = options.disabled === true;
 
@@ -149,14 +150,16 @@ var RankingsSearch = BaseComponent.extend({
                 })
             ]
         }));
-        this.dispatcher.bind('selectedDataChange', this.onSelectedDataChange, this);
 
-        this.dispatcher.bind('submitSuccess', function(payload) {
-            this.searchForm.reset();
-        }, this);
-        this.dispatcher.bind('reset', function() {
-            this.searchForm.reset(false).focus();
-        }, this);
+        if (this.dispatcher) {
+            this.dispatcher.bind('selectedDataChange', this.onSelectedDataChange, this);
+            this.dispatcher.bind('submitSuccess', function(payload) {
+                this.searchForm.reset();
+            }, this);
+            this.dispatcher.bind('reset', function() {
+                this.searchForm.reset(false).focus();
+            }, this);
+        }
     },
 
     render: function() {
@@ -198,7 +201,8 @@ var RankingsUpdateCheck = BaseComponent.extend({
                                 .removeClass()
                                 .addClass('message-box info')
                                 .find('p')
-                                .html('A new version of the ranking list may be available updated ' + webLastUpdated);
+                                .html('A new version of the ranking list may be available updated ' +
+                                    dateFormatters.short(new Date(webLastUpdated)));
                     } else {
                         if (this.displayUpToDateConfirmation) {
                             this.$el.css('display', 'block')

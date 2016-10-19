@@ -6,7 +6,8 @@ module.exports = function(config) {
             'node_modules/backbone/backbone.js',
             'test/ui/mock-services.client.js',
             'src/**/*.client.js',
-            'src/**/*.spec.js'
+            'src/**/*.spec.js',
+            {pattern: 'test/ui/fixtures/*.html', served: true, included: false}
         ],
 
         frameworks: ['jquery-jasmine', 'jasmine', 'jquery-2.1.0'],
@@ -20,7 +21,8 @@ module.exports = function(config) {
             // source files, that you wanna generate coverage for
             // do not include tests or libraries
             // (these files will be instrumented by Istanbul)
-            'src/**/*.client.js': ['coverage']
+            'src/**/*.client.js': ['coverage'],
+            '**/*.html': []
         },
 
         // optionally, configure the reporter
