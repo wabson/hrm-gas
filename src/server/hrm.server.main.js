@@ -2805,15 +2805,19 @@ function sumPoints(values, count) {
  * @param scriptProps
  */
 function calculatePoints(scriptProps) {
-  var skipNonComplete = true, raceRegion;
-  if (scriptProps.haslerRegion) {
-    raceRegion = scriptProps.haslerRegion;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var skipNonComplete = false, raceRegion;
+  if (scriptProps) {
+    if (scriptProps.haslerRegion) {
+      raceRegion = scriptProps.haslerRegion;
+    } else {
+      throw "No Hasler region is defined";
+    }
   } else {
-    throw "No Hasler region is defined";
+    var inlineInfo = getRaceInfo_(ss);
+    raceRegion = inlineInfo.regionId || '';
   }
-  
-  var ss = SpreadsheetApp.getActiveSpreadsheet(),
-      clubsSheet = ss.getSheetByName("Clubs"), clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
+  var clubsSheet = ss.getSheetByName("Clubs"), clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
       clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"), 
       pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
   if (clubsSheet !== null) {
