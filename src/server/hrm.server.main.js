@@ -1210,7 +1210,7 @@ function getEntryRowData(range, returnEmptyEntries) {
         rows.push(currEntry);
       }
       currEntry = {
-        boatNumber: values[i][0], 
+        boatNumber: values[i][0],
         rowNumber: range.getRow() + i,
         values: [values[i]],
         rows: headers ? [arrayZip(headers, values[i])] : null,
