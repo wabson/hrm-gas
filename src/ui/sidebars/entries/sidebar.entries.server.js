@@ -12,13 +12,17 @@ function sidebar_entries_race_info(spreadsheetId) {
         rankingsSize = getNumRankings_(rankingsSheet);
         rankingsLastUpdated = rankingsSize > 0 ? getRankingsLastUpdated_(rankingsSheet) : null;
     }
+
+    var driveProps = getDriveProperties_(spreadsheetId);
+
     return {
         classes: CLASSES_DEFS,
         divisions: DIVS_ALL,
         clubs: getClubRows(spreadsheet.getSheetByName('Clubs')),
         rankingsSize: rankingsSize,
         lastUpdated: rankingsLastUpdated !== null ?
-            Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null
+            Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null,
+        raceDate: driveProps.raceDate ? Utilities.formatDate(new Date(driveProps.raceDate)) : ''
     };
 }
 

@@ -301,6 +301,9 @@ $(function() {
                 return [clubArr[1], clubArr[0]];
             }));
             this.divisionsListData.set('options', resp.divisions);
+            if (resp.raceDate) {
+                rankingDetails.raceDate = new Date(resp.raceDate);
+            }
             new RankingsUpdateCheck({
                 el: '#rankings-update',
                 spreadsheetId: this.spreadsheetId,
