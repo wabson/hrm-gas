@@ -554,14 +554,6 @@ function showImportEntries() {
  */
 function importEntries(eventInfo) {
   var app = UiApp.getActiveApplication();
-  // Because the upload control was named "csvfile" and added as a callback element to the
-  // button's click event, we have its value available in eventInfo.parameter.csvfile.
-  //var csvBlob = eventInfo.parameter.csvfile;
-  //for (var p in eventInfo.parameter) {
-  //  Logger.log("" + p + ": " + eventInfo.parameter[p]);
-  //}
-  //if (csvBlob)
-  //{
   var csvId = eventInfo.parameter.spreadsheetId;
   if (csvId)
   {
