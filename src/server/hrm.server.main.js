@@ -2703,7 +2703,7 @@ function calculatePromotions(scriptProps) {
     }
     pdSheet.getRange(1, 1).setValue("Version 5.0");
     pdSheet.getRange(1, 12).setValue("P/D");
-    setPromotionsDiv123(ss, isHaslerFinal);
+    //setPromotionsDiv123(ss, isHaslerFinal);
     setPromotionsDiv456(ss, isHaslerFinal);
     setPromotionsDiv789(ss, isHaslerFinal);
     // These extra rows appear at the end with no times - presumably for manual promotions
