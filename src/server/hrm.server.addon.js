@@ -35,7 +35,7 @@ function onOpen(e) {
     .addSubMenu(ui.createMenu('Entries')
       .addItem('Add Entries from File', 'showAddLocalEntries')
       .addItem('Import Entries from CSV', 'showImportEntries')
-      .addItem('Update Expiry Dates', 'updateEntriesFromRankings')
+      .addItem('Update from Rankings', 'updateEntriesFromRankings')
       .addItem('Clear Entries', 'showClearEntries')
       .addItem('Set Formatting', 'setFormatting')
       .addItem('Set Formulas', 'setFormulas')

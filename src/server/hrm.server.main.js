@@ -1039,7 +1039,7 @@ function checkEntriesFromRankings_() {
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
         if (raceData[j]['Surname'] || raceData[j]['First name']) {
-          var columns = ['Div', 'BCU Number'];
+          var columns = ['Div', 'BCU Number', 'Expiry'];
           var boatNum = raceData[j]['Number'] || raceData[j-1]['Number'], bcuNum = raceData[j]['BCU Number'];
           if (bcuNum) {
             var matches = lookupInTable(rankingData, [
@@ -1051,7 +1051,7 @@ function checkEntriesFromRankings_() {
               matches = lookupInTable(rankingData, [
                 {name: 'BCU Number', value: raceData[j]['BCU Number']}
               ]);
-              columns = ['Div', 'Club', 'Surname', 'First name', 'Class'];
+              columns = ['Div', 'Club', 'Surname', 'First name', 'Class', 'Expiry'];
             }
             if (matches.length === 1) {
               Logger.log("Found match: " + matches[0]);
