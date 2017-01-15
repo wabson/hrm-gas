@@ -31,7 +31,7 @@ function onOpen(e) {
     .addSubMenu(ui.createMenu('Rankings')
       .addItem('Load Rankings', 'showLoadRankings')
       .addItem('Load Rankings from File', 'showAddLocalRankings')
-      .addItem('Clear Rankings', 'clearRankings'))
+      .addItem('Clear Rankings', 'confirmClearRankings'))
     .addSubMenu(ui.createMenu('Entries')
       .addItem('Add Entries from File', 'showAddLocalEntries')
       .addItem('Import Entries from CSV', 'showImportEntries')
