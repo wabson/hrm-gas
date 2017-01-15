@@ -16,15 +16,15 @@
     });
     runner.addData('dialog_start_submit', {});
     runner.addData('sidebar_rankings_import', {
-        lastUpdated: '26/04/2016',
+        lastUpdated: '2016-04-26',
         rankingsSize: 48910
     });
     runner.addData('sidebar_rankings_info', {
-        lastUpdated: '24/04/2016',
+        lastUpdated: '2016-04-24',
         rankingsSize: 32323
     });
     runner.addData('getRaceSheetNamesHTML', ['Div1', 'Div2', 'Div3']);
-    runner.addData('sidebar_rankings_last_updated', '23/04/2016');
+    runner.addData('sidebar_rankings_last_updated', '2016-04-23');
     runner.addData('sidebar_entries_search', [{
         'First name': 'WILLIAM',
         'Surname': 'ABSON',

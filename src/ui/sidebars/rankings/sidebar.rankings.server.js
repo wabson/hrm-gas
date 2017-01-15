@@ -24,7 +24,7 @@ function sidebar_rankings_info(spreadsheetId) {
     return {
         rankingsSize: rankingsSize,
         lastUpdated: rankingsLastUpdated !== null ?
-            Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null
+            Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : null
     };
 }
 
@@ -33,7 +33,7 @@ function sidebar_rankings_last_updated(spreadsheetId) {
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId),
         lastUpdated = getRankingsWebsiteLastUpdated_();
 
-    return lastUpdated ? Utilities.formatDate(lastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null;
+    return lastUpdated ? Utilities.formatDate(lastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : null;
 }
 
 function sidebar_rankings_insert(rows, headers) {
