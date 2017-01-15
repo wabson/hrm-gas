@@ -621,6 +621,128 @@ function importEntries(eventInfo) {
   return app;
 }
 
+function addEntrySets(ssId, entrySets) {
+  var ENTRY_SETS_SHEET_NAME = 'Entry Sets';
+  var MEMBERSHIP_PROOF_SHEET_NAME = 'Memberships';
+  var ENTRY_SETS_COLUMNS = ['ID', 'Name', 'Club', 'Email', 'Phone', 'Team Leader?', 'Entered', 'Due', 'Paid', 'Added'];
+  var MEMBERSHIP_PROOF_COLUMNS = ['Surname', 'First name', 'Club', 'Class', 'BCU Number', 'Expiry', 'Member name'];
+  // First make sure we have a sheet called Entry Sets
+  var ss = SpreadsheetApp.openById(ssId);
+  var added = new Date();
+  var results = [];
+  var membershipProofRows = [];
+  if (ss) {
+    var raceSheetNames = getRaceNames(ss);
+    var entrySetsSheet = ss.getSheetByName(ENTRY_SETS_SHEET_NAME) || ss.insertSheet(ENTRY_SETS_SHEET_NAME);
+    entrySetsSheet.getRange(1, 1, 1, ENTRY_SETS_COLUMNS.length).setValues([ENTRY_SETS_COLUMNS]);
+    var membershipProofsSheet = ss.getSheetByName(MEMBERSHIP_PROOF_SHEET_NAME) || ss.insertSheet(MEMBERSHIP_PROOF_SHEET_NAME);
+    membershipProofsSheet.getRange(1, 1, 1, MEMBERSHIP_PROOF_COLUMNS.length).setValues([MEMBERSHIP_PROOF_COLUMNS]);
+    var entriesToAdd = {};
+    var availablePlacesBySheet = {};
+    var getAvailablePlaces = function(raceName) {
+      availablePlacesBySheet[raceName] = availablePlacesBySheet[raceName] || getNextEntryRows(ss.getSheetByName(raceName));
+      return availablePlacesBySheet[raceName];
+    };
+    var getTotalPaidForEntrySet = function(entrySet) {
+      return entrySet.payments.reduce(function(total, payment) {
+        return total + (payment.type = 'paypal' && payment.state == 'approved' ? parseFloat(payment.amount) : 0);
+      }, 0)
+    };
+    var entrySetRows = entrySets.map(function(entrySet) {
+      return {
+        'ID': entrySet.id,
+        'Name': entrySet.name,
+        'Club': entrySet.club,
+        'Email': entrySet.email,
+        'Phone': entrySet.phone,
+        'Team Leader?': entrySet.isTeamLeader ? 'Y' : '',
+        'Entered': parseDate(entrySet.enteredOn),
+        'Due': parseFloat(entrySet.due) || '',
+        'Paid': parseFloat(getTotalPaidForEntrySet(entrySet)) || '',
+        'Added': added
+      };
+    });
+    entrySets.forEach(function(entrySet) {
+      var totalDue = 0;
+      var totalPaid = getTotalPaidForEntrySet(entrySet);
+      entrySet.entries.forEach(function(entries) {
+        var raceClass = entries.raceClass;
+        var entriesList = entries.list;
+        // Add payment info
+        entriesList.forEach(function(entryCrew) {
+          entryCrew.forEach(function(crewMember) {
+            var dueAmount = parseFloat(crewMember.due || 0);
+            totalDue += dueAmount;
+            if (totalPaid > 0) {
+              crewMember.paid = dueAmount;
+            }
+            crewMember.setId = entrySet.id;
+            if (crewMember.membershipProof && crewMember.membershipProof.type == 'upload' && crewMember.membershipProof.uploads) {
+              crewMember.membershipProof.uploads.forEach(function(upload) {
+                var parsedResult = upload.parsedResults[0];
+                membershipProofRows.push({
+                  'Surname': crewMember.surname,
+                  'First name': crewMember.firstName,
+                  'Club': crewMember.club,
+                  'Class': crewMember.className,
+                  'BCU Number': parsedResult ? parsedResult.number : '',
+                  'Expiry': parsedResult ? parseDate(parsedResult.expiry) : '',
+                  'Member name': parsedResult ? parsedResult.name : ''
+                });
+              });
+            }
+          });
+        });
+        if (raceSheetNames.indexOf(raceClass) > -1) {
+          entriesToAdd[raceClass] = (entriesToAdd[raceClass] || []).concat(entriesList);
+          if (getAvailablePlaces(raceClass).length < entriesToAdd[raceClass].length) { // TODO check size of slots is correct as well
+            throw 'Not enough places to import race class ' + raceClass + ' in entry set ' + entrySet.id +
+              ' (needs ' + entriesToAdd[raceClass].length + ', found ' + getAvailablePlaces(raceClass).length + ')';
+          }
+        } else {
+          throw 'Could not find race sheet for ' + raceClass;
+        }
+      });
+      if (totalPaid > 0 && totalDue !== totalPaid) {
+        throw 'Paid amount ' + totalPaid + ' does not match total due amount ' + totalDue;
+      }
+    });
+    // Run through each race in the set of entries
+    //  and check the race sheet exists
+    //  if so then check the number of available spaces
+    // and if more spaces are available then add
+    for (var raceName in entriesToAdd) {
+      if (entriesToAdd.hasOwnProperty(raceName)) {
+        var addtoSheet = ss.getSheetByName(raceName);
+        var availablePlaces = getAvailablePlaces(raceName);
+        var entryRows = entriesToAdd[raceName].reduce(function(existing, entries) {
+          return existing.concat(entries.map(function(entry) {
+            return {
+              'Surname': entry.surname,
+              'First name': entry.firstName,
+              'BCU Number': entry.membershipNumber,
+              'Expiry': parseDate(entry.membershipExpiry),
+              'Club': entry.club,
+              'Class': entry.className,
+              'Div': entry.division,
+              'Due': parseFloat(entry.due) || '',
+              'Paid': entry.paid | '',
+              'Set': entry.setId
+            };
+          }));
+        }, []);
+        setTableRowValues(addtoSheet, entryRows, 'Surname', 'Paid', availablePlaces[0][1]);
+      }
+    }
+    // TODO need to add 'Set ID' column to race sheets
+    setTableRowValues(membershipProofsSheet, membershipProofRows, null, null, membershipProofsSheet.getLastRow()+1);
+    setTableRowValues(entrySetsSheet, entrySetRows, null, null, entrySetsSheet.getLastRow()+1);
+    return results;
+  } else {
+    throw 'Spreadsheet with ID ' + ssId + ' could not be found';
+  }
+}
+
 /**
  * @param sheet
  */
@@ -1126,15 +1248,23 @@ function setTableRowValues(sheet, values, startColumnName, endColumnName, startR
   if (convertHeadersToLowerCase) {
     headers = headers.map(function(n) {return n.toLowerCase();});
   }
+  var startColumnIndex = startColumnName ? headers.indexOf(startColumnName): 0;
+  var endColumnIndex = endColumnName ? headers.indexOf(endColumnName) : 0;
+  if (startColumnIndex == -1) {
+    throw 'Could not find start column ' + startColumnName + ' in columns ' + headers.join(', ');
+  }
+  if (endColumnIndex == -1) {
+    throw 'Could not find end column ' + endColumnName + ' in columns ' + headers.join(', ');
+  }
   var valueList = new Array(values.length);
   for (var i = 0; i < values.length; i++) {
     var row = [];
-    for (var j = (startColumnName ? headers.indexOf(startColumnName) : 0); j < (endColumnName ? headers.indexOf(endColumnName) + 1 : headers.length); j++) {
+    for (var j = (startColumnName ? startColumnIndex : 0); j < (endColumnName ? endColumnIndex + 1 : headers.length); j++) {
       row.push(values[i][headers[j]] || "");
     }
     valueList[i] = row;
   }
-  sheet.getRange(startRow, (startColumnName ? headers.indexOf(startColumnName) + 1 : 1), valueList.length, valueList[0].length).setValues(valueList);
+  sheet.getRange(startRow, (startColumnName ? startColumnIndex + 1 : 1), valueList.length, valueList[0].length).setValues(valueList);
 }
 
 function appendTableRowValues(sheet, values) {
