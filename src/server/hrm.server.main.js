@@ -985,6 +985,44 @@ function lookupInTable(rows, matchValues, useOr) {
 }
 
 /**
+ * Look through all the current entries and update BCU Number and Expiry with new data from the memberships sheet
+ *
+ * @public
+ */
+function updateEntriesFromMemberships() {
+  var replaceExisting = true;
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), membershipsSheet = ss.getSheetByName('Memberships'), sheets = getRaceSheets(ss);
+  var membershipsData = getTableRows(membershipsSheet), sheet;
+  for (var i = 0; i < sheets.length; i++) {
+    sheet = sheets[i];
+    var raceData = getTableRows(sheet);
+    if (raceData.length > 0) {
+      for (var j = 0; j < raceData.length; j++) {
+        if (raceData[j]['Surname'] || raceData[j]['First name']) {
+          var matches = lookupInTable(membershipsData, [
+            {name: 'Surname', value: raceData[j]['Surname']},
+            {name: 'First name', value: raceData[j]['First name']},
+            {name: 'Club', value: raceData[j]['Club']},
+            {name: 'Class', value: raceData[j]['Class']}
+          ]);
+          if (matches.length == 1) {
+            // Logger.log("Found match: " + matches[0]);
+            var update = matches[0];
+            for (var p in update) {
+              if (update.hasOwnProperty(p) && (raceData[j][p] === '' || replaceExisting === true)) {
+                Logger.log(raceData[j]['First name'] + ' ' + raceData[j]['Surname'] + ': Set ' + p + ': ' + update[p]);
+                raceData[j][p] = update[p];
+              }
+            }
+          }
+        }
+      }
+      setTableRowValues(sheet, raceData, 'BCU Number', 'Expiry', null, false);
+    }
+  }
+}
+
+/**
  * Look through all the current entries and update with any new data from the rankings sheet
  *
  * @public
