@@ -3586,13 +3586,21 @@ function setRaceSheetProtection_(sheet) {
   }
     // Now set up new protections
   var lastRow = sheet.getMaxRows();
-  var offsetCol = getRaceColumnNumber("Time+/-", sheet),
+  var lastColumn = sheet.getMaxColumns();
+  var numberCol = getRaceColumnNumber("Number", sheet),
+    offsetCol = getRaceColumnNumber("Time+/-", sheet),
     posnCol = getRaceColumnNumber("Posn", sheet), notesCol = getRaceColumnNumber("Notes", sheet);
   if (posnCol < 1) {
     posnCol = getRaceColumnNumber("Pos", sheet); // NRM uses different name!
   }
+  var headingsRange = sheet.getRange(1, 1, 1, lastColumn);
+  setProtection_(headingsRange.protect().setDescription(sheet.getName() + ' headings'));
   var resultsRange = sheet.getRange(2, offsetCol, lastRow-1, posnCol - offsetCol + 1);
   setProtection_(resultsRange.protect().setDescription(sheet.getName() + ' results'));
+  if (numberCol) {
+    var numberRange = sheet.getRange(2, numberCol, lastRow-1, 1);
+    setProtection_(numberRange.protect().setDescription(sheet.getName() + ' numbers'));
+  }
   if (notesCol) {
     var notesRange = sheet.getRange(2, notesCol, lastRow-1, 1);
     setProtection_(notesRange.protect().setDescription(sheet.getName() + ' notes'));
