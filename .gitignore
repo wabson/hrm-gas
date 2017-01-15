@@ -4,4 +4,4 @@ coverage
 node_modules
 node-test
 npm-debug.log
-
+src/env/**/integrations.config.js

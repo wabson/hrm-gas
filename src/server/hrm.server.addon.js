@@ -61,7 +61,8 @@ function onOpen(e) {
        .addSeparator()
        .addItem('Live Results', 'showResultsURL')
        .addItem('Publish Results', 'saveResultsHTML')
-       .addItem('Print Results', 'createPrintableResults'));
+       .addItem('Print Results', 'createPrintableResults')
+       .addItem('Send SMS results', 'sendResultsSms'));
 
   addonMenu.addToUi();
 }

@@ -332,11 +332,12 @@ function _getRaceResultsFromSpreadsheet(sheet) {
         finishTime = formatTime(row['Finish']),
         points = row['Points'],
         pd = row['P/D'],
-        notes = row['Notes'];
+        notes = row['Notes'],
+        setId = +(row['Set'] || 0);
     if (name.trim() !== "") {
       if (bn) {
         //if (time) {
-        results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [raceClass], divs: [div], time: time, timePenalty: timePenalty, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes] });
+        results.push({num: bn, posn: row['Posn'], names: [name], clubs: [club], classes: [raceClass], divs: [div], time: time, timePenalty: timePenalty, startTime: startTime, finishTime: finishTime, points: [points], pd: [pd], notes: [notes], setId: setId });
         //}
       } else if (results.length > 0) {
         var last = results.pop();
@@ -356,6 +357,50 @@ function _getRaceResultsFromSpreadsheet(sheet) {
   }
   results.sort(sortResults);
   return results;
+}
+
+function sendResultsSms() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+  var results = _getRaceResultsFromSpreadsheet(sheet);
+  var entrySetsSheet = ss.getSheetByName('Entry Sets');
+  if (entrySetsSheet === null) {
+    throw 'Could not find Entry Sets sheet';
+  }
+  var entrySets = getTableRows(entrySetsSheet);
+  var numStarters = results.filter(function(result) {
+    return result.time !== 'dns';
+  }).length;
+  results.forEach(function(result) {
+    if (!result.setId) {
+      return;
+    }
+    if (!result.posn) {
+      return;
+    }
+    var matchingEntrySets = entrySets.filter(function(entrySet) {
+      return entrySet['ID'] == result.setId;
+    });
+    if (matchingEntrySets.length !== 1) {
+      Logger.log('Could not find entry set ' + result.setId);
+      return;
+    }
+    var phoneNumber = matchingEntrySets[0]['Phone'];
+    if (phoneNumber) {
+      var phoneLookup = lookupNationalPhoneNumber(phoneNumber);
+      if (phoneLookup.getResponseCode() == 200) {
+        var phoneData = JSON.parse(phoneLookup);
+        var intlNumber = phoneData['phone_number'];
+        if (intlNumber && intlNumber.indexOf('+447') == 0) {
+          var messageBody = ss.getName() + ': Boat ' + result.num + ' ' + result.names.join(', ') + ' finished in ' + result.time + ' in posn ' + result.posn + ' of ' + numStarters + ' in ' + sheet.getName();
+          Logger.log('sending SMS to ' + intlNumber + ': "' + messageBody + '" (' + messageBody.length + ' characters)');
+          sendSms(intlNumber, messageBody);
+        }
+      }
+    } else {
+      Logger.log('Ignoring empty phone number for boat ' + result.num);
+    }
+  });
 }
 
 function getRaceStartersFromSpreadsheet(ss) {

@@ -25,11 +25,13 @@ var Configuration = {
       throw 'You must provide an implementation of getDefaultConfiguration_' +
           'to use this configuration library.';
     }
-    var defaultConfiguration = getDefaultConfiguration_();
+    var configuration = getDefaultConfiguration_();
     if (typeof provideEnvironmentConfiguration_ !== 'undefined') {
-      return provideEnvironmentConfiguration_(defaultConfiguration);
-    } else {
-      return defaultConfiguration;
+      configuration = provideEnvironmentConfiguration_(configuration);
     }
+    if (typeof provideExternalIntegrationConfiguration_ !== 'undefined') {
+      configuration = provideExternalIntegrationConfiguration_(configuration);
+    }
+    return configuration;
   }
 };

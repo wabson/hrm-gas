@@ -4410,6 +4410,7 @@ function getDefaultConfiguration_() {
     },
     app: {
       raceTemplatesFolderId: null
-    }
+    },
+    integrations: {}
   };
 }
