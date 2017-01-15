@@ -196,7 +196,7 @@ var RankingsUpdateCheck = BaseComponent.extend({
         /* jshint camelcase: false */
         google.script.run
                 .withSuccessHandler(_.bind(function (webLastUpdated) {
-                    if (webLastUpdated !== null && this.lastUpdated !== null && webLastUpdated !== this.lastUpdated) {
+                    if (webLastUpdated !== null && this.lastUpdated !== null && webLastUpdated > this.lastUpdated) {
                         this.$el.css('display', 'block')
                                 .removeClass()
                                 .addClass('message-box info')
