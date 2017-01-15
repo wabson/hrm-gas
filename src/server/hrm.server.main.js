@@ -3508,6 +3508,7 @@ function setRaceSheetFormatting_(sheet) {
       bcuIndex = getRaceColumnNumber("BCU Number", sheet),
       expiryIndex = getRaceColumnNumber("Expiry", sheet),
       divIndex = getRaceColumnNumber("Div", sheet),
+      setIndex = getRaceColumnNumber("Set", sheet),
       paidIndex = getRaceColumnNumber("Paid", sheet),
       dueIndex = getRaceColumnNumber("Due", sheet),
       timeIndex = getRaceColumnNumber("Time+/-", sheet);
@@ -3522,6 +3523,9 @@ function setRaceSheetFormatting_(sheet) {
     }
     if (divIndex > 0) {
       sheet.getRange(2, divIndex, lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
+    }
+    if (setIndex > 0) {
+      sheet.getRange(2, setIndex, lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_INTEGER);
     }
     if (paidIndex > 0) {
       sheet.getRange(2, paidIndex, lastRow-1, 1).setNumberFormat(NUMBER_FORMAT_CURRENCY);
