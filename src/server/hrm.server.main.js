@@ -46,8 +46,8 @@ var NUMBER_FORMAT_TIME = "[h]:mm:ss";
 var NUMBER_FORMAT_CURRENCY = "£0.00";
 var NUMBER_FORMAT_INTEGER = "0";
 
-var BCU_NUMBER_REGEXP = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+)$';
-var BCU_NUMBER_FULL_REGEXP = '^(\\d+|(SCA|WCA) ?\\d+|INT)$';
+var BCU_NUMBER_REGEXP = '^(\\d+(?:/[A-Z])?|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|ET [\\w,]+)$';
+var BCU_NUMBER_FULL_REGEXP = '^(\\d+(?:/[A-Z])?|(SCA|WCA) ?\\d+|INT)$';
 var VALIDATION_MSG_BCU = 'BCU Number must be in the correct format';
 
 var CLASSES_DEFS = [['S', 'Senior Male'],['V', 'Veteran Male'],['J', 'Junior Male'],['F', 'Senior Female'],['VF', 'Veteran Female'],['JF', 'Junior Female'],['C', 'SM Canoe'],['VC', 'VM Canoe'],['JC', 'JM Canoe'],['FC', 'SF Canoe'],['VFC', 'VF Canoe'],['JFC', 'JF Canoe']];

@@ -2,7 +2,7 @@
 
 var HaslerRankingDetails = function(options) {
     this.raceDate = options.raceDate ? new Date(options.raceDate) : new Date();
-    this.bcuRegexp = '^(\\d+|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|ET [A-Z]{3})$';
+    this.bcuRegexp = '^(\\d+(?:/[A-Z])?|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|ET [\\w,]+)$';
     this.classListData = options.classListData || new Backbone.Model();
     this.clubListData = options.clubListData || new Backbone.Model();
 };
