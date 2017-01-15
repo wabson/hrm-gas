@@ -36,6 +36,7 @@ function onOpen(e) {
       .addItem('Add Entries from File', 'showAddLocalEntries')
       .addItem('Import Entries from CSV', 'showImportEntries')
       .addItem('Update from Rankings', 'updateEntriesFromRankings')
+      .addItem('Check against Rankings', 'checkEntriesFromRankings')
       .addItem('Clear Entries', 'showClearEntries')
       .addItem('Set Formatting', 'setFormatting')
       .addItem('Set Formulas', 'setFormulas')
