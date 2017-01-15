@@ -1047,7 +1047,7 @@ function checkEntriesFromRankings_() {
               {name: 'First name', value: raceData[j]['First name']},
               {name: 'Club', value: raceData[j]['Club']},
               {name: 'Class', value: raceData[j]['Class']}]);
-            if (matches.length === 0) { // Try again based on BCU number
+            if (matches.length === 0 && !(typeof bcuNum == 'string' && bcuNum.indexOf('ET ') == 0)) { // Try again based on BCU number
               matches = lookupInTable(rankingData, [
                 {name: 'BCU Number', value: raceData[j]['BCU Number']}
               ]);
