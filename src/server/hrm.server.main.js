@@ -436,7 +436,7 @@ function addLocalRankings(eventInfo) {
   var ssId = eventInfo.parameter.spreadsheetId;
   if (ssId)
   {
-    loadRankingsSheet_(SpreadsheetApp.getSpreadsheetById(ssId));
+    loadRankingsSheet_(SpreadsheetApp.openById(ssId));
   } else {
     throw "Could not locate source spreadsheet";
   }
