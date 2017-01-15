@@ -22,7 +22,7 @@ function sidebar_entries_race_info(spreadsheetId) {
         rankingsSize: rankingsSize,
         lastUpdated: rankingsLastUpdated !== null ?
             Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null,
-        raceDate: driveProps.raceDate ? Utilities.formatDate(new Date(driveProps.raceDate)) : ''
+        raceDate: driveProps.raceDate ? Utilities.formatDate(new Date(driveProps.raceDate), spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : ''
     };
 }
 
