@@ -5,8 +5,8 @@ module.exports = function(config) {
             'node_modules/underscore/underscore.js',
             'node_modules/backbone/backbone.js',
             'test/ui/mock-services.client.js',
-            'src/**/*.client.js',
-            'src/**/*.spec.js',
+            'src/ui/components/**/*.client.js',
+            'src/ui/components/**/*.spec.js',
             {pattern: 'test/ui/fixtures/*.html', served: true, included: false}
         ],
 

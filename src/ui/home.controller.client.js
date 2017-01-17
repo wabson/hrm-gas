@@ -2,6 +2,7 @@
 
 var newData = null, lastUpdated = null;
 var timeRe = /\d{1,2}:\d{2}:\d{2}/;
+// var show = '', key = '', url = '';
 
 // The code in this function runs when the page is loaded.
 $(function() {
