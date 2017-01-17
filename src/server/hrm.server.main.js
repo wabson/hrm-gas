@@ -4391,7 +4391,7 @@ function parseDate(dateStr) {
     parts = dateStr.split('/');
     parsedDate = new Date(2000 + parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
   } else {
-      throw "Unsuppored date format for '" + dateStr + "' - must be YYYY-MM-DD or DD/MM/YY[YY]";
+      throw "Unsupported date format for '" + dateStr + "' - must be YYYY-MM-DD or DD/MM/YY[YY]";
   }
   var timeMatch = dateStr.match(/(\d{2}):(\d{2}):(\d{2})/);
   if (timeMatch) {
