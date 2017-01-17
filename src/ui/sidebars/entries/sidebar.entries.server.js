@@ -21,8 +21,8 @@ function sidebar_entries_race_info(spreadsheetId) {
         clubs: getClubRows(spreadsheet.getSheetByName('Clubs')),
         rankingsSize: rankingsSize,
         lastUpdated: rankingsLastUpdated !== null ?
-            Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : null,
-        raceDate: driveProps.raceDate ? Utilities.formatDate(new Date(driveProps.raceDate), spreadsheet.getSpreadsheetTimeZone(), 'dd/MM/yy') : ''
+            Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : null,
+        raceDate: driveProps.raceDate ? Utilities.formatDate(parseDate(driveProps.raceDate), spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : ''
     };
 }
 
@@ -32,10 +32,10 @@ function sidebar_entries_search(spreadsheetId, term) {
     return jsonSafeArr(searchRankings_(spreadsheet, term));
 }
 
-function sidebar_entries_add(spreadsheetId, crewMembers, headers, selectedClass) {
+function sidebar_entries_add(spreadsheetId, crewMembers, headers, selectedClass, isLate) {
 
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-    return addEntry_(arrFromJson(crewMembers), headers, selectedClass, spreadsheet);
+    return addEntry_(arrFromJson(crewMembers), headers, selectedClass, spreadsheet, isLate);
 }
 
 function sidebar_entries_link(sheetName, rowNumber) {

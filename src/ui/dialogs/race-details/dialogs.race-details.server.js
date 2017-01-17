@@ -11,7 +11,10 @@ function dialog_raceDetails_get(spreadsheetId) {
         raceDate: driveProps.raceDate || '',
         entrySenior: driveProps.entrySenior || '',
         entryJunior: driveProps.entryJunior || '',
-        entryLightning: driveProps.entryLightning || ''
+        entryLightning: driveProps.entryLightning || '',
+        entrySeniorLate: driveProps.entrySeniorLate || '',
+        entryJuniorLate: driveProps.entryJuniorLate || '',
+        entryLightningLate: driveProps.entryLightningLate || ''
     });
 }
 
@@ -25,7 +28,10 @@ function dialog_raceDetails_set(spreadsheetId, formData) {
         raceDate: data.raceDate,
         entrySenior: data.entrySenior,
         entryJunior: data.entryJunior,
-        entryLightning: data.entryLightning
+        entryLightning: data.entryLightning,
+        entrySeniorLate: data.entrySeniorLate,
+        entryJuniorLate: data.entryJuniorLate,
+        entryLightningLate: data.entryLightningLate
     };
     setDriveProperties_(spreadsheetId, driveProps);
 

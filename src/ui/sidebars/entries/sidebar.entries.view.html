@@ -22,6 +22,14 @@
 </div>
 <script>
 //=require ./sidebar.entries.client.js
+$(function() {
+    new AddEntryView({
+        el: '#add-entry-widget',
+        spreadsheetId: spreadSheetId,
+        classListData: classListData,
+        clubListData: clubListData
+    }).render();
+});
 </script>
 <!--=include mock-services.html -->
 </body>

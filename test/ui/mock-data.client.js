@@ -54,7 +54,8 @@
             ['J', 'Junior Male'],
             ['V', 'Veteran Male']
         ],
-        clubs: [['Addlestone CC', 'ADS', 'LS'], ['Richmond CC', 'RIC', 'LS'], ['Royal CC', 'ROY', 'LS']]
+        clubs: [['Addlestone CC', 'ADS', 'LS'], ['Richmond CC', 'RIC', 'LS'], ['Royal CC', 'ROY', 'LS']],
+        raceDate: '2016-05-26'
     });
     runner.addData('dialog_raceDetails_get', {
         raceName: 'Test Race',
@@ -62,6 +63,9 @@
         raceDate: '2016-05-26',
         entrySenior: 8,
         entryJunior: 6,
-        entryLightning: 2.5
+        entryLightning: 2.5,
+        entrySeniorLate: 10,
+        entryJuniorLate: 8,
+        entryLightningLate: 2.5
     });
 })();

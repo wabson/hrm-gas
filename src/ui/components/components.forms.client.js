@@ -350,6 +350,7 @@ var FormField = Backbone.View.extend({
         this.label = options.label;
         this.disabled = options.disabled === true;
         this.required = options.required === true;
+        this.checked = options.checked === true;
         this.value = options.value || '';
         this.pattern = options.pattern;
         this.step = options.step;
@@ -375,6 +376,7 @@ var FormField = Backbone.View.extend({
                 '<%= title ? \'title="\' + title + \'" \' : "" %>' +
                 'type="<%= type %>" ' +
                 'value="<%= value %>" ' +
+                '<%= checked ? "checked " : "" %>' +
                 '<%= required ? "required " : "" %>' +
                 '<%= pattern ? \'pattern="\' + pattern + \'" \' : "" %>' +
                 '<%= step ? \'step="\' + step + \'" \' : "" %>' +
@@ -390,6 +392,7 @@ var FormField = Backbone.View.extend({
             type: this.type,
             disabled: this.disabled,
             required: this.required,
+            checked: this.checked,
             value: this.value,
             pattern: this.pattern,
             step: this.step,
