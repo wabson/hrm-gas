@@ -29,7 +29,7 @@
     "gulp-debug": "^2.1.2",
     "gulp-flatten": "^0.2.0",
     "gulp-ignore": "^2.0.1",
-    "gulp-include": "@wabson/gulp-include@2.3.1-paths",
+    "@wabson/gulp-include": "2.3.1-paths",
     "gulp-jshint": "^1.12.0",
     "gulp-rename": "^1.2.2",
     "gulp-replace": "^0.5.4",
