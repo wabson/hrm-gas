@@ -4,11 +4,13 @@
   "description": "HRM clone built on top of Google Apps Script",
   "main": "Code.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha $(find src/* -path *test* -name \\\\*.js -type f)",
     "lint": "./node_modules/eslint/bin/eslint.js *.js",
     "hint": "./node_modules/jshint/bin/jshint --extract=auto *.js src/*.js src/*.html",
     "upload": "./node_modules/node-google-apps-script/bin/gapps upload",
-    "coverage": "karma start karma.conf.js"
+    "coverage": "karma start karma.conf.js",
+    "test-server": "./node_modules/mocha/bin/mocha $(find src/* -path *test* -name \\\\*.js -type f)",
+    "test-ui": "karma start karma.conf.js --single-run",
+    "test": "npm run test-ui"
   },
   "repository": {
     "type": "git",
@@ -27,7 +29,7 @@
     "gulp-debug": "^2.1.2",
     "gulp-flatten": "^0.2.0",
     "gulp-ignore": "^2.0.1",
-    "gulp-include": "^2.2.1",
+    "gulp-include": "@wabson/gulp-include@2.3.1-paths",
     "gulp-jshint": "^1.12.0",
     "gulp-rename": "^1.2.2",
     "gulp-replace": "^0.5.4",

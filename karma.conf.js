@@ -14,7 +14,7 @@ module.exports = function(config) {
 
         frameworks: ['jquery-jasmine', 'jasmine', 'jquery-2.1.0'],
 
-        browsers: ['Chrome'],
+        browsers: ['PhantomJS'],
 
         // coverage reporter generates the coverage
         reporters: ['progress', 'coverage'],

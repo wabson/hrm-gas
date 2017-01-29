@@ -60,7 +60,8 @@ gulp.task('compile-latest', ['copy-latest'], function() {
     var clientExcludes = options.env === 'local' ? '' : clientJsFilesGlob;
     return gulp.src(dstRoot + '/**')
         .pipe(include({
-            includePaths: dstRoot
+            includePaths: dstRoot,
+            hardFail: false
         }))
         .pipe(gulpIgnore.exclude(clientExcludes))
         .pipe(gulp.dest(compileRoot))

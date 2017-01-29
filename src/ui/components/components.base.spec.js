@@ -402,7 +402,7 @@ describe('Base components', function() {
 
             it('should reflect the new active tab when a different tab is clicked', function() {
                 this.view.render();
-                this.view.$el.find('.tab a')[1].click();
+                $(this.view.$el.find('.tab a')[1]).click();
                 var tabEls = this.view.el.childNodes;
                 expect(tabEls[0].className).toBe('tab');
                 expect(tabEls[1].className).toBe('tab selected');
@@ -410,7 +410,7 @@ describe('Base components', function() {
 
             it('should show the related view and hide others when a different tab is clicked', function() {
                 this.view.render();
-                this.view.$el.find('.tab a')[1].click();
+                $(this.view.$el.find('.tab a')[1]).click();
                 expect(this.mock1.$el.css('display')).toBe('none');
                 expect(this.mock2.$el.css('display')).toBe('block');
             });
