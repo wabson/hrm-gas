@@ -46,7 +46,7 @@ function doGet(e) {
  */
 function saveResultsHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var template = HtmlService.createTemplateFromFile('results-static.view'), scriptProps, title, data;
+  var template = HtmlService.createTemplateFromFile('results-static.view'), scriptProps, title, data, outputHtml;
   var publishedResultsId = null;
   try {
     publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedResultsId', {
@@ -66,8 +66,7 @@ function saveResultsHTML(ss) {
       template.isHaslerFinal = scriptProps.haslerRegion == "HF";
     }
   }
-  var outputHtml = template.evaluate().getContent();
-  //var htmlFile = DriveApp.createFile(Utilities.formatString(RESULTS_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
+  outputHtml = template.evaluate().getContent();
   var htmlFile = scriptProps.publishedResultsId ? DriveApp.getFileById(scriptProps.publishedResultsId) : DriveApp.createFile(Utilities.formatString(RESULTS_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
   if (scriptProps.publishedResultsId) {
     htmlFile.setContent(outputHtml);
@@ -78,7 +77,6 @@ function saveResultsHTML(ss) {
       value: htmlFile.getId(),
       visibility: 'PUBLIC'
     }, ss.getId());
-    Logger.log("Set drive publishedResultsId property to: " + htmlFile.getId());
   }
   catch (ex) {
     Logger.log('Caught exception ', ex);
@@ -154,7 +152,7 @@ function saveEntriesHTML(ss) {
 /**
  * Print entries summary
  *
- * @param {object} e Event information
+ * @param {String} ssKey Spreadsheet key
  */
 function saveEntriesHTMLForSpreadsheet(ssKey) {
   return saveEntriesHTML(SpreadsheetApp.openById(ssKey));
