@@ -339,13 +339,18 @@ function showResultsSummary(races, options) {
         $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 7-9');
       }).setPromotionsDiv789(ssKey, false);
     });
+    $("#points").button().on("click", function () {
+      google.script.run.withSuccessHandler(function (data) {
+        $("#pd-result").html('Calculated points OK');
+      }).calculatePointsFromWeb(ssKey);
+    });
   }
   if (hasEditPermission) {
     $("#publish-results").button().on("click", function () {
       $("#pd-result").html('Publishing results...');
       google.script.run.withSuccessHandler(function (data) {
-        $("#pd-result").html('Published results to <a href="https://googledrive.com/host/' + data.fileId + '">web page</a>');
-      }).saveResultsHTMLForSpreadsheet(ssKey, false);
+        $("#pd-result").html('Published results to <a href="https://googledrive.com/host/' + data.fileId + '" target="_top">web page</a>');
+      }).saveResultsHTMLForSpreadsheet(ssKey);
     });
     $("#check-finish-times").button().on("click", function () {
       $("#pd-result").html('Checking finish times...');
@@ -556,8 +561,8 @@ function showEntriesSummary(races, options) {
     $("#publish-entries").button().on("click", function () {
       $("#entries-result").html('Publishing entries...');
       google.script.run.withSuccessHandler(function (data) {
-        $("#entries-result").html('Published entries to <a href="https://googledrive.com/host/' + data.fileId + '">web page</a>');
-      }).saveEntriesHTMLForSpreadsheet(ssKey, false);
+        $("#entries-result").html('Published entries to <a href="https://googledrive.com/host/' + data.fileId + '" target="_top">web page</a>');
+      }).saveEntriesHTMLForSpreadsheet(ssKey);
     });
   }
 }
