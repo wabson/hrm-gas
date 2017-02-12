@@ -61,7 +61,7 @@ if (races[i].results && races[i].results.length > 0) { ?>
      <th>Paid</th>
   </tr>
 <? for (var j = 0; j < races[i].results.length; ++j) { ?>
-  <span>
+  <tr>
      <td><?= races[i].results[j].num ?></td>
      <td><?!= races[i].results[j].names.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
      <td><?!= races[i].results[j].bcuNum.map(function(val) {return val ? (""+val).toUpperCase() : "&nbsp;"}).join("<br />") ?></td>
