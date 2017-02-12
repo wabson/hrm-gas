@@ -314,7 +314,7 @@ function showResultsSummary(races, options) {
   }).join('\n');
   html += ('</table>');
   if (options.allowPd === true) {
-    html += ('<p><button id="pd-div1">Div 1-3 Promotions</button></p>');
+    html += ('<p><button id="pd-div1" disabled>Div 1-3 Promotions</button></p>');
     html += ('<p><button id="pd-div4">Div 4-6 Promotions</button></p>');
     html += ('<p><button id="pd-div7">Div 7-9 Promotions</button></p>');
   }
