@@ -317,6 +317,7 @@ function showResultsSummary(races, options) {
     html += ('<p><button id="pd-div1" disabled>Div 1-3 Promotions</button></p>');
     html += ('<p><button id="pd-div4">Div 4-6 Promotions</button></p>');
     html += ('<p><button id="pd-div7">Div 7-9 Promotions</button></p>');
+    html += ('<p><button id="points">Club Points</button></p>');
   }
   if (hasEditPermission) {
     html += ('<p><button id="check-finish-times">Check Finish Times</button></p>');
