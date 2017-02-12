@@ -87,16 +87,16 @@ function onDataReloaded(data) {
     });
   } else {
     if (show == 'entries') {
-    showEntries(data.races, true);
-  } else if (show == 'starters') {
-    showEntries(data.races, false);
-  } else {
+      showEntries(data.races, true);
+    } else if (show == 'starters') {
+      showEntries(data.races, false);
+    } else {
       if (race === '') {
         showSummaryData(data);
       } else {
         showData(data);
       }
-  }
+    }
   }
   if (data.lastUpdated) {
     lastUpdated = data.lastUpdated;
@@ -341,16 +341,16 @@ function showResultsSummary(races, options) {
           $("#pd-result").html('No duplicate finish times found');
         } else {
           $("#pd-result").html('Found ' + duplicates.length + ' duplicated boats:<br />' + duplicates.map(function(dup) {
-            var timesHtml = dup.times.map(function(time) {
-              return (time.number ? ('(' + time.number + ') ') : '') + time.time;
-            }).join(', ');
-            return 'Boat ' + dup.boatNumber + ': found times ' + timesHtml;
-          }).join('<br />'));
+              var timesHtml = dup.times.map(function(time) {
+                return (time.number ? ('(' + time.number + ') ') : '') + time.time;
+              }).join(', ');
+              return 'Boat ' + dup.boatNumber + ': found times ' + timesHtml;
+            }).join('<br />'));
         }
         if (strangeTimes.length > 0) {
           $("#pd-result").html($("#pd-result").html() + '<br />Found ' + strangeTimes.length + ' strange times:<br />' + strangeTimes.map(function(row) {
-            return '' + row.number + ' boat ' + row.boatNumber + ', time ' + row.time;
-          }).join('<br />'));
+              return '' + row.number + ' boat ' + row.boatNumber + ', time ' + row.time;
+            }).join('<br />'));
         }
       }).checkFinishDuplicatesForSpreadsheet(ssKey, false);
     });
@@ -460,7 +460,7 @@ function showEntries(entries, showBCUDetails) {
       html += '     <th>Class</th>';
       html += '     <th>Div</th>';
       if (showBCUDetails) {
-      html += '     <th>Paid</th>';
+        html += '     <th>Paid</th>';
       }
       html += '  </tr>';
       var n = 0;

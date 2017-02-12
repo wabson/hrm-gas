@@ -110,7 +110,7 @@ function saveEntriesHTML(ss) {
   var template = HtmlService.createTemplateFromFile('entries-static.view'), scriptProps, title, data;
   var publishedResultsId = null;
   try {
-    publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedEntriesId', {
+    publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedResultsId', {
       visibility: 'PUBLIC'
     }).value;
   } catch (e) { }
@@ -175,7 +175,7 @@ function listFiles(e) {
   var template = HtmlService.createTemplateFromFile('Files'), title = "My Files";
   template.title = title;
   template.files = DriveApp.searchFiles(
-     "properties has { key='hrmType' and value='HRM' and visibility='PUBLIC' }");
+    "properties has { key='hrmType' and value='HRM' and visibility='PUBLIC' }");
   var output = template.evaluate();
   output.setSandboxMode(HtmlService.SandboxMode.IFRAME);
   output.setTitle(title);
@@ -391,7 +391,7 @@ function sendResultsSms() {
       if (phoneLookup.getResponseCode() == 200) {
         var phoneData = JSON.parse(phoneLookup);
         var intlNumber = phoneData['phone_number'];
-        if (intlNumber && intlNumber.indexOf('+447') == 0) {
+        if (intlNumber && intlNumber.indexOf('+447') === 0) {
           var messageBody = ss.getName() + ': Boat ' + result.num + ' ' + result.names.join(', ') + ' finished in ' + result.time + ' in posn ' + result.posn + ' of ' + numStarters + ' in ' + sheet.getName();
           Logger.log('sending SMS to ' + intlNumber + ': "' + messageBody + '" (' + messageBody.length + ' characters)');
           sendSms(intlNumber, messageBody);
@@ -464,13 +464,13 @@ function _getRaceEntriesFromSheet(sheet, raceDateStr) {
 }
 
 function getLastEntryRow(sheet) {
-    // Find the latest row with a number but without a name in the sheet
-    var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 2), values = range.getValues();
-    for (var i=0; i<values.length; i++) {
-      if (parseInt(values[i][0]) && values[i][1] === "") {
-        return i;
-      }
+  // Find the latest row with a number but without a name in the sheet
+  var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 2), values = range.getValues();
+  for (var i=0; i<values.length; i++) {
+    if (parseInt(values[i][0]) && values[i][1] === "") {
+      return i;
     }
+  }
   return 1;
 }
 
@@ -553,8 +553,8 @@ function sortResults(r1, r2) {
   if (typeof t2.getTime == "function") {
     t2 = t2.getTime();
   }
-  if (typeof t1 == "number" && typeof t2 == "number" || 
-     typeof t1 == "string" && typeof t2 == "string")
+  if (typeof t1 == "number" && typeof t2 == "number" ||
+    typeof t1 == "string" && typeof t2 == "string")
   {
     if (t1 < t2) {
       return -1;

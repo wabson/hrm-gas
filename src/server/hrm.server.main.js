@@ -139,7 +139,7 @@ var ListUtils = {
  */
 function loadRankings(eventInfo) {
   var app = UiApp.getActiveApplication(),
-    clubId = eventInfo.parameter.club, 
+    clubId = eventInfo.parameter.club,
     clear = eventInfo.parameter.clear;
   Logger.log("Clear checkbox: " + (clear == 'true'));
   if (clear == 'true') {
@@ -159,17 +159,17 @@ function loadRankings(eventInfo) {
 function showLoadRankings() {
   // Dialog height in pixels
   var dialogHeight = 125;
-  
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Load Hasler Rankings').setHeight(dialogHeight);
-  
+
   // Create a vertical panel called mypanel and add it to myapp
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-  
+
   mypanel.add(app.createLabel("This will load rankings from the MRC web site into the spreadsheet. This may take a short while if loading rankings from all clubs."));
-  
+
   var lb = app.createListBox(false).setId('club').setName('club');
   lb.setVisibleItemCount(1);
   lb.addItem("All Clubs", "");
@@ -182,7 +182,7 @@ function showLoadRankings() {
   mypanel.add(lb);
   var cb = app.createCheckBox("Clear existing records first").setValue(true).setId('clear').setName('clear');
   mypanel.add(cb);
-  
+
   var clientHandler =
     app.createClientHandler().forEventSource().setEnabled(false);
 
@@ -193,7 +193,7 @@ function showLoadRankings() {
 
   // Add my panel to myapp
   app.add(mypanel);
-  
+
   ss.show(app);
 }
 
@@ -258,7 +258,7 @@ function loadRankingsSheet_(sourceSS, ss, clubName) {
     sourceSheet = sourceSS.getSheetByName(rankingsSheetName) || sourceSS.getActiveSheet(),
     sourceRange = sourceSheet.getDataRange(), sourceWidth = sourceRange.getWidth(),
     sourceHeight = sourceRange.getHeight(), sourceHeaderRange = sourceSheet.getRange(1, 1, 1, sourceWidth);
-  
+
   if (sourceHeight > 0)
   {
     var sourceRow1 = sourceHeaderRange.getValues()[0],
@@ -394,15 +394,15 @@ function clearAllEntries() {
 function showAddLocalRankings() {
   // Dialog height in pixels
   var dialogHeight = 80;
-  
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Add Local Rankings').setHeight(dialogHeight);
-  
+
   // Create a vertical panel called mypanel and add it to myapp
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-  
+
   var lb = app.createListBox(false).setId('spreadsheetId').setName('spreadsheetId');
   lb.setVisibleItemCount(1);
 
@@ -413,7 +413,7 @@ function showAddLocalRankings() {
     lb.addItem(file.getName(), file.getId());
   }
   mypanel.add(lb);
-  
+
   var closeButton = app.createButton('Add');
   var closeHandler = app.createServerClickHandler('addLocalRankings').addCallbackElement(lb);
   closeButton.addClickHandler(closeHandler);
@@ -421,7 +421,7 @@ function showAddLocalRankings() {
 
   // Add my panel to myapp
   app.add(mypanel);
-  
+
   ss.show(app);
 }
 
@@ -452,15 +452,15 @@ function addLocalRankings(eventInfo) {
 function showAddLocalEntries() {
   // Dialog height in pixels
   var dialogHeight = 130;
-  
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Add Entries from Spreadsheet').setHeight(dialogHeight);
-  
+
   // Create a vertical panel called mypanel and add it to myapp
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-  
+
   var lb = app.createListBox(false).setId('addLocalEntriesSpreadsheetId').setName('spreadsheetId');
   lb.setVisibleItemCount(1);
 
@@ -471,15 +471,15 @@ function showAddLocalEntries() {
     lb.addItem(file.getName(), file.getId());
   }
   mypanel.add(lb);
-  
+
   var addButton = app.createButton('Add Entries').setId("addLocalEntriesAddBn");
   var addHandler = app.createServerClickHandler('addLocalEntries').addCallbackElement(lb);
   addButton.addClickHandler(addHandler).addClickHandler(app.createClientHandler().forEventSource().setEnabled(false));
   mypanel.add(addButton);
-  
+
   // Status text
   mypanel.add(app.createHTML("").setId("addLocalEntriesResult").setVisible(false).setSize("100%", "100px").setStyleAttribute("overflow", "scroll"));
-  
+
   // For the close button, we create a server click handler closeHandler and pass closeHandler to the close button as a click handler.
   // The function close is called when the close button is clicked.
   var closeButton = app.createButton('Done').setId("addLocalEntriesCloseBn").setVisible(false);
@@ -489,7 +489,7 @@ function showAddLocalEntries() {
 
   // Add my panel to myapp
   app.add(mypanel);
-  
+
   ss.show(app);
 }
 
@@ -501,16 +501,16 @@ function showAddLocalEntries() {
 function showImportEntries() {
   // Dialog height in pixels
   var dialogHeight = 130;
-  
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Add Entries from CSV File').setHeight(dialogHeight);
-  
+
   // Create a vertical panel called mypanel and add it to myapp
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
   //    upload = app.createFileUpload().setName('csvfile');
-  
+
   var lb = app.createListBox(false).setId('importEntriesFileId').setName('spreadsheetId');
   lb.setVisibleItemCount(1);
 
@@ -522,15 +522,15 @@ function showImportEntries() {
   }
   mypanel.add(lb);
   //mypanel.add(upload);
-  
+
   var addButton = app.createButton('Import Entries').setId("importEntriesAddBn");
   var addHandler = app.createServerClickHandler('importEntries').addCallbackElement(lb);
   addButton.addClickHandler(addHandler).addClickHandler(app.createClientHandler().forEventSource().setEnabled(false));
   mypanel.add(addButton);
-  
+
   // Status text
   mypanel.add(app.createHTML("").setId("importEntriesResult").setVisible(false).setSize("100%", "100px").setStyleAttribute("overflow", "scroll"));
-  
+
   // For the close button, we create a server click handler closeHandler and pass closeHandler to the close button as a click handler.
   // The function close is called when the close button is clicked.
   var closeButton = app.createButton('Done').setId("importEntriesCloseBn").setVisible(false);
@@ -573,20 +573,20 @@ function importEntries(eventInfo) {
           numCrewsByRace[raceClass] = numCrewsByRace[raceClass] || 0;
           newRows[raceClass].push({
             "Number": csvRow["#"] || 1,
-            "Surname": csvRow["Last Name (1)"].toUpperCase(), 
-            "First name": csvRow["First Name (1)"].toUpperCase(), 
-            "BCU Number": csvRow["BCU Number (1)"].toUpperCase(), 
-            "Club": csvRow["Club (1)"], 
-            "Class": csvRow["Class (1)"], 
+            "Surname": csvRow["Last Name (1)"].toUpperCase(),
+            "First name": csvRow["First Name (1)"].toUpperCase(),
+            "BCU Number": csvRow["BCU Number (1)"].toUpperCase(),
+            "Club": csvRow["Club (1)"],
+            "Class": csvRow["Class (1)"],
             "Div": csvRow["Ranking (1)"],
             "Due": csvRow["Payment Amount"],
             "Paid": csvRow["Paid"]
           },{
-            "Surname": csvRow["Last Name (2)"].toUpperCase(), 
-            "First name": csvRow["First Name (2)"].toUpperCase(), 
-            "BCU Number": csvRow["BCU Number (2)"].toUpperCase(), 
-            "Club": csvRow["Club (2)"], 
-            "Class": csvRow["Class (2)"], 
+            "Surname": csvRow["Last Name (2)"].toUpperCase(),
+            "First name": csvRow["First Name (2)"].toUpperCase(),
+            "BCU Number": csvRow["BCU Number (2)"].toUpperCase(),
+            "Club": csvRow["Club (2)"],
+            "Class": csvRow["Class (2)"],
             "Div": csvRow["Ranking (2)"]
           }); // Surname, First name, BCU Number, Club, Class, Div
           numCrewsByRace[raceClass] ++;
@@ -595,7 +595,7 @@ function importEntries(eventInfo) {
         }
       }
     }
-    
+
     for (var raceName in newRows) {
       if (newRows.hasOwnProperty(raceName)) {
         rows = newRows[raceName];
@@ -646,7 +646,7 @@ function addEntrySets(ssId, entrySets) {
     var getTotalPaidForEntrySet = function(entrySet) {
       return entrySet.payments.reduce(function(total, payment) {
         return total + (payment.type = 'paypal' && payment.state == 'approved' ? parseFloat(payment.amount) : 0);
-      }, 0)
+      }, 0);
     };
     var entrySetRows = entrySets.map(function(entrySet) {
       return {
@@ -726,7 +726,7 @@ function addEntrySets(ssId, entrySets) {
               'Class': entry.className,
               'Div': entry.division,
               'Due': parseFloat(entry.due) || '',
-              'Paid': entry.paid | '',
+              'Paid': entry.paid || '',
               'Set': entry.setId
             };
           }));
@@ -1211,7 +1211,7 @@ function checkEntriesFromRankings_() {
               {name: 'First name', value: raceData[j]['First name']},
               {name: 'Club', value: raceData[j]['Club']},
               {name: 'Class', value: raceData[j]['Class']}]);
-            if (matches.length === 0 && !(typeof bcuNum == 'string' && bcuNum.indexOf('ET ') == 0)) { // Try again based on BCU number
+            if (matches.length === 0 && !(typeof bcuNum == 'string' && bcuNum.indexOf('ET ') === 0)) { // Try again based on BCU number
               matches = lookupInTable(rankingData, [
                 {name: 'BCU Number', value: raceData[j]['BCU Number']}
               ]);
@@ -1679,7 +1679,7 @@ function getRaceType(ss) {
 
 /**
  * Handler function for closing a dialog
- 
+
  * @return {AppInstance} Active application instance
  */
 function close() {
@@ -1725,23 +1725,23 @@ function showWebURL(type) {
 function showLinkDialog(title, text, linkHref, linkText, linkTarget, dialogHeight) {
   // Dialog height in pixels
   dialogHeight = dialogHeight||125;
-  
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle(title).setHeight(dialogHeight),
       mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-  
+
   mypanel.add(app.createHTML(text));
   mypanel.add(app.createAnchor(linkText||linkHref, linkHref).setTarget(linkTarget||"_blank"));
-  
+
   var closeButton = app.createButton('OK');
   var closeHandler = app.createServerClickHandler('close');
   closeButton.addClickHandler(closeHandler);
   mypanel.add(closeButton);
-  
+
   app.add(mypanel);
-  
+
   ss.show(app);
 }
 
@@ -1751,24 +1751,24 @@ function showLinkDialog(title, text, linkHref, linkText, linkTarget, dialogHeigh
 function showDialog(title, text, dialogHeight) {
   // Dialog height in pixels
   dialogHeight = dialogHeight||125;
-  
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle(title).setHeight(dialogHeight),
       mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-  
+
   var scroll = app.createScrollPanel().setWidth('100%').setHeight('100px');
   scroll.add(app.createHTML(text));
   mypanel.add(scroll);
-  
+
   var closeButton = app.createButton('OK');
   var closeHandler = app.createServerClickHandler('close');
   closeButton.addClickHandler(closeHandler);
   mypanel.add(closeButton);
-  
+
   app.add(mypanel);
-  
+
   ss.show(app);
 }
 
@@ -1812,19 +1812,19 @@ function showRaceLevies(scriptProps) {
       }
     }
   }
-  
+
   var totalLevies = totalSnr * LEVY_SENIOR + totalJnr * LEVY_JUNIOR;
   var grandTotal = totalSnr + totalJnr + totalLightning;
-  
+
   // Dialog height in pixels
   var dialogHeight = 245;
-  
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Finance Summary').setHeight(dialogHeight),
       mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-  
+
   mypanel.add(app.createHTML("<p>Total Received: £" + totalReceived + "</p>"));
   mypanel.add(app.createHTML("<p>Total Due: £" + totalDue + "</p>"));
   mypanel.add(app.createHTML("<p>Total Seniors: " + totalSnr + "<br />Total Juniors: " + totalJnr + "<br />Total Lightnings: " + totalLightning + "<br />Grand Total: " + grandTotal + "</p>"));
@@ -1833,14 +1833,14 @@ function showRaceLevies(scriptProps) {
     mypanel.add(app.createHTML("<p>Total Due (Calculated): £" + totalPaid + "</p>"));
   }
   mypanel.add(app.createHTML("<p>MRC Levies Due: £" + totalLevies + "</p>"));
-  
+
   var closeButton = app.createButton('OK');
   var closeHandler = app.createServerClickHandler('close');
   closeButton.addClickHandler(closeHandler);
   mypanel.add(closeButton);
-  
+
   app.add(mypanel);
-  
+
   ss.show(app);
 }
 
@@ -1852,13 +1852,13 @@ function showPrompt(title, text, fnName, height) {
 
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle(title).setHeight(height);
-  
+
   // Create a vertical panel called mypanel and add it to myapp
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%"),
       hpanel = app.createHorizontalPanel();
-  
+
   mypanel.add(app.createHTML(text));
-  
+
   var closeButton = app.createButton('Cancel');
   closeButton.addClickHandler(app.createServerClickHandler('close'));
   var okButton = app.createButton('OK');
@@ -1869,7 +1869,7 @@ function showPrompt(title, text, fnName, height) {
 
   // Add my panel to myapp
   app.add(mypanel);
-  
+
   ss.show(app);
 }
 
@@ -1938,13 +1938,13 @@ function getSelectedEntryRows(sheet) {
  */
 function showModifyCrews() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet();
-  
+
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Modify Crews').setHeight(140);
-  
+
   // Create a vertical panel called mypanel and add it to the app
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%").setSpacing(5).setVerticalAlignment(UiApp.VerticalAlignment.MIDDLE);
-  
+
   // Selection list allowing us to pick another race to move the crew(s) to
   var mvpanel = app.createHorizontalPanel().setSpacing(5);
   mvpanel.add(app.createHTML("Move to "));
@@ -1969,7 +1969,7 @@ function showModifyCrews() {
   mvbutton.addClickHandler(app.createServerHandler("moveCrews").addCallbackElement(clb).addCallbackElement(mlb));
   mvpanel.add(mvbutton);
   mypanel.add(mvpanel);
-  
+
   var delpanel = app.createHorizontalPanel().setSpacing(5);
   delpanel.add(app.createHTML("Delete crews then "));
   var dlb = app.createListBox(false).setId('delAction').setName('delAction');
@@ -1980,24 +1980,24 @@ function showModifyCrews() {
   delbutton.addClickHandler(app.createServerHandler("deleteCrews").addCallbackElement(dlb));
   delpanel.add(delbutton);
   mypanel.add(delpanel);
-  
+
   // Status text
   mypanel.add(app.createHTML("").setId("modifyCrewsResult"));
-  
+
   // Done button
   var closeButton = app.createButton('Done');
   var closeHandler = app.createServerClickHandler('close');
   closeButton.addClickHandler(closeHandler);
   mypanel.add(closeButton);
-  
+
   // Add my panel to myapp
   app.add(mypanel);
-  
+
   ss.show(app);
 }
 
 function moveEntryRows(srcRange, dstSheet) {
-  var entries = getEntryRowData(srcRange), 
+  var entries = getEntryRowData(srcRange),
       dstRows = getNextEntryRows(dstSheet);
   if (dstRows.length < entries.length) {
     throw "Destination sheet does not have sufficient room for entries (needs " + entries.length + ", found " + dstRows.length + ")";
@@ -2036,7 +2036,7 @@ function moveEntryRows(srcRange, dstSheet) {
  */
 function moveCrews(eventInfo) {
   var app = UiApp.getActiveApplication();
-  var action = eventInfo.parameter.moveAction, 
+  var action = eventInfo.parameter.moveAction,
       dstSheetName = eventInfo.parameter.className,
       dstSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(dstSheetName),
       sheet = SpreadsheetApp.getActiveSheet();
@@ -2054,9 +2054,9 @@ function moveCrews(eventInfo) {
         lastEntry = selectedEntries[selectedEntries.length-1],
         lastRow = parseInt(lastEntry[1]) + parseInt(lastEntry[2]) - 1,
         numRows = lastRow - firstRow + 1;
-    
+
     Logger.log("firstRow: " + firstRow + ", lastRow: " + lastRow + ", numRows: " + numRows);
-    
+
     var srcRange = sheet.getRange(firstRow, 1, numRows, sheet.getLastColumn());
     if (action == "remove") { // Re-number and remove the old boat numbers in the current sheet. Generally numbers should not be re-used if they have already been allocated to others.
       moveEntryRows(srcRange, dstSheet);
@@ -2097,9 +2097,9 @@ function deleteCrews(eventInfo) {
         lastEntry = selectedEntries[selectedEntries.length-1],
         lastRow = parseInt(lastEntry[1]) + parseInt(lastEntry[2]) - 1,
         numRows = lastRow - firstRow + 1;
-    
+
     Logger.log("firstRow: " + firstRow + ", lastRow: " + lastRow + ", numRows: " + numRows);
-    
+
     if (action == "remove") {
       sheet.deleteRows(firstRow, numRows);
     } else if (action == "leave") {
@@ -2121,15 +2121,15 @@ function deleteCrews(eventInfo) {
  */
 function showSetStartTimes() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet();
-  
+
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Enter Start Times').setHeight(130);
-  
+
   // Create a vertical panel called mypanel and add it to the app
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%").setSpacing(5);
-  
+
   mypanel.add(app.createHTML("Enter times in format HH:MM:SS or MM:SS"));
-  
+
   // Selection list allowing us to pick another race to move the crew(s) to
   var hpanel = app.createHorizontalPanel().setSpacing(10).setVerticalAlignment(UiApp.VerticalAlignment.MIDDLE);
   //hpanel.add(app.createHTML("Move to "));
@@ -2150,26 +2150,26 @@ function showSetStartTimes() {
   setbutton.addClickHandler(app.createServerHandler("setStartTimes").addCallbackElement(clb).addCallbackElement(time));
   hpanel.add(setbutton);
   mypanel.add(hpanel);
-  
+
   // Key handler to detect when enter key is pressed
   var keyHandler = app.createServerKeyHandler('onSetStartTimesEnter').addCallbackElement(clb).addCallbackElement(time);
   time.addKeyUpHandler(keyHandler);
-  
+
   // Status text
   mypanel.add(app.createHTML("").setId("setStartTimes-result"));
-  
+
   // Done button
   var closeButton = app.createButton('Done');
   var closeHandler = app.createServerClickHandler('close');
   closeButton.addClickHandler(closeHandler);
   mypanel.add(closeButton);
-  
+
   // Add my panel to myapp
   app.add(mypanel);
-  
+
   // Set focus
   clb.setFocus(true);
-  
+
   ss.show(app);
 }
 
@@ -2295,36 +2295,36 @@ function setStartTimeValues_(sheet, values) {
  */
 function showSetFinishTimes() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  
+
   // Create the UiInstance object myapp and set the title text
   var app = UiApp.createApplication().setTitle('Enter Finish Times').setHeight(300);
-  
+
   // Create a vertical panel called mypanel and add it to the app
   var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%").setSpacing(5);
-  
+
   mypanel.add(app.createHTML("Enter finishers one-per-line, as a boat number, followed by a space, followed by times in format HH:MM:SS or MM:SS or 'dns' or 'rtd' or 'dsq'"));
-  
+
   var times = app.createTextArea().setName("times").setId("setFinishTimes-times").setHeight("160px").setStyleAttribute("width", "100%");
   mypanel.add(times);
   var setbutton = app.createButton("Set");
   setbutton.addClickHandler(app.createServerHandler("setFinishTimes").addCallbackElement(times));
   mypanel.add(setbutton);
-  
+
   // Status text
   mypanel.add(app.createHTML("").setId("setFinishTimes-result"));
-  
+
   // Done button
   var closeButton = app.createButton('Done');
   var closeHandler = app.createServerClickHandler('close');
   closeButton.addClickHandler(closeHandler);
   mypanel.add(closeButton);
-  
+
   // Add my panel to myapp
   app.add(mypanel);
-  
+
   // Set focus
   times.setFocus(true);
-  
+
   ss.show(app);
 }
 
@@ -2402,7 +2402,7 @@ function setFinishTimes(eventInfo) {
         {name: 'Finish Number', color: COLOR_YELLOW},
         {name: 'Finish Time', color: COLOR_BLUE},
         {name: 'Notes', color: 'white', weight: 'normal', fontStyle: 'italic'},
-        {name: 'Strange Number', color: COLOR_YELLOW}, 
+        {name: 'Strange Number', color: COLOR_YELLOW},
         {name: 'Time', color: COLOR_BLUE},
         {name: 'Duplicate Number', color: COLOR_YELLOW},
         {name: 'Time', color: COLOR_BLUE},
@@ -2730,7 +2730,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
   }
   var zeroTime = overallZero(zeroTimes);
   Logger.log("Calculated handicapped zero as " + timeToStringMs_(new Date(zeroTime)));
-  
+
   // Calculate P/D times
   var pTimes = [], dTimes = [], boundary, t, label;
   for (var j=0; j<pFactors.length; j++) {
@@ -2756,7 +2756,7 @@ function setCoursePromotions(calculateFromDivs, applyToDivs, sourceFactors, pFac
 
   // Write the times into the sheet
   addPDTimes_(pdSheet, pdTimeRows);
-  
+
   // Apply promotions
   var pdDivRows, timeColIndex, pdColIndex, pds, allPds = [];
   for (var l=0; l<applyToDivs.length; l++) {
@@ -2982,7 +2982,7 @@ function calculatePoints(scriptProps) {
     raceRegion = inlineInfo.regionId || '';
   }
   var clubsSheet = ss.getSheetByName("Clubs"), clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
-      clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"), 
+      clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"),
       pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
   if (clubsSheet !== null) {
     // Clear existing calculated values
@@ -2992,7 +2992,7 @@ function calculatePoints(scriptProps) {
   } else {
     throw "Cannot find Clubs sheet";
   }
-  
+
   clubsRange = getClubRows(clubsSheet);
   allClubs = getClubCodes(clubsRange);
   Logger.log("All clubs: " + allClubs);
@@ -3009,16 +3009,16 @@ function calculatePoints(scriptProps) {
   doublesPoints = isHaslerFinal ? new Array(clubsInRegion.length) : null;
   for (var j=0; j<clubsInRegion.length; j++) {
     haslerPoints[j] = [];
-    if (doublesPoints) { 
+    if (doublesPoints) {
       doublesPoints[j] = [];
     }
   }
   for (var k=0; k<allClubs.length; k++) {
     lightningPoints[k] = [];
   }
-  
+
   // TODO Check that promotions have first been calculated...
-  
+
   // For each race...
   var entries = [], sheets = getRaceSheets(), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace, isDoublesRace;
   var sheetRange, sheetValues;
@@ -3133,7 +3133,7 @@ function calculatePoints(scriptProps) {
         colValues[m] = [""];
       }
     }
-    
+
     var pointsCol = getTableColumnIndex("Points");
     if (pointsCol < 0) {
       throw "Could not find Points column";
@@ -3141,7 +3141,7 @@ function calculatePoints(scriptProps) {
     // We cannot set the same range we used to read the data, since this replaces formulae in other columns with the raw cell value :-(
     sheets[i].getRange(2, pointsCol + 1, sheetValues.length, 1).setValues(colValues);
   }
-  
+
   if (haslerPoints.length > 0) {
     var clubPointsRows = [], lastHaslerPoints = 9999;
     for (var n=0; n<clubsInRegion.length; n++) {
@@ -3161,22 +3161,22 @@ function calculatePoints(scriptProps) {
         lastHaslerPoints = clubPointsRows[o][2];
       }
       drawTable_(clubsSheet, {
-        column: 5, 
+        column: 5,
         headings: [{name: 'Unfound club', color: COLOR_YELLOW}, {name: 'Race number'}]
       });
       drawTable_(clubsSheet, {
-        column: 8, 
+        column: 8,
         headings: [{name: 'Club', color: COLOR_YELLOW}, {name: 'Code', color: COLOR_YELLOW}, {name: 'Points'}, {name: 'Hasler Points'}]
       });
       drawTable_(clubsSheet, {
-        column: 13, 
+        column: 13,
         headings: [{name: 'Club', color: COLOR_YELLOW}, {name: 'Code', color: COLOR_YELLOW}, {name: 'Lightning Points'}]
       });
       clubsSheet.getRange(2, 8, clubPointsRows.length, 4).setValues(clubPointsRows);
       clubsSheet.getDataRange().setFontFamily(SHEET_FONT_FAMILY);
     }
   }
-  
+
   if (lightningPoints.length > 0) {
     var lightningPointsRows = [];
     for (var p=0; p<allClubs.length; p++) {
@@ -3190,7 +3190,7 @@ function calculatePoints(scriptProps) {
       clubsSheet.getRange(2, 13, lightningPointsRows.length, 3).setValues(lightningPointsRows);
     }
   }
-  
+
   if (unfoundClubs.length > 0) {
     clubsSheet.getRange(2, 5, unfoundClubs.length, 2).setValues(unfoundClubs);
   }
@@ -3241,7 +3241,7 @@ function drawTable_(sheet, config) {
 
 /**
  * Return the zero-based index of the column with the specified header name, or -1 if not found. Columns are looked up from the spreadsheet.
- * 
+ *
  * Return values are cached for 5 minutes, after this the name will be looked up again in the spreadsheet.
  *
  * @param colName The name of the column header to look for
@@ -3964,11 +3964,11 @@ function createNRMSheet() {
 }
 
 
-function getElementsByTagName(element, tagName) {  
+function getElementsByTagName(element, tagName) {
   var data = [];
-  var descendants = element.getDescendants();  
+  var descendants = element.getDescendants();
   for (var i = 0; i< descendants.length; i++) {
-    var elt = descendants[i].asElement();     
+    var elt = descendants[i].asElement();
     if ( elt !== null && elt.getName() == tagName) {
       data.push(elt);
     }
@@ -4093,7 +4093,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   name = name || ss.getName() + " (Printable)";
   autoResize = typeof autoResize != "undefined" ? autoResize : false;
-  var newss = fileId ? SpreadsheetApp.openById(fileId) : SpreadsheetApp.create(name), 
+  var newss = fileId ? SpreadsheetApp.openById(fileId) : SpreadsheetApp.create(name),
     srcSheets = getRaceSheets(ss);
   if (fileId) {
     newss.insertSheet("Temp" + Math.floor(Date.now() / 1000), 0);
@@ -4332,7 +4332,7 @@ function createNumberBoards_(name, truncateEmpty) {
  * Look through all the current entries and flag duplicates
  */
 function checkEntryDuplicateWarnings(spreadsheet) {
-  var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(), 
+  var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(),
     sheets = getRaceSheets(ss), sheet, boatNumsByPaddler = {}, warnings = [];
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
