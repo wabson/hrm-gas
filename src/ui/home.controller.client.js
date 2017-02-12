@@ -26,6 +26,20 @@ $(function() {
   }
 });
 
+function getScriptUrl(params) {
+  var scriptUrl = url;
+  if (params) {
+    var initialSep = scriptUrl.indexOf('?') == -1 ? '?' : '&', pairs = [];
+    for (var k in params) {
+      if (params.hasOwnProperty(k)) {
+        pairs.push(k + '=' + params[k]);
+      }
+    }
+    scriptUrl += initialSep + pairs.join('&');
+  }
+  return scriptUrl;
+}
+
 function isScrollingEnabled() {
   return scroll == "1" || scroll == "true";
 }
@@ -169,7 +183,7 @@ function showSummaryData(data) {
 function showResults(races, options) {
   var div = $('#results-races'), html = '';
   var ssKey = key;
-  $('#file-links').html('<p><a href="' + url + '?show=results&amp;key=' + ssKey + '" target="_top"><< Back up</a></p>');
+  $('#file-links').html('<p><a href="' + getScriptUrl({ ssKey: key, show: 'results' }) + '" target="_top">&lt;&lt; Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     html += formatRaceResults(races[i], options);
@@ -246,7 +260,7 @@ function showResultsSummary(races, options) {
   var div = $('#results-summary'), html = '';
   var ssKey = key;
   var summaryItems = [];
-  $('#file-links').html('<p><a href="' + url + '?key=' + ssKey + '" target="_top"><< Back up</a></p>');
+  $('#file-links').html('<p><a href="' + getScriptUrl({ key: ssKey }) + '" target="_top">&lt;&lt; Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     var starters, finishers, complete, finishTimes, startTime = null,
@@ -291,7 +305,7 @@ function showResultsSummary(races, options) {
   html += ('  </tr>');
   html += summaryItems.map(function(item) {
     return '  <tr>' +
-      '     <td><a href="' + url + '?show=results&amp;key=' + key + '&amp;race=' + item.name + '" target="_top">' + item.name + '</a></td>' +
+      '     <td><a href="' + getScriptUrl({ key: ssKey, show: 'results', race: item.name }) + '" target="_top">' + item.name + '</a></td>' +
       '     <td>' + item.completeness + '</td>' +
       '     <td>' + item.start + '</td>' +
       '     <td>' + item.first + '</td>' +
@@ -444,7 +458,7 @@ function showEntries(entries, showBCUDetails) {
   var div = $('#entries-data'), html = '';
   var ssKey = key;
   div.empty();
-  $('#file-links').html('<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top"><< Back up</a></p>');
+  $('#file-links').html('<p><a href="' + getScriptUrl({ key: ssKey, show: 'entries' }) + '" target="_top">&lt;&lt; Back up</a></p>');
   for (var i = 0; i < entries.length; ++i) {
     if (entries[i].results && entries[i].results.length > 0) {
       html += '<table>';
@@ -495,7 +509,7 @@ function showEntriesSummary(races, options) {
   var summaryItems = [];
   var m = 0;
   var entries, numPaid;
-  $('#file-links').html('<p><a href="' + url + '?key=' + ssKey + '" target="_top"><< Back up</a></p>');
+  $('#file-links').html('<p><a href="' + getScriptUrl({ key: ssKey }) + '" target="_top">&lt;&lt; Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     entries = races[i].results;
@@ -529,7 +543,7 @@ function showEntriesSummary(races, options) {
   html += ('  </tr>');
   html += summaryItems.map(function(item) {
     return '  <tr>' +
-      '     <td><a href="' + url + '?show=entries&amp;key=' + ssKey + '&amp;race=' + item.name + '" target="_top">' + item.name + '</a></td>' +
+      '     <td><a href="' + getScriptUrl({ key: ssKey, show: 'entries', race: item.name }) + '" target="_top">' + item.name + '</a></td>' +
       '     <td>' + item.entries + '</td>' +
       '     <td>' + item.paid + '</td>' +
       '     <td>' + item.bcu + '</td>' +
@@ -551,8 +565,8 @@ function showEntriesSummary(races, options) {
 function showLinks(ssKey) {
   var div = $('#file-links'), html = '';
   div.empty();
-  html += '<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top">Show Entries</a></p>';
-  html += '<p><a href="' + url + '?show=results&amp;key=' + ssKey + '" target="_top">Show Results</a> or <a href="' + url + '?show=results&amp;key=' + ssKey + '&amp;scroll=1" target="_top">Scrolling Results</a></p>';
+  html += '<p><a href="' + getScriptUrl({ key: ssKey, show: 'entries' }) + '" target="_top">Show Entries</a></p>';
+  html += '<p><a href="' + getScriptUrl({ key: ssKey, show: "results" }) + '" target="_top">Show Results</a> or <a href="' + getScriptUrl({ key: ssKey, show: 'results', scroll: 1 }) + '" target="_top">Scrolling Results</a></p>';
   html += '<p><a href="https://docs.google.com/spreadsheets/d/' + ssKey + '/edit">Edit Full Spreadsheet</a></p>';
   div.append(html);
   $('#messages').hide();

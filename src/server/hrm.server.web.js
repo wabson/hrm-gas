@@ -231,14 +231,21 @@ function spreadsheetHasEditPermission_(ss) {
   return true;
 }
 
-
-
 /**
  * Get the URL for the Google Apps Script running as a WebApp.
  */
-function getScriptUrl() {
- var url = ScriptApp.getService().getUrl();
- return url;
+function getScriptUrl(params) {
+  var url = ScriptApp.getService().getUrl();
+  if (params) {
+    var initialSep = url.indexOf('?') == -1 ? '?' : '&', pairs = [];
+    for (var k in params) {
+      if (params.hasOwnProperty(k)) {
+        pairs.push(k + '=' + params[k]);
+      }
+    }
+    url += initialSep + pairs.join('&');
+  }
+  return url;
 }
 
 /**
