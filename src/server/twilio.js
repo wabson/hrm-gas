@@ -9,7 +9,9 @@ function lookupNationalPhoneNumber(phoneNumber) {
         throw 'Twilio configuration could not be found';
     }
     options.headers = {
-        'Authorization': 'Basic ' + Utilities.base64Encode(config.integrations.twilio.accountSid + ':' + config.integrations.twilio.authToken)
+        'Authorization': 'Basic ' + Utilities.base64Encode(
+            config.integrations.twilio.accountSid + ':' +config.integrations.twilio.authToke
+        )
     };
     return UrlFetchApp.fetch(lookupUrl, options);
 }
@@ -19,7 +21,9 @@ function sendSms(toNumber, messageBody) {
     if (!config.integrations || !config.integrations.twilio) {
         throw 'Twilio configuration could not be found';
     }
-    var messagesUrl = 'https://api.twilio.com/2010-04-01/Accounts/' + config.integrations.twilio.accountSid + '/Messages.json';
+    var messagesUrl = 'https://api.twilio.com/2010-04-01/Accounts/' +
+        config.integrations.twilio.accountSid +
+        '/Messages.json';
     var payload = {
         'To': toNumber,
         'Body' : messageBody,
@@ -30,7 +34,9 @@ function sendSms(toNumber, messageBody) {
         payload: payload
     };
     options.headers = {
-        'Authorization': 'Basic ' + Utilities.base64Encode(config.integrations.twilio.accountSid + ':' + config.integrations.twilio.authToken)
+        'Authorization': 'Basic ' + Utilities.base64Encode(
+            config.integrations.twilio.accountSid + ':' + config.integrations.twilio.authToken
+        )
     };
     var response = UrlFetchApp.fetch(messagesUrl, options);
     var data = JSON.parse(response);

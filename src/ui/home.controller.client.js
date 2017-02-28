@@ -26,6 +26,20 @@ $(function() {
   }
 });
 
+function getScriptUrl(params) {
+  var scriptUrl = url;
+  if (params) {
+    var initialSep = scriptUrl.indexOf('?') == -1 ? '?' : '&', pairs = [];
+    for (var k in params) {
+      if (params.hasOwnProperty(k)) {
+        pairs.push(k + '=' + params[k]);
+      }
+    }
+    scriptUrl += initialSep + pairs.join('&');
+  }
+  return scriptUrl;
+}
+
 function isScrollingEnabled() {
   return scroll == "1" || scroll == "true";
 }
@@ -87,16 +101,16 @@ function onDataReloaded(data) {
     });
   } else {
     if (show == 'entries') {
-    showEntries(data.races, true);
-  } else if (show == 'starters') {
-    showEntries(data.races, false);
-  } else {
+      showEntries(data.races, true);
+    } else if (show == 'starters') {
+      showEntries(data.races, false);
+    } else {
       if (race === '') {
         showSummaryData(data);
       } else {
         showData(data);
       }
-  }
+    }
   }
   if (data.lastUpdated) {
     lastUpdated = data.lastUpdated;
@@ -169,7 +183,7 @@ function showSummaryData(data) {
 function showResults(races, options) {
   var div = $('#results-races'), html = '';
   var ssKey = key;
-  $('#file-links').html('<p><a href="' + url + '?show=results&amp;key=' + ssKey + '" target="_top"><< Back up</a></p>');
+  $('#file-links').html('<p><a href="' + getScriptUrl({ ssKey: key, show: 'results' }) + '" target="_top">&lt;&lt; Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     html += formatRaceResults(races[i], options);
@@ -246,7 +260,7 @@ function showResultsSummary(races, options) {
   var div = $('#results-summary'), html = '';
   var ssKey = key;
   var summaryItems = [];
-  $('#file-links').html('<p><a href="' + url + '?key=' + ssKey + '" target="_top"><< Back up</a></p>');
+  $('#file-links').html('<p><a href="' + getScriptUrl({ key: ssKey }) + '" target="_top">&lt;&lt; Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     var starters, finishers, complete, finishTimes, startTime = null,
@@ -291,7 +305,7 @@ function showResultsSummary(races, options) {
   html += ('  </tr>');
   html += summaryItems.map(function(item) {
     return '  <tr>' +
-      '     <td><a href="' + url + '?show=results&amp;key=' + key + '&amp;race=' + item.name + '" target="_top">' + item.name + '</a></td>' +
+      '     <td><a href="' + getScriptUrl({ key: ssKey, show: 'results', race: item.name }) + '" target="_top">' + item.name + '</a></td>' +
       '     <td>' + item.completeness + '</td>' +
       '     <td>' + item.start + '</td>' +
       '     <td>' + item.first + '</td>' +
@@ -300,9 +314,10 @@ function showResultsSummary(races, options) {
   }).join('\n');
   html += ('</table>');
   if (options.allowPd === true) {
-    html += ('<p><button id="pd-div1">Div 1-3 Promotions</button></p>');
+    html += ('<p><button id="pd-div1" disabled>Div 1-3 Promotions</button></p>');
     html += ('<p><button id="pd-div4">Div 4-6 Promotions</button></p>');
     html += ('<p><button id="pd-div7">Div 7-9 Promotions</button></p>');
+    html += ('<p><button id="points">Club Points</button></p>');
   }
   if (hasEditPermission) {
     html += ('<p><button id="check-finish-times">Check Finish Times</button></p>');
@@ -325,13 +340,18 @@ function showResultsSummary(races, options) {
         $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 7-9');
       }).setPromotionsDiv789(ssKey, false);
     });
+    $("#points").button().on("click", function () {
+      google.script.run.withSuccessHandler(function (data) {
+        $("#pd-result").html('Calculated points OK');
+      }).calculatePointsFromWeb(ssKey);
+    });
   }
   if (hasEditPermission) {
     $("#publish-results").button().on("click", function () {
       $("#pd-result").html('Publishing results...');
       google.script.run.withSuccessHandler(function (data) {
-        $("#pd-result").html('Published results to <a href="https://googledrive.com/host/' + data.fileId + '">web page</a>');
-      }).saveResultsHTMLForSpreadsheet(ssKey, false);
+        $("#pd-result").html('Published results to <a href="https://googledrive.com/host/' + data.fileId + '" target="_top">web page</a>');
+      }).saveResultsHTMLForSpreadsheet(ssKey);
     });
     $("#check-finish-times").button().on("click", function () {
       $("#pd-result").html('Checking finish times...');
@@ -341,16 +361,16 @@ function showResultsSummary(races, options) {
           $("#pd-result").html('No duplicate finish times found');
         } else {
           $("#pd-result").html('Found ' + duplicates.length + ' duplicated boats:<br />' + duplicates.map(function(dup) {
-            var timesHtml = dup.times.map(function(time) {
-              return (time.number ? ('(' + time.number + ') ') : '') + time.time;
-            }).join(', ');
-            return 'Boat ' + dup.boatNumber + ': found times ' + timesHtml;
-          }).join('<br />'));
+              var timesHtml = dup.times.map(function(time) {
+                return (time.number ? ('(' + time.number + ') ') : '') + time.time;
+              }).join(', ');
+              return 'Boat ' + dup.boatNumber + ': found times ' + timesHtml;
+            }).join('<br />'));
         }
         if (strangeTimes.length > 0) {
           $("#pd-result").html($("#pd-result").html() + '<br />Found ' + strangeTimes.length + ' strange times:<br />' + strangeTimes.map(function(row) {
-            return '' + row.number + ' boat ' + row.boatNumber + ', time ' + row.time;
-          }).join('<br />'));
+              return '' + row.number + ' boat ' + row.boatNumber + ', time ' + row.time;
+            }).join('<br />'));
         }
       }).checkFinishDuplicatesForSpreadsheet(ssKey, false);
     });
@@ -444,7 +464,7 @@ function showEntries(entries, showBCUDetails) {
   var div = $('#entries-data'), html = '';
   var ssKey = key;
   div.empty();
-  $('#file-links').html('<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top"><< Back up</a></p>');
+  $('#file-links').html('<p><a href="' + getScriptUrl({ key: ssKey, show: 'entries' }) + '" target="_top">&lt;&lt; Back up</a></p>');
   for (var i = 0; i < entries.length; ++i) {
     if (entries[i].results && entries[i].results.length > 0) {
       html += '<table>';
@@ -460,7 +480,7 @@ function showEntries(entries, showBCUDetails) {
       html += '     <th>Class</th>';
       html += '     <th>Div</th>';
       if (showBCUDetails) {
-      html += '     <th>Paid</th>';
+        html += '     <th>Paid</th>';
       }
       html += '  </tr>';
       var n = 0;
@@ -495,7 +515,7 @@ function showEntriesSummary(races, options) {
   var summaryItems = [];
   var m = 0;
   var entries, numPaid;
-  $('#file-links').html('<p><a href="' + url + '?key=' + ssKey + '" target="_top"><< Back up</a></p>');
+  $('#file-links').html('<p><a href="' + getScriptUrl({ key: ssKey }) + '" target="_top">&lt;&lt; Back up</a></p>');
   div.empty();
   for (var i = 0; i < races.length; i++) {
     entries = races[i].results;
@@ -529,7 +549,7 @@ function showEntriesSummary(races, options) {
   html += ('  </tr>');
   html += summaryItems.map(function(item) {
     return '  <tr>' +
-      '     <td><a href="' + url + '?show=entries&amp;key=' + ssKey + '&amp;race=' + item.name + '" target="_top">' + item.name + '</a></td>' +
+      '     <td><a href="' + getScriptUrl({ key: ssKey, show: 'entries', race: item.name }) + '" target="_top">' + item.name + '</a></td>' +
       '     <td>' + item.entries + '</td>' +
       '     <td>' + item.paid + '</td>' +
       '     <td>' + item.bcu + '</td>' +
@@ -542,8 +562,8 @@ function showEntriesSummary(races, options) {
     $("#publish-entries").button().on("click", function () {
       $("#entries-result").html('Publishing entries...');
       google.script.run.withSuccessHandler(function (data) {
-        $("#entries-result").html('Published entries to <a href="https://googledrive.com/host/' + data.fileId + '">web page</a>');
-      }).saveEntriesHTMLForSpreadsheet(ssKey, false);
+        $("#entries-result").html('Published entries to <a href="https://googledrive.com/host/' + data.fileId + '" target="_top">web page</a>');
+      }).saveEntriesHTMLForSpreadsheet(ssKey);
     });
   }
 }
@@ -551,8 +571,8 @@ function showEntriesSummary(races, options) {
 function showLinks(ssKey) {
   var div = $('#file-links'), html = '';
   div.empty();
-  html += '<p><a href="' + url + '?show=entries&amp;key=' + ssKey + '" target="_top">Show Entries</a></p>';
-  html += '<p><a href="' + url + '?show=results&amp;key=' + ssKey + '" target="_top">Show Results</a> or <a href="' + url + '?show=results&amp;key=' + ssKey + '&amp;scroll=1" target="_top">Scrolling Results</a></p>';
+  html += '<p><a href="' + getScriptUrl({ key: ssKey, show: 'entries' }) + '" target="_top">Show Entries</a></p>';
+  html += '<p><a href="' + getScriptUrl({ key: ssKey, show: "results" }) + '" target="_top">Show Results</a> or <a href="' + getScriptUrl({ key: ssKey, show: 'results', scroll: 1 }) + '" target="_top">Scrolling Results</a></p>';
   html += '<p><a href="https://docs.google.com/spreadsheets/d/' + ssKey + '/edit">Edit Full Spreadsheet</a></p>';
   div.append(html);
   $('#messages').hide();

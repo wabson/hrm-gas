@@ -146,7 +146,7 @@ $(function() {
       $( "#users tbody" ).append( "<tr>" +
         "<td>" + name.val() + "</td>" +
         "<td>" + password.val() + "</td>" +
-      "</tr>" );
+        "</tr>" );
       dialog.dialog( "close" );
     }
     return valid;
@@ -168,11 +168,11 @@ $(function() {
 
   function onSearchResultsLoaded(resp) {
     $( "#users tbody" ).empty().append(resp.map(function(row) { return "<tr>" +
-        "<td><input type=\"radio\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
-        "<td>" + row[1] + " " + row[0] + "</td>" +
-        "<td>" + row[2] + "</td>" +
-        "<td>" + row[3] + "</td>" +
-        "<td>" + row[6] + "</td>" +
+      "<td><input type=\"radio\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
+      "<td>" + row[1] + " " + row[0] + "</td>" +
+      "<td>" + row[2] + "</td>" +
+      "<td>" + row[3] + "</td>" +
+      "<td>" + row[6] + "</td>" +
       "</tr>";}));
     var addToCrewEnabled = resp.length > 0;
     if (resp.length == 1) {
@@ -190,11 +190,11 @@ $(function() {
   function onClickAddToCrew() {
     var selectedVal = $("#users input[name=entry]:checked").val().split("|");
     $("#crew-members tbody").append("<tr>" +
-        "<td><input type=\"hidden\" name=\"entry\" value=\"" + selectedVal.join("|") + "\" />" +
-        "" + selectedVal[1] + " " + selectedVal[0] + "</td>" +
-        "<td>" + selectedVal[2] + "</td>" +
-        "<td>" + selectedVal[3] + "</td>" +
-        "<td>" + selectedVal[6] + "</td>" +
+      "<td><input type=\"hidden\" name=\"entry\" value=\"" + selectedVal.join("|") + "\" />" +
+      "" + selectedVal[1] + " " + selectedVal[0] + "</td>" +
+      "<td>" + selectedVal[2] + "</td>" +
+      "<td>" + selectedVal[3] + "</td>" +
+      "<td>" + selectedVal[6] + "</td>" +
       "</tr>");
     $("#users tbody" ).empty();
     $("#add-entry").button("option", "disabled", false);
@@ -209,17 +209,17 @@ $(function() {
         .withSuccessHandler(onAddCrewSuccess)
         .withFailureHandler(onAddCrewFailure)
         .onHTMLAddEntryClick(
-          key, 
-          $(selected[0]).attr("value").split("|"), 
-          selected.length > 1 ? $(selected[1]).attr("value").split("|") : null, 
+          key,
+          $(selected[0]).attr("value").split("|"),
+          selected.length > 1 ? $(selected[1]).attr("value").split("|") : null,
           raceName
         );
     }
   }
 
   function onAddCrewSuccess(result) {
-    $("#add-entry-messages").html("Added " + result.boatNumber + " " + result.crewName + " in " + 
-        result.sheetName);
+    $("#add-entry-messages").html("Added " + result.boatNumber + " " + result.crewName + " in " +
+      result.sheetName);
     $( "#crew-members tbody" ).empty();
     $("#add-entry").button("option", "disabled", true);
     name.focus();

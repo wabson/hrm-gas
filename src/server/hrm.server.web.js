@@ -46,7 +46,7 @@ function doGet(e) {
  */
 function saveResultsHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var template = HtmlService.createTemplateFromFile('results-static.view'), scriptProps, title, data;
+  var template = HtmlService.createTemplateFromFile('results-static.view'), scriptProps, title, data, outputHtml;
   var publishedResultsId = null;
   try {
     publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedResultsId', {
@@ -66,8 +66,7 @@ function saveResultsHTML(ss) {
       template.isHaslerFinal = scriptProps.haslerRegion == "HF";
     }
   }
-  var outputHtml = template.evaluate().getContent();
-  //var htmlFile = DriveApp.createFile(Utilities.formatString(RESULTS_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
+  outputHtml = template.evaluate().getContent();
   var htmlFile = scriptProps.publishedResultsId ? DriveApp.getFileById(scriptProps.publishedResultsId) : DriveApp.createFile(Utilities.formatString(RESULTS_HTML_FILENAME_TMPL, title), outputHtml, MimeType.HTML);
   if (scriptProps.publishedResultsId) {
     htmlFile.setContent(outputHtml);
@@ -78,7 +77,6 @@ function saveResultsHTML(ss) {
       value: htmlFile.getId(),
       visibility: 'PUBLIC'
     }, ss.getId());
-    Logger.log("Set drive publishedResultsId property to: " + htmlFile.getId());
   }
   catch (ex) {
     Logger.log('Caught exception ', ex);
@@ -110,7 +108,7 @@ function saveEntriesHTML(ss) {
   var template = HtmlService.createTemplateFromFile('entries-static.view'), scriptProps, title, data;
   var publishedResultsId = null;
   try {
-    publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedEntriesId', {
+    publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedResultsId', {
       visibility: 'PUBLIC'
     }).value;
   } catch (e) { }
@@ -154,7 +152,7 @@ function saveEntriesHTML(ss) {
 /**
  * Print entries summary
  *
- * @param {object} e Event information
+ * @param {String} ssKey Spreadsheet key
  */
 function saveEntriesHTMLForSpreadsheet(ssKey) {
   return saveEntriesHTML(SpreadsheetApp.openById(ssKey));
@@ -175,7 +173,7 @@ function listFiles(e) {
   var template = HtmlService.createTemplateFromFile('Files'), title = "My Files";
   template.title = title;
   template.files = DriveApp.searchFiles(
-     "properties has { key='hrmType' and value='HRM' and visibility='PUBLIC' }");
+    "properties has { key='hrmType' and value='HRM' and visibility='PUBLIC' }");
   var output = template.evaluate();
   output.setSandboxMode(HtmlService.SandboxMode.IFRAME);
   output.setTitle(title);
@@ -233,14 +231,21 @@ function spreadsheetHasEditPermission_(ss) {
   return true;
 }
 
-
-
 /**
  * Get the URL for the Google Apps Script running as a WebApp.
  */
-function getScriptUrl() {
- var url = ScriptApp.getService().getUrl();
- return url;
+function getScriptUrl(params) {
+  var url = ScriptApp.getService().getUrl();
+  if (params) {
+    var initialSep = url.indexOf('?') == -1 ? '?' : '&', pairs = [];
+    for (var k in params) {
+      if (params.hasOwnProperty(k)) {
+        pairs.push(k + '=' + params[k]);
+      }
+    }
+    url += initialSep + pairs.join('&');
+  }
+  return url;
 }
 
 /**
@@ -391,7 +396,7 @@ function sendResultsSms() {
       if (phoneLookup.getResponseCode() == 200) {
         var phoneData = JSON.parse(phoneLookup);
         var intlNumber = phoneData['phone_number'];
-        if (intlNumber && intlNumber.indexOf('+447') == 0) {
+        if (intlNumber && intlNumber.indexOf('+447') === 0) {
           var messageBody = ss.getName() + ': Boat ' + result.num + ' ' + result.names.join(', ') + ' finished in ' + result.time + ' in posn ' + result.posn + ' of ' + numStarters + ' in ' + sheet.getName();
           Logger.log('sending SMS to ' + intlNumber + ': "' + messageBody + '" (' + messageBody.length + ' characters)');
           sendSms(intlNumber, messageBody);
@@ -464,13 +469,13 @@ function _getRaceEntriesFromSheet(sheet, raceDateStr) {
 }
 
 function getLastEntryRow(sheet) {
-    // Find the latest row with a number but without a name in the sheet
-    var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 2), values = range.getValues();
-    for (var i=0; i<values.length; i++) {
-      if (parseInt(values[i][0]) && values[i][1] === "") {
-        return i;
-      }
+  // Find the latest row with a number but without a name in the sheet
+  var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 2), values = range.getValues();
+  for (var i=0; i<values.length; i++) {
+    if (parseInt(values[i][0]) && values[i][1] === "") {
+      return i;
     }
+  }
   return 1;
 }
 
@@ -553,8 +558,8 @@ function sortResults(r1, r2) {
   if (typeof t2.getTime == "function") {
     t2 = t2.getTime();
   }
-  if (typeof t1 == "number" && typeof t2 == "number" || 
-     typeof t1 == "string" && typeof t2 == "string")
+  if (typeof t1 == "number" && typeof t2 == "number" ||
+    typeof t1 == "string" && typeof t2 == "string")
   {
     if (t1 < t2) {
       return -1;
