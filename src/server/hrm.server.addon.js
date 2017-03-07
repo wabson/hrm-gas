@@ -1,23 +1,115 @@
 /* jshint eqeqeq: false, quotmark: false, maxdepth: false, maxstatements: false, maxlen: false */
 
+var hrm = require('./hrm.server.main');
+var uiService = require('./ui-service');
+var web = require('./hrm.server.web');
+
+global.showClearEntries = hrm.showClearEntries;
+global.confirmClearEntries = hrm.confirmClearEntries;
+global.showLoadRankings = hrm.showLoadRankings;
+global.showAddLocalRankings = hrm.showAddLocalRankings;
+global.addLocalRankings = hrm.addLocalRankings;
+global.showClearRankings = hrm.showClearRankings;
+global.confirmClearRankings = hrm.confirmClearRankings;
+global.showAddLocalEntries = hrm.showAddLocalEntries;
+global.showImportEntries = hrm.showImportEntries;
+global.importEntries = hrm.importEntries;
+global.addLocalEntries = hrm.addLocalEntries;
+global.showModifyCrews = hrm.showModifyCrews;
+global.moveCrews = hrm.moveCrews;
+global.deleteCrews = hrm.deleteCrews;
+global.updateEntriesFromMemberships = hrm.updateEntriesFromMemberships;
+global.updateEntriesFromRankings = hrm.updateEntriesFromRankings;
+
+global.saveEntriesHTML = hrm.saveEntriesHTML;
+global.saveResultsHTML = hrm.saveResultsHTML;
+global.showResultsURL = hrm.showResultsURL;
+global.showEntriesURL = hrm.showEntriesURL;
+global.showRaceLevies = hrm.showRaceLevies;
+
+global.showSetStartTimes = hrm.showSetStartTimes;
+global.setStartTimes = hrm.setStartTimes;
+global.onSetStartTimesEnter = hrm.onSetStartTimesEnter;
+global.showSetFinishTimes = hrm.showSetFinishTimes;
+global.setFinishTimes = hrm.setFinishTimes;
+
+global.calculatePromotions = hrm.calculatePromotions;
+global.setPromotionsDiv123 = hrm.setPromotionsDiv123;
+global.setPromotionsDiv456 = hrm.setPromotionsDiv456;
+global.setPromotionsDiv789 = hrm.setPromotionsDiv789;
+global.calculatePoints = hrm.calculatePoints;
+
+global.setFormulas = hrm.setFormulas;
+global.setValidation = hrm.setValidation;
+global.setFormatting = hrm.setFormatting;
+global.setProtection = hrm.setProtection;
+global.setFreezes = hrm.setFreezes;
+
+global.createK4Sheet = hrm.createK4Sheet;
+global.createK2Sheet = hrm.createK2Sheet;
+global.createARMSheet = hrm.createARMSheet;
+global.createARMSheet = hrm.createARMSheet;
+global.createNRMSheet = hrm.createNRMSheet;
+global.populateFromHtmlResults = hrm.populateFromHtmlResults;
+global.createPrintableEntries = hrm.createPrintableEntries;
+global.createPrintableResults = hrm.createPrintableResults;
+global.createClubEntries = hrm.createClubEntries;
+global.createNumberBoards = hrm.createNumberBoards;
+global.checkEntriesFromRankings = hrm.checkEntriesFromRankings;
+
+global.close = uiService.close;
+
+/**
+ * Respond to a browser request
+ *
+ * TODO Move this to a separate project?
+ *
+ * @param {object} e Event information
+ */
+global.doGet = function doGet(e) {
+  var key = e.parameter.key, action = e.parameter.show || "links";
+  if (key) {
+    switch (action) {
+      case "results":
+        return web.printResults(e);
+      case "entries":
+        return web.printResults(e);
+      case "starters":
+        return web.printResults(e);
+      case "links":
+        return web.printResults(e);
+      default:
+        throw "Unsupported action " + action;
+    }
+  } else {
+    return web.listFiles(e);
+  }
+};
+
+global.saveResultsHTMLForSpreadsheet = web.saveResultsHTMLForSpreadsheet;
+global.saveEntriesHTMLForSpreadsheet = web.saveEntriesHTMLForSpreadsheet;
+global.getScriptUrl = web.getScriptUrl;
+global.getLastUpdated = web.getLastUpdated;
+global.sendResultsSms = web.sendResultsSms;
+
 /**
  * Called when an add-on is installed.
  * @param {Object} e Apps Script onInstall event object
  */
-function onInstall(e) {
-  onOpen(e);
-}
+global.onInstall = function onInstall(e) {
+  global.onOpen(e);
+};
 
 
 /**
  * Called when a spreadsheet that is associated with this add-on is opened.
  * @param {Object} e Apps Script onInstall event object
  */
-function onOpen(e) {
+global.onOpen = function onOpen(e) {
   var ui = SpreadsheetApp.getUi();
-  var addonMenu = ui.createAddonMenu();
+  //var addonMenu = ui.createAddonMenu();
 
-  addonMenu
+  ui.createMenu('Custom Menu')
     .addItem('Start', 'openStartDialog')
     .addItem('Rankings', 'openRankingsSidebar')
     .addItem('Entries', 'openEntriesSidebar')
@@ -62,29 +154,20 @@ function onOpen(e) {
        .addItem('Live Results', 'showResultsURL')
        .addItem('Publish Results', 'saveResultsHTML')
        .addItem('Print Results', 'createPrintableResults')
-       .addItem('Send SMS results', 'sendResultsSms'));
+       .addItem('Send SMS results', 'sendResultsSms')).addToUi();
 
-  addonMenu.addToUi();
-}
-
-
-function onShowSidebar() {
-  var html = HtmlService.createTemplateFromFile('a.myproj.home.view');
-  html.mode = 'addon';
-  SpreadsheetApp.getUi()
-      .showSidebar(html.evaluate()
-      .setSandboxMode(HtmlService.SandboxMode.IFRAME));
-}
+  //addonMenu.addToUi();
+};
 
 /**
  * Automatically invoked whenever a cell is edited
  */
-function onEdit(e) {
+global.onEdit = function onEdit(e) {
   var sheet = e.range.getSheet();
   // If we are in a race sheet and this is a name or similar then capitalise the value
   var sheetName = sheet.getName();
   if (e.value && typeof e.value == "string" && e.range.getRow() > 1 && e.range.getColumn() > 1 && e.range.getColumn() < 8 &&
-    sheetName != "Finishes" && sheetName != "Rankings" && sheetName != "Clubs" && sheetName != "Results" && 
+    sheetName != "Finishes" && sheetName != "Rankings" && sheetName != "Clubs" && sheetName != "Results" &&
       sheetName != "PandD" && sheetName != "Summary") {
         if (e.value.toUpperCase() != e.value) {
           e.range.setValue(e.value.toUpperCase());
@@ -116,4 +199,4 @@ function onEdit(e) {
     }
   }
   //e.range.setComment("Edited at: " + new Date().toTimeString());
-}
+};

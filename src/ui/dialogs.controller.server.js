@@ -13,23 +13,23 @@ function openSidebar_(templateFile, options) {
         .setWidth(300);
     SpreadsheetApp.getUi().showSidebar(html);
 }
-function openStartDialog() {
+exports.openStartDialog = function openStartDialog() {
     openModalDialog_('dialogs.start.view', {
         title: 'Start project'
     });
-}
-function openRaceDetailsDialog() {
+};
+exports.openRaceDetailsDialog = function openRaceDetailsDialog() {
     openModalDialog_('dialogs.race-details.view', {
         title: 'Race details'
     });
-}
-function openRankingsSidebar() {
+};
+exports.openRankingsSidebar = function openRankingsSidebar() {
     openSidebar_('sidebar.rankings.view', {
         title: 'Rankings'
     });
-}
-function openEntriesSidebar() {
+};
+exports.openEntriesSidebar = function openEntriesSidebar() {
     openSidebar_('sidebar.entries.view', {
         title: 'Add Entries'
     });
-}
+};

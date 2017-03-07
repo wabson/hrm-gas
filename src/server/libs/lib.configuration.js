@@ -21,17 +21,19 @@ var Configuration = {
   * @return {myproj.json.Configuration}
   */
   getCurrent: function() {
-    if (typeof getDefaultConfiguration_ === 'undefined') {
+    if (typeof global.getDefaultConfiguration_ === 'undefined') {
       throw 'You must provide an implementation of getDefaultConfiguration_' +
           'to use this configuration library.';
     }
-    var configuration = getDefaultConfiguration_();
-    if (typeof provideEnvironmentConfiguration_ !== 'undefined') {
-      configuration = provideEnvironmentConfiguration_(configuration);
+    var configuration = global.getDefaultConfiguration_();
+    if (typeof global.provideEnvironmentConfiguration_ !== 'undefined') {
+      configuration = global.provideEnvironmentConfiguration_(configuration);
     }
-    if (typeof provideExternalIntegrationConfiguration_ !== 'undefined') {
-      configuration = provideExternalIntegrationConfiguration_(configuration);
+    if (typeof global.provideExternalIntegrationConfiguration_ !== 'undefined') {
+      configuration = global.provideExternalIntegrationConfiguration_(configuration);
     }
     return configuration;
   }
 };
+
+module.exports = Configuration;

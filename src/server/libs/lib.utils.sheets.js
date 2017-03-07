@@ -14,21 +14,6 @@
 
 
 /**
- * Composes the correct URL to open a Google Sheet from Drive by URL.
- * @private
- * @param {String} fileId Drive file ID for the spreadsheet.
- * @param {String} gid The sheet ID to open.
- *     Value is in "gid=" param in the URL.
- * @return {String} Full URL to open the spreadsheet on Drive.
- */
-function getSpreadsheetUrl_(fileId, gid) {
-  return 'https://docs.google.com/spreadsheets/d/' + fileId +
-      '/edit#gid=' + gid;
-}
-
-
-
-/**
  * Assists in working in a standalone project that may be dynamically bound to
  * a Spreadsheet (as an add-on), but also may run separate (testing, Execution
  * API, etc.).
@@ -154,3 +139,5 @@ SheetsUtilitiesLibrary.prototype.activateById = function(sheetId)  {
     sheet.activate();
   }
 };
+
+module.exports = SheetsUtilitiesLibrary;

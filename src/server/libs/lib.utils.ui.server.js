@@ -20,11 +20,11 @@
  *      Do not include ".html".
  *  @return {String} HTML markup for the requested file.
  */
-function include(filename) {
+exports.include = function include(filename) {
   var baseName = filename.substring(filename.lastIndexOf('/') + 1);
   return HtmlService.createHtmlOutputFromFile(baseName)
       .getContent();
-}
+};
 
 /**
  * Create a JSON-safe copy of the specified object, since the server cannot send a Date object we must encode this
@@ -33,7 +33,7 @@ function include(filename) {
  * @param source  {object} Source object to copy
  * @returns {object}  Copy of the input with date properties replaced with strings
  */
-function jsonSafeObj(source) {
+exports.jsonSafeObj = function jsonSafeObj(source) {
   var copy = {}, val;
   for (var p in source) {
     if (source.hasOwnProperty(p)) {
@@ -42,7 +42,7 @@ function jsonSafeObj(source) {
     }
   }
   return copy;
-}
+};
 
 function dateToString_(d) {
   var day = ('0' + d.getDate()).slice(-2);
@@ -58,11 +58,11 @@ function dateToString_(d) {
  * @param source {object[]} Source array to copy
  * @returns {object[]} New array with each item being a copy of the corresponding item in the original
  */
-function jsonSafeArr(source) {
+exports.jsonSafeArr = function jsonSafeArr(source) {
   return source.map(function (item) {
     return jsonSafeObj(item);
   });
-}
+};
 
 /**
  * Convert an object received from the client, which may contain string-encoded dates
@@ -70,7 +70,7 @@ function jsonSafeArr(source) {
  * @param source {object} Source object to copy
  * @returns {object}  Copy of the input with date-like string properties replaced with real date objects
  */
-function objFromJson(source) {
+exports.objFromJson = function objFromJson(source) {
   var copy = {}, val, isDate, dateRe = /\w{3} \w{3} \d{1,2} \d{4}/i;
   for (var p in source) {
     if (source.hasOwnProperty(p)) {
@@ -80,7 +80,7 @@ function objFromJson(source) {
     }
   }
   return copy;
-}
+};
 
 /**
  * Create a copy of an array of objects received from the client, with string-encoded dates converted to real dates.
@@ -92,8 +92,8 @@ function objFromJson(source) {
  * @param source {object[]} Source array to copy
  * @returns {object[]} New array with each item being a copy of the corresponding item in the original
  */
-function arrFromJson(source) {
+exports.arrFromJson = function arrFromJson(source) {
   return source.map(function (item) {
     return objFromJson(item);
   });
-}
+};
