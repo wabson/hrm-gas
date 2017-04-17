@@ -1,7 +1,9 @@
 var hrm = require('./hrm.server.main');
 var uiService = require('./ui-service');
 var web = require('./hrm.server.web');
+var uiUtils = require('./libs/lib.utils.ui.server');
 var dialogs = require('../ui/dialogs.controller.server');
+var uiHome = require('../ui/home.controller.server');
 var apiRaceDetails = require('../ui/dialogs/race-details/dialogs.race-details.server');
 var apiStart = require('../ui/dialogs/start/dialogs.start.server');
 var apiEntries = require('../ui/sidebars/entries/sidebar.entries.server');
@@ -69,6 +71,8 @@ global.dialog_start_submit = apiStart.dialog_start_submit;
 global.dialog_raceDetails_get = apiRaceDetails.dialog_raceDetails_get;
 global.dialog_raceDetails_set = apiRaceDetails.dialog_raceDetails_set;
 
+global.getRaceSheetNamesHTML = uiHome.getRaceSheetNamesHTML;
+
 global.sidebar_entries_race_info = apiEntries.sidebar_entries_race_info;
 global.sidebar_entries_search = apiEntries.sidebar_entries_search;
 global.sidebar_entries_add = apiEntries.sidebar_entries_add;
@@ -114,5 +118,70 @@ global.doGet = function doGet(e) {
 global.saveResultsHTMLForSpreadsheet = web.saveResultsHTMLForSpreadsheet;
 global.saveEntriesHTMLForSpreadsheet = web.saveEntriesHTMLForSpreadsheet;
 global.getScriptUrl = web.getScriptUrl;
+global.include = uiUtils.includeHTML;
 global.getLastUpdated = web.getLastUpdated;
 global.sendResultsSms = web.sendResultsSms;
+
+/**
+ * Called when an add-on is installed.
+ * @param {Object} e Apps Script onInstall event object
+ */
+global.onInstall = function onInstall(e) {
+  Logger.log("onInstall()");
+  global.onOpen(e);
+};
+
+/**
+ * Called when a spreadsheet that is associated with this add-on is opened.
+ * @param {Object} e Apps Script onInstall event object
+ */
+global.onOpen = function onOpen(e) {
+  Logger.log("onOpen()");
+  var ui = SpreadsheetApp.getUi(), menu = ui.createAddonMenu();
+  menu.addItem('Start', 'openStartDialog')
+    .addItem('Rankings', 'openRankingsSidebar')
+    .addItem('Entries', 'openEntriesSidebar')
+    .addItem('Race Details', 'openRaceDetailsDialog')
+    .addSubMenu(ui.createMenu('New')
+      .addItem('HRM Sheet', 'createHRMSheet')
+      .addItem('ARM Sheet', 'createARMSheet')
+      .addItem('NRM Sheet', 'createNRMSheet')
+      .addItem('K2 Sheet', 'createK2Sheet')
+      .addItem('K4 Sheet', 'createK4Sheet'))
+    .addSubMenu(ui.createMenu('Rankings')
+      .addItem('Load Rankings', 'showLoadRankings')
+      .addItem('Load Rankings from File', 'showAddLocalRankings')
+      .addItem('Clear Rankings', 'confirmClearRankings'))
+    .addSubMenu(ui.createMenu('Entries')
+      .addItem('Add Entries from File', 'showAddLocalEntries')
+      .addItem('Import Entries from CSV', 'showImportEntries')
+      .addItem('Update from Rankings', 'updateEntriesFromRankings')
+      .addItem('Update from Memberships', 'updateEntriesFromMemberships')
+      .addItem('Check against Rankings', 'checkEntriesFromRankings')
+      .addItem('Clear Entries', 'showClearEntries')
+      .addItem('Set Formatting', 'setFormatting')
+      .addItem('Set Formulas', 'setFormulas')
+      .addItem('Set Protection', 'setProtection')
+      .addItem('Set Validation', 'setValidation')
+      .addSeparator()
+      .addItem('Modify Crews', 'showModifyCrews')
+      .addSeparator()
+      .addItem('Live Entries', 'showEntriesURL')
+      .addItem('Publish Entries', 'saveEntriesHTML')
+      .addItem('Print Entries', 'createPrintableEntries')
+      .addItem('Club Entries', 'createClubEntries')
+      .addSeparator()
+      .addItem('Finance Summary', 'showRaceLevies'))
+    .addSubMenu(ui.createMenu('Results')
+    //   .addItem('Set Start Times', 'showSetStartTimes')
+    //   .addItem('Set Finish Times', 'showSetFinishTimes')
+      .addItem('Calculate Promotions', 'calculatePromotions')
+      .addItem('Calculate Points', 'calculatePoints')
+      .addItem('Set Formulas', 'setFormulas')
+      .addSeparator()
+      .addItem('Live Results', 'showResultsURL')
+      .addItem('Publish Results', 'saveResultsHTML')
+      .addItem('Print Results', 'createPrintableResults')
+      .addItem('Send SMS results', 'sendResultsSms'));
+  menu.addToUi();
+};

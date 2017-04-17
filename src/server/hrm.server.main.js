@@ -20,6 +20,8 @@ var publishing = require('./publishing');
 var tables = require('./tables');
 var racing = require('./racing');
 var uiService = require('./ui-service');
+var Configuration = require('./libs/lib.configuration');
+var SheetsUtilitiesLibrary = require('./libs/lib.utils.sheets');
 
 /**
  * Rankings sheet column names
@@ -124,9 +126,9 @@ var RACE_SHEETS_NATIONALS = [
     ['O59_VMK2', [[900, 20, 'Y']], 2], ['O59_VLK2', [[920, 20, 'Y']], 2],
     ['Mixed', [[940, 60, 'Y']], 2]
 ];
-var EXTRA_SHEETS_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
-var EXTRA_SHEETS_NON_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
-var EXTRA_SHEETS_NATIONALS = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Divisional Results', 'Singles Results', 'Doubles Results', 'Summary'];
+var EXTRA_SHEETS_HASLER = racing.EXTRA_SHEETS_HASLER;
+var EXTRA_SHEETS_NON_HASLER = racing.EXTRA_SHEETS_NON_HASLER;
+var EXTRA_SHEETS_NATIONALS = racing.EXTRA_SHEETS_NATIONALS;
 
 var PROTECTED_SHEETS = ['Rankings'];
 
@@ -808,7 +810,7 @@ function setRaceInfo_(info, sheet) {
 
 exports.setRaceInfo = setRaceInfo_;
 
-function getRaceInfo_(sheet) {
+function getRaceInfo(sheet) {
   var range =  getRaceInfoCellRange_(sheet);
   if (range !== null) {
     var values = range.getValues();
@@ -1037,7 +1039,7 @@ function searchRankings_(spreadsheet, term) {
 
 exports.searchRankings = searchRankings_;
 
-function addEntry_(items, headers, selectedClass, spreadsheet, isLate) {
+function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
   if (!selectedClass) {
     selectedClass = 'Auto';
   }
@@ -1062,7 +1064,7 @@ exports.addEntry = addEntry;
 
 function addDueAmountToEntry_(members, raceName, isLate) {
   var sheetUtils = new SheetsUtilitiesLibrary({});
-  var driveProps = getDriveProperties_(sheetUtils.getCurrentActiveSpreadsheet().getId()), member;
+  var driveProps = getDriveProperties(sheetUtils.getCurrentActiveSpreadsheet().getId()), member;
   isLate = isLate === true;
   var entrySenior = isLate ? driveProps.entrySeniorLate : driveProps.entrySenior;
   var entryJunior = isLate ? driveProps.entryJuniorLate : driveProps.entryJunior;
@@ -3289,7 +3291,7 @@ function setSheetSpecificFormulas_(sheet) {
 exports.setValidation = function setValidation(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var sheets = racing.getRaceSheets(ss);
-  var props = getDriveProperties_(ss.getId());
+  var props = getDriveProperties(ss.getId());
   for (var i=0; i<sheets.length; i++) {
     setSheetValidation_(sheets[i], null, props);
     setSheetSpecificValidation_(sheets[i], null, props);
@@ -3792,7 +3794,7 @@ function setDriveProperty_(spreadsheetId, name, value) {
   }, spreadsheetId);
 }
 
-function setDriveProperties_(spreadsheetId, values) {
+function setDriveProperties(spreadsheetId, values) {
   for (var p in values) {
     if (values.hasOwnProperty(p)) {
       setDriveProperty_(spreadsheetId, p, values[p]);
@@ -3808,7 +3810,7 @@ function getDriveProperty_(spreadsheetId, name) {
   });
 }
 
-function getDriveProperties_(spreadsheetId) {
+function getDriveProperties(spreadsheetId) {
   var driveResp = Drive.Properties.list(spreadsheetId), propertyMap = {};
   driveResp.items.forEach(function(p) {
     propertyMap[p.key] = p.value;
@@ -3816,7 +3818,7 @@ function getDriveProperties_(spreadsheetId) {
   return propertyMap;
 }
 
-exports.getDriveProperties = getDriveProperties_;
+exports.getDriveProperties = getDriveProperties;
 
 function setRaceType_(spreadsheetId, raceType) {
   setDriveProperty_(spreadsheetId, 'hrmType', raceType);
@@ -4101,7 +4103,7 @@ exports.createClubEntries = function createClubEntries(scriptProps) {
 
 function createClubSpreadsheet_(name, columnNames, scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var driveProps = getDriveProperties_(ss.getId());
+  var driveProps = getDriveProperties(ss.getId());
   var truncateEmpty = true;
   name = name || ss.getName() + " (Clubs)";
   var newss = scriptProps && scriptProps.clubEntriesId ? SpreadsheetApp.openById(scriptProps.clubEntriesId) : SpreadsheetApp.create(name), srcSheets = racing.getRaceSheets(ss), clubValues = {}, currClub, currDue, currPaid, currClubValues;
@@ -4336,20 +4338,3 @@ function parseDate(dateStr) {
 }
 
 exports.parseDate = parseDate;
-
-/**
- * Passed into the configuration factory constructor
- * @return {myproj.json.Configuration} Default configuration settings.
- */
-global.getDefaultConfiguration = function getDefaultConfiguration_() {
-  return {
-    debug: false,
-    sheets: {
-      debugSpreadsheetId: null
-    },
-    app: {
-      raceTemplatesFolderId: null
-    },
-    integrations: {}
-  };
-};

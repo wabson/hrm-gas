@@ -1,5 +1,9 @@
 var formats = require('./dateformat');
 
+var EXTRA_SHEETS_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
+var EXTRA_SHEETS_NON_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
+var EXTRA_SHEETS_NATIONALS = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Divisional Results', 'Singles Results', 'Doubles Results', 'Summary'];
+
 exports.getRaceResultsFromSpreadsheet = function getRaceResultsFromSpreadsheet(sheetRows) {
   var results = [], lastbn = 0;
   for (var j=0; j<sheetRows.length; j++) {
@@ -182,6 +186,9 @@ function getRaceNames(spreadsheet) {
   return raceNames;
 }
 
+exports.EXTRA_SHEETS_HASLER = EXTRA_SHEETS_HASLER;
+exports.EXTRA_SHEETS_NON_HASLER = EXTRA_SHEETS_NON_HASLER;
+exports.EXTRA_SHEETS_NATIONALS = EXTRA_SHEETS_NATIONALS;
 exports.getRaceSheets = getRaceSheets;
 exports.getRaceSheetNames = getRaceSheetNames;
 exports.getRaceNames = getRaceNames;

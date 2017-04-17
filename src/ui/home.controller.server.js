@@ -1,5 +1,7 @@
 /* jshint sub: true, quotmark: false, maxstatements: false */
 
+var racing = require('../server/racing');
+
 function checkFinishDuplicates_(ss) {
   var sheet = ss.getSheetByName('Finishes');
   if (sheet === null) {
@@ -51,8 +53,10 @@ function checkFinishDuplicatesForSpreadsheet(ssKey) {
 }
 
 function getRaceSheetNamesHTML(ssKey) {
-  return getRaceSheetNames(SpreadsheetApp.openById(ssKey));
+  return racing.getRaceSheetNames(SpreadsheetApp.openById(ssKey));
 }
+
+exports.getRaceSheetNamesHTML = getRaceSheetNamesHTML;
 
 function findSpreadsheetRankings(ssKey, val) {
   var rankings = findRankings(val, SpreadsheetApp.openById(ssKey));

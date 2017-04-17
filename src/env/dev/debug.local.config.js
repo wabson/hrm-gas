@@ -8,7 +8,7 @@
  * @return {myproj.json.Configuration} configuration
  *     The current configuration settings, updated with test settings.
  */
-global.provideEnvironmentConfiguration = function provideEnvironmentConfiguration_(configuration) {
+function provideEnvironmentConfiguration_(configuration) {
     //TODO: (blog post reader) Change ID below to a Spreadsheet ID you can read
     configuration.sheets.debugSpreadsheetId =
         '1uLT2QyiqKdCRGLNuG0X0QU97c0OQiEWtiQHHGaBDWA0';
@@ -18,4 +18,4 @@ global.provideEnvironmentConfiguration = function provideEnvironmentConfiguratio
     configuration.app.clubsFileId = '1oUTH3FMWPd4HqyKA1AiaA1U3h9SZ1kVEGmS2B9bSxxs';
 
     return configuration;
-};
+}

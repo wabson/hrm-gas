@@ -1,3 +1,5 @@
+var Configuration = require('./libs/lib.configuration');
+
 exports.lookupNationalPhoneNumber = function lookupNationalPhoneNumber(phoneNumber) {
     var lookupUrl = 'https://lookups.twilio.com/v1/PhoneNumbers/' + phoneNumber + '?CountryCode=GB';
     var options = {
@@ -10,7 +12,7 @@ exports.lookupNationalPhoneNumber = function lookupNationalPhoneNumber(phoneNumb
     }
     options.headers = {
         'Authorization': 'Basic ' + Utilities.base64Encode(
-            config.integrations.twilio.accountSid + ':' +config.integrations.twilio.authToke
+            config.integrations.twilio.accountSid + ':' +config.integrations.twilio.authToken
         )
     };
     return UrlFetchApp.fetch(lookupUrl, options);

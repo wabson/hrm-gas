@@ -20,7 +20,7 @@
  *      Do not include ".html".
  *  @return {String} HTML markup for the requested file.
  */
-exports.include = function include(filename) {
+exports.includeHTML = function includeHTML(filename) {
   var baseName = filename.substring(filename.lastIndexOf('/') + 1);
   return HtmlService.createHtmlOutputFromFile(baseName)
       .getContent();
@@ -33,7 +33,7 @@ exports.include = function include(filename) {
  * @param source  {object} Source object to copy
  * @returns {object}  Copy of the input with date properties replaced with strings
  */
-exports.jsonSafeObj = function jsonSafeObj(source) {
+function jsonSafeObj(source) {
   var copy = {}, val;
   for (var p in source) {
     if (source.hasOwnProperty(p)) {
@@ -42,7 +42,9 @@ exports.jsonSafeObj = function jsonSafeObj(source) {
     }
   }
   return copy;
-};
+}
+
+exports.jsonSafeObj = jsonSafeObj;
 
 function dateToString_(d) {
   var day = ('0' + d.getDate()).slice(-2);
@@ -70,7 +72,7 @@ exports.jsonSafeArr = function jsonSafeArr(source) {
  * @param source {object} Source object to copy
  * @returns {object}  Copy of the input with date-like string properties replaced with real date objects
  */
-exports.objFromJson = function objFromJson(source) {
+function objFromJson(source) {
   var copy = {}, val, isDate, dateRe = /\w{3} \w{3} \d{1,2} \d{4}/i;
   for (var p in source) {
     if (source.hasOwnProperty(p)) {
@@ -80,7 +82,8 @@ exports.objFromJson = function objFromJson(source) {
     }
   }
   return copy;
-};
+}
+exports.objFromJson = objFromJson;
 
 /**
  * Create a copy of an array of objects received from the client, with string-encoded dates converted to real dates.
