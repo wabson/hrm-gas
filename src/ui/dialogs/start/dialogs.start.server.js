@@ -1,6 +1,7 @@
 /* jshint camelcase: false */
 
 var hrm = require('../../../server/hrm.server.main');
+var Configuration = require('../../../server/libs/lib.configuration');
 
 exports.dialog_start_getRaceTemplates = function dialog_start_getRaceTemplates() {
     var config = Configuration.getCurrent(),
