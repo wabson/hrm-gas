@@ -127,7 +127,6 @@ global.sendResultsSms = web.sendResultsSms;
  * @param {Object} e Apps Script onInstall event object
  */
 global.onInstall = function onInstall(e) {
-  Logger.log("onInstall()");
   global.onOpen(e);
 };
 
@@ -136,7 +135,6 @@ global.onInstall = function onInstall(e) {
  * @param {Object} e Apps Script onInstall event object
  */
 global.onOpen = function onOpen(e) {
-  Logger.log("onOpen()");
   var ui = SpreadsheetApp.getUi(), menu = ui.createAddonMenu();
   menu.addItem('Start', 'openStartDialog')
     .addItem('Rankings', 'openRankingsSidebar')
