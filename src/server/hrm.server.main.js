@@ -63,13 +63,14 @@ var CLASSES_LIGHTNING = ['J','JF'];
 
 exports.CLASSES_DEFS = CLASSES_DEFS;
 exports.CLASSES_ALL = CLASSES_ALL;
-exports.DIVS_ALL = DIVS_ALL;
 
 var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_12_MILE = ["1","2","3","4","5","6","7","8","9"];
 var DIVS_8_MILE = ["4","5","6","7","8","9"];
 var DIVS_4_MILE = ["5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_LIGHTNING = ["U12M","U12F","U10M","U10F"];
+
+exports.DIVS_ALL = DIVS_ALL;
 
 var LEVY_SENIOR = 2, LEVY_JUNIOR = 2;
 
