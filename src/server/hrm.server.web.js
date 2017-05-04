@@ -12,12 +12,6 @@ var results = require('./racing');
 var tables = require('./tables');
 var twilio = require('./twilio');
 
-var rankingsSheetName = "Rankings";
-var ENTRIES_HTML_FILENAME_TMPL = "%s Entries";
-var ENTRIES_SS_FILENAME_TMPL = "%s Printable Entries";
-var RESULTS_HTML_FILENAME_TMPL = "%s Results";
-var RESULTS_SS_FILENAME_TMPL = "%s Printable Results";
-
 /**
  * Print results summary
  *

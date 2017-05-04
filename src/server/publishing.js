@@ -2,6 +2,11 @@ var dateformat = require('./dateformat');
 var results = require('./racing');
 var tables = require('./tables');
 
+var ENTRIES_HTML_FILENAME_TMPL = "%s Entries";
+var ENTRIES_SS_FILENAME_TMPL = "%s Printable Entries";
+var RESULTS_HTML_FILENAME_TMPL = "%s Results";
+var RESULTS_SS_FILENAME_TMPL = "%s Printable Results";
+
 exports.saveEntriesHTML = function saveEntriesHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var template = HtmlService.createTemplateFromFile('entries-static.view'), scriptProps, title, data;
@@ -16,7 +21,7 @@ exports.saveEntriesHTML = function saveEntriesHTML(ss) {
   };
   title = ss.getName();
   template.title = title;
-  data = getRaceEntriesFromSpreadsheet(ss, scriptProps.raceDate);
+  data = results.getRaceEntriesFromSpreadsheet(ss, scriptProps.raceDate);
   for (var k in data) {
     if (data.hasOwnProperty(k)) {
       template[k] = data[k];

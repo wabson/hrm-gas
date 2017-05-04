@@ -1,4 +1,5 @@
 var formats = require('./dateformat');
+var tables = require('./tables');
 
 var EXTRA_SHEETS_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
 var EXTRA_SHEETS_NON_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
@@ -71,7 +72,7 @@ exports.getRaceEntriesFromSpreadsheet = function getRaceEntriesFromSpreadsheet(s
 
 function _getRaceEntriesFromSheet(sheet, raceDateStr) {
   var results = [], rows = tables.getRows(sheet);
-  var raceDate = raceDateStr ? parseDate(raceDateStr) : new Date();
+  var raceDate = raceDateStr ? formats.parseDate(raceDateStr) : new Date();
   for (var j=0; j<rows.length; j++) {
     var row = rows[j];
     if (parseInt(row['Number']) && row['Surname'] === "") {
