@@ -22,7 +22,7 @@ exports.dialog_raceDetails_get = function dialog_raceDetails_get(spreadsheetId) 
 };
 
 exports.dialog_raceDetails_set = function dialog_raceDetails_set(spreadsheetId, formData) {
-    var spreadsheet = SpreadsheetApp.openById(spreadsheetId), data = objFromJson(formData);
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId), data = uiUtils.objFromJson(formData);
     hrm.setRaceInfo({
         regionId: data.raceRegion || 'ALL',
         raceName: data.raceName
