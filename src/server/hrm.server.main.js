@@ -19,15 +19,10 @@
 var publishing = require('./publishing');
 var tables = require('./tables');
 var racing = require('./racing');
+var rankings = require('./rankings');
 var uiService = require('./ui-service');
 var Configuration = require('./libs/lib.configuration');
 var SheetsUtilitiesLibrary = require('./libs/lib.utils.sheets');
-
-/**
- * Rankings sheet column names
- */
-var rankingsSheetColumnNames = ["Surname", "First name", "Club", "Class", "BCU Number", "Expiry", "Division"];
-var rankingsSheetName = "Rankings";
 
 var STARTS_SHEET_COLUMNS = [[1, 1], ['Race', 'Time']];
 var FINISHES_SHEET_COLUMNS = [[1, 2], ['Boat Num', 'Time', 'Notes', 'Time+/-']];
@@ -133,16 +128,6 @@ var EXTRA_SHEETS_NATIONALS = racing.EXTRA_SHEETS_NATIONALS;
 
 var PROTECTED_SHEETS = ['Rankings'];
 
-var ListUtils = {
-  trim: function(input) {
-    var output = input.slice();
-    while (output.length > 0 && (output[output.length - 1] === '' || output[output.length - 1] === null)) {
-      output.pop();
-    }
-    return output;
-  }
-};
-
 /**
  * Button handler for load rankings dialog
  *
@@ -208,183 +193,6 @@ exports.showLoadRankings = function showLoadRankings() {
 
   ss.show(app);
 };
-
-function loadRankingsPage_() {
-  var pageResp = UrlFetchApp.fetch('http://canoeracing.org.uk/marathon/index.php/latest-marathon-ranking-list/');
-  return pageResp.getContentText().replace('&nbsp;', ' ');
-}
-
-function getMonthNumber_(monthName) {
-  var monthsFull = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
-    monthsAbbr = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'],
-    match = monthsFull.indexOf(monthName.toLowerCase());
-  if (match == -1) {
-    match = monthsAbbr.indexOf(monthName.toLowerCase());
-  }
-  return match;
-}
-
-function getRankingsWebsiteLastUpdated_() {
-  var pageSrc = loadRankingsPage_(),
-      reMatch = /UPDATED?\s+(\d+)[\s\/-]+(\w+)[\s\/-]+(\d{4})/i.exec(pageSrc);
-  if (reMatch) {
-    Logger.log(reMatch[0]);
-    var year = parseInt(reMatch[3]), month = getMonthNumber_(reMatch[2]), day = parseInt(reMatch[1]);
-    if (month > -1) {
-      return new Date(year, month, day, 0, 0, 0);
-    }
-  } else {
-    Logger.log('No match');
-  }
-  return null;
-}
-
-exports.getRankingsWebsiteLastUpdated = getRankingsWebsiteLastUpdated_;
-
-/**
- * Load current Hasler Rankings from the latest Excel file on the marathon web site
- */
-function loadRankingsXLS(ss) {
-  var pageSrc = loadRankingsPage_(),
-    reMatch = /<a href="([\w\/\-_:\.]+.xlsx?)"[\w_\s="]*>RankingList<\/a>/ig.exec(pageSrc);
-  if (!reMatch) {
-    throw("Ranking list URL not found");
-  }
-  var rankingListUrl = reMatch[1], fileName = rankingListUrl.substr(rankingListUrl.lastIndexOf("/") + 1), response = UrlFetchApp.fetch(rankingListUrl);
-  if (response.getResponseCode() == 200) {
-    var file = {
-      title: fileName
-    };
-    var driveFile = Drive.Files.insert(file, response.getBlob(), {
-      convert: true
-    });
-    loadRankingsSheet_(SpreadsheetApp.openById(driveFile.id), ss);
-    DriveApp.removeFile(DriveApp.getFileById(driveFile.id));
-  } else {
-    throw "An error was encountered loading the rankings spreadsheet (code: " + response.getResponseCode() + ")";
-  }
-}
-
-exports.loadRankingsXLS = loadRankingsXLS;
-
-function loadRankingsSheet_(sourceSS, ss, clubName) {
-  // Locate Rankings sheet or create it if it doesn't already exist
-  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(rankingsSheetName) || ss.insertSheet(rankingsSheetName, ss.getSheets().length),
-    sourceSheet = sourceSS.getSheetByName(rankingsSheetName) || sourceSS.getActiveSheet(),
-    sourceRange = sourceSheet.getDataRange(), sourceWidth = sourceRange.getWidth(),
-    sourceHeight = sourceRange.getHeight(), sourceHeaderRange = sourceSheet.getRange(1, 1, 1, sourceWidth);
-
-  if (sourceHeight > 0)
-  {
-    var sourceRow1 = sourceHeaderRange.getValues()[0],
-        headerRange = sheet.getRange(1, 1, 1, sourceWidth), headers = getTableHeaders(sheet);
-
-    if (!(headers && headers.length > 0)) {
-      // Copy header names from the source sheet
-      headers = getTableHeaders(sourceSheet);
-      headerRange.setValues(sourceHeaderRange.getValues());
-      // Set header row format
-      headerRange.setBackgrounds(sourceHeaderRange.getBackgrounds());
-      headerRange.setHorizontalAlignments(sourceHeaderRange.getHorizontalAlignments());
-    }
-
-    var lastUpdated = setRankingsLastUpdated_(sheet, headers, sourceRow1);
-    if (lastUpdated) {
-      var numberFormats = sourceHeaderRange.getNumberFormats();
-      // Override date number format as it does not seem to get applied correctly
-      numberFormats[0][sourceWidth-1] = NUMBER_FORMAT_DATE;
-      headerRange.setNumberFormats(numberFormats);
-    }
-
-    var srcRows = tables.getRows(sourceSheet);
-    Logger.log(Utilities.formatString("Found %d total rankings", srcRows.length));
-    if (clubName) {
-      Logger.log(Utilities.formatString("Filtering by club name '%s'", clubName));
-      srcRows = srcRows.filter(function(val) { return val["Club"] == clubName; });
-    }
-    appendTableRowValues(sheet, srcRows);
-    // Set expiration date formats (column F)
-    var expiryColPos = headers.indexOf("Expiry");
-    if (expiryColPos > -1) {
-      sheet.getRange(2, expiryColPos + 1, sourceHeight-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
-    }
-  }
-}
-
-function cellValueIsDate_(value) {
-  return value instanceof Date || typeof value == 'number';
-}
-
-function cellDateValue_(value) {
-  if (value instanceof Date) {
-    return value;
-  } else if (typeof value == 'number') {
-    var dateVal = new Date(1899, 11, 30, 0, 0, 0);
-    dateVal.setDate(dateVal.getDate() + value);
-    return dateVal;
-  }
-  throw 'Not a valid date type';
-}
-
-function getRankingsLastUpdated_(rankingsSheet) {
-  var lastRow = rankingsSheet.getLastRow(), lastColumn = rankingsSheet.getLastColumn();
-  if (lastRow > 0 && lastColumn > 0) {
-    var rowValues = ListUtils.trim(rankingsSheet.getRange(1, 1, 1, lastColumn).getValues()[0]),
-      lastValue = rowValues[rowValues.length-1];
-    Logger.log(rowValues);
-    Logger.log('Found candidate last updated value ' + lastValue);
-    if (cellValueIsDate_(lastValue)) {
-      return cellDateValue_(lastValue);
-    }
-  }
-  return null;
-}
-
-exports.getRankingsLastUpdated = getRankingsLastUpdated_;
-
-function getNumRankings_(rankingsSheet) {
-  return Math.max(rankingsSheet.getLastRow() - 1, 0);
-}
-
-exports.getNumRankings = getNumRankings_;
-
-function setRankingsLastUpdated_(rankingsSheet, headers, sourceRowValues) {
-  if (sourceRowValues.length > 0) {
-    var lastValue = sourceRowValues[sourceRowValues.length-1], headerRow = headers.slice();
-    if (cellValueIsDate_(lastValue)) {
-      headerRow.push(lastValue);
-      rankingsSheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]);
-      return lastValue;
-    }
-  }
-  return null;
-}
-
-/**
- * Clear all Hasler rankings in the current spreadsheet
- */
-function clearRankings_(ss, addColumns) {
-  addColumns = (addColumns !== undefined) ? addColumns : true;
-  // Locate Rankings sheet or create it if it doesn't already exist
-  var sheet = (ss || SpreadsheetApp.getActiveSpreadsheet()).getSheetByName(rankingsSheetName);
-  if (!sheet) {
-    throw "Could not find Rankings sheet";
-  }
-  sheet.clear();
-  if (addColumns === true) {
-    sheet.appendRow(rankingsSheetColumnNames);
-  }
-}
-
-function clearRankingsIfSheetExists_(ss, addColumns) {
-  var sheet = ss || SpreadsheetApp.getActiveSpreadsheet().getSheetByName(rankingsSheetName);
-  if (sheet !== null) {
-    clearRankings_(ss, addColumns);
-  }
-}
-
-exports.clearRankingsIfSheetExists = clearRankingsIfSheetExists_;
 
 /**
  * Clear all entries in the specified sheet
@@ -753,12 +561,12 @@ function addEntrySets(ssId, entrySets) {
             };
           }));
         }, []);
-        setTableRowValues(addtoSheet, entryRows, 'Surname', 'Paid', availablePlaces[0][1]);
+        tables.setValues(addtoSheet, entryRows, 'Surname', 'Paid', availablePlaces[0][1]);
       }
     }
     // TODO need to add 'Set ID' column to race sheets
-    setTableRowValues(membershipProofsSheet, membershipProofRows, null, null, membershipProofsSheet.getLastRow()+1);
-    setTableRowValues(entrySetsSheet, entrySetRows, null, null, entrySetsSheet.getLastRow()+1);
+    tables.setValues(membershipProofsSheet, membershipProofRows, null, null, membershipProofsSheet.getLastRow()+1);
+    tables.setValues(entrySetsSheet, entrySetRows, null, null, entrySetsSheet.getLastRow()+1);
     return results;
   } else {
     throw 'Spreadsheet with ID ' + ssId + ' could not be found';
@@ -910,7 +718,7 @@ function appendEntryRows(rows, sheetName) {
         return;
       }
       if (lastRow-nextRow+1 >= rows.length) {
-        setTableRowValues(dstsheet, rows, "Surname", "Paid", nextRow); // TODO Allow numbers to be added
+        tables.setValues(dstsheet, rows, "Surname", "Paid", nextRow); // TODO Allow numbers to be added
         results.push("Added " + numCrews + " crews to " + dstSheetName + (totalPaid > 0 ? (", Paid £" + totalPaid) : ""));
       } else {
         throw "Too many rows to import into " + dstSheetName + " (" + rows.length + " data rows, " + (lastRow-nextRow+1) + " in sheet)";
@@ -1171,7 +979,7 @@ exports.updateEntriesFromMemberships = function updateEntriesFromMemberships() {
           }
         }
       }
-      setTableRowValues(sheet, raceData, 'BCU Number', 'Expiry', null, false);
+      tables.setValues(sheet, raceData, 'BCU Number', 'Expiry', null, false);
     }
   }
 };
@@ -1208,8 +1016,8 @@ exports.updateEntriesFromRankings = function updateEntriesFromRankings(replaceEx
           }
         }
       }
-      //setTableRowValues(sheet, raceData, "Surname", "Div");
-      setTableRowValues(sheet, raceData, "expiry", "expiry", null, true);
+      //tables.setValues(sheet, raceData, "Surname", "Div");
+      tables.setValues(sheet, raceData, "expiry", "expiry", null, true);
     }
   }
 };
@@ -1266,58 +1074,6 @@ function checkEntriesFromRankings_() {
     }
   }
   uiService.showDialog('Check Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No problems found</p>');
-}
-
-function setTableRowValues(sheet, values, startColumnName, endColumnName, startRow, convertHeadersToLowerCase) {
-  convertHeadersToLowerCase = typeof convertHeadersToLowerCase != "undefined" ? convertHeadersToLowerCase : false;
-  if (values.length === 0) {
-    return;
-  }
-  startRow = startRow || 2;
-  var headers = getTableHeaders(sheet);
-  if (convertHeadersToLowerCase) {
-    headers = headers.map(function(n) {return n.toLowerCase();});
-  }
-  var startColumnIndex = startColumnName ? headers.indexOf(startColumnName): 0;
-  var endColumnIndex = endColumnName ? headers.indexOf(endColumnName) : 0;
-  if (startColumnIndex == -1) {
-    throw 'Could not find start column ' + startColumnName + ' in columns ' + headers.join(', ');
-  }
-  if (endColumnIndex == -1) {
-    throw 'Could not find end column ' + endColumnName + ' in columns ' + headers.join(', ');
-  }
-  var valueList = new Array(values.length);
-  for (var i = 0; i < values.length; i++) {
-    var row = [];
-    for (var j = (startColumnName ? startColumnIndex : 0); j < (endColumnName ? endColumnIndex + 1 : headers.length); j++) {
-      row.push(values[i][headers[j]] || "");
-    }
-    valueList[i] = row;
-  }
-  sheet.getRange(startRow, (startColumnName ? startColumnIndex + 1 : 1), valueList.length, valueList[0].length).setValues(valueList);
-}
-
-function appendTableRowValues(sheet, values) {
-  setTableRowValues(sheet, values, null, null, sheet.getLastRow()+1);
-}
-
-/**
- * Return an array containing the list of table heading cells taken from row 1 in the given sheet
- *
- * Return {array} Array containing the heading cell values, which may be empty if there were no values in row 1
- */
-function getTableHeaders(sheet) {
-  var lastCol = sheet.getLastColumn();
-  if (lastCol > 0) {
-    var range = sheet.getRange(1, 1, 1, lastCol), values = range.getValues();
-    var headers =  values.length > 0 ? values[0] : [];
-    while (headers.length > 0 && (headers[headers.length - 1] === "" || typeof headers[headers.length - 1] != "string")) {
-      headers.pop();
-    }
-    return headers;
-  } else {
-    return [];
-  }
 }
 
 /**
@@ -1476,7 +1232,7 @@ function addRowsToSheet_(rows, headers, sheet, rowPosition) {
     throw("Could not find sheet " + sheetName);
   }
   if (rowPosition > 1) {
-    var targetSheetHeaders = getTableHeaders(sheet),
+    var targetSheetHeaders = tables.getHeaders(sheet),
         headerIndexes = rankingToEntryHeaders_(headers).map(function(header) {
           return targetSheetHeaders.indexOf(header);
         }).filter(function(index) {
@@ -3184,7 +2940,7 @@ function getTableColumnIndex(colName, sheet) {
   if (cached !== null) {
      return +cached; // convert to a number
   }
-  var headers = getTableHeaders(sheet); // takes some time
+  var headers = tables.getHeaders(sheet); // takes some time
   var index = headers.indexOf(colName);
   cache.put(cacheKey, index, 300); // cache for 5 minutes
   return index;
@@ -3751,7 +3507,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columns) {
        setProtection_(sheet.protect().setDescription(sheetNameExtra + ' sheet protection'));
     }
     if (sheetNameExtra == "Rankings") {
-      sheet.appendRow(rankingsSheetColumnNames);
+      sheet.appendRow(rankings.COLUMN_NAMES);
     }
     if (sheetNameExtra == "Starts") {
       sheet.getRange(STARTS_SHEET_COLUMNS[0][0], STARTS_SHEET_COLUMNS[0][1], 1, STARTS_SHEET_COLUMNS[1].length).setValues([STARTS_SHEET_COLUMNS[1]]);
