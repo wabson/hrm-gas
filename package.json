@@ -14,14 +14,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gist.github.com/8196167.git"
+    "url": "https://github.com/wabson/hrm-gas"
   },
   "author": "Will Abson",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://gist.github.com/8196167"
+    "url": "https://github.com/wabson/hrm-gas"
   },
-  "homepage": "https://gist.github.com/8196167",
+  "homepage": "https://github.com/wabson/hrm-gas",
   "devDependencies": {
     "@wabson/gulp-include": "2.3.1-paths",
     "browserify": "^14.1.0",
