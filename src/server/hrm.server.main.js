@@ -143,7 +143,7 @@ function loadRankings(eventInfo) {
     Logger.log("Clearing existing rankings");
     clearRankingsIfSheetExists_(false);
   }
-  loadRankingsXLS(clubId);
+  rankings.loadRankingsXLS(clubId);
   app.close();
   return app;
 }
@@ -3468,7 +3468,7 @@ function setupRaceFromTemplate_(spreadsheet, template, options) {
   }
 
   if (options.importRankings === true) {
-    loadRankingsXLS(spreadsheet);
+    rankings.loadRankingsXLS(spreadsheet);
   }
 
   setRaceInfo_({

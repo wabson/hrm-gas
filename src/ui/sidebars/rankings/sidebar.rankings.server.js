@@ -2,14 +2,14 @@
 /* globals Logger, SpreadsheetApp, Utilities */
 
 var hrm = require('../../../server/hrm.server.main');
-var uiUtils = require('../../../server/libs/lib.utils.ui.server');
+var rankings = require('../../../server/rankings');
 
 exports.sidebar_rankings_import = function sidebar_rankings_import(spreadsheetId) {
 
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
 
-    hrm.clearRankingsIfSheetExists(spreadsheet, false);
-    hrm.loadRankingsXLS(spreadsheet);
+    rankings.clearRankingsIfSheetExists(spreadsheet, false);
+    rankings.loadRankingsXLS(spreadsheet);
 
     return exports.sidebar_rankings_info(spreadsheetId);
 };
@@ -20,8 +20,8 @@ exports.sidebar_rankings_info = function sidebar_rankings_info(spreadsheetId) {
         rankingsSize = 0, rankingsLastUpdated = null;
 
     if (rankingsSheet !== null) {
-        rankingsSize = hrm.getNumRankings(rankingsSheet);
-        rankingsLastUpdated = rankingsSize > 0 ? hrm.getRankingsLastUpdated(rankingsSheet) : null;
+        rankingsSize = rankings.getNumRankings(rankingsSheet);
+        rankingsLastUpdated = rankingsSize > 0 ? rankings.getRankingsLastUpdated(rankingsSheet) : null;
     }
 
     return {
@@ -34,7 +34,7 @@ exports.sidebar_rankings_info = function sidebar_rankings_info(spreadsheetId) {
 exports.sidebar_rankings_last_updated = function sidebar_rankings_last_updated(spreadsheetId) {
 
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId),
-        lastUpdated = hrm.getRankingsWebsiteLastUpdated();
+        lastUpdated = rankings.getRankingsWebsiteLastUpdated();
 
     return lastUpdated ? Utilities.formatDate(lastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : null;
 };
