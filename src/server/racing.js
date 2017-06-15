@@ -58,19 +58,21 @@ function getRaceStartersFromSpreadsheet(ss) {
   return entries;
 }
 
+exports.getRaceStartersFromSpreadsheet = getRaceStartersFromSpreadsheet;
+
 exports.getRaceEntriesFromSpreadsheet = function getRaceEntriesFromSpreadsheet(ss, raceDateStr) {
   var data = {}, classes = [],
     sheets = getRaceSheets(ss);
 
   for (var i=0; i<sheets.length; i++) {
-    classes.push({name: sheets[i].getName(), results: _getRaceEntriesFromSheet(sheets[i], raceDateStr) });
+    classes.push({name: sheets[i].getName(), results: getRaceEntriesFromSheet(sheets[i], raceDateStr) });
   }
   data.races = classes;
   data.lastUpdated = getLastUpdated(ss.getId());
   return data;
 };
 
-function _getRaceEntriesFromSheet(sheet, raceDateStr) {
+function getRaceEntriesFromSheet(sheet, raceDateStr) {
   var results = [], rows = tables.getRows(sheet);
   var raceDate = raceDateStr ? formats.parseDate(raceDateStr) : new Date();
   for (var j=0; j<rows.length; j++) {
@@ -109,6 +111,8 @@ function _getRaceEntriesFromSheet(sheet, raceDateStr) {
   }
   return results;
 }
+
+exports.getRaceEntriesFromSheet = getRaceEntriesFromSheet;
 
 /**
  * Comparison function to sort the result objects by time taken

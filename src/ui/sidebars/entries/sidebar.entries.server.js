@@ -2,6 +2,7 @@
 /* globals Logger, SpreadsheetApp, Utilities */
 
 var hrm = require('../../../server/hrm.server.main');
+var rankings = require('../../../server/rankings');
 var uiUtils = require('../../../server/libs/lib.utils.ui.server');
 
 exports.sidebar_entries_race_info = function sidebar_entries_race_info(spreadsheetId) {
@@ -12,8 +13,8 @@ exports.sidebar_entries_race_info = function sidebar_entries_race_info(spreadshe
         rankingsSize = 0, rankingsLastUpdated = null;
 
     if (rankingsSheet !== null) {
-        rankingsSize = hrm.getNumRankings(rankingsSheet);
-        rankingsLastUpdated = rankingsSize > 0 ? hrm.getRankingsLastUpdated(rankingsSheet) : null;
+        rankingsSize = rankings.getNumRankings(rankingsSheet);
+        rankingsLastUpdated = rankingsSize > 0 ? rankings.getRankingsLastUpdated(rankingsSheet) : null;
     }
 
     var driveProps = hrm.getDriveProperties(spreadsheetId);
@@ -32,7 +33,7 @@ exports.sidebar_entries_race_info = function sidebar_entries_race_info(spreadshe
 exports.sidebar_entries_search = function sidebar_entries_search(spreadsheetId, term) {
 
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-    return uiUtils.jsonSafeArr(hrm.searchRankings(spreadsheet, term));
+    return uiUtils.jsonSafeArr(rankings.searchRankings(spreadsheet, term));
 };
 
 exports.sidebar_entries_add = function sidebar_entries_add(spreadsheetId, crewMembers, headers, selectedClass, isLate) {

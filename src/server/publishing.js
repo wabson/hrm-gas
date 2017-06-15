@@ -162,3 +162,5 @@ function getResultsFromSpreadsheet(ss) {
   Logger.log("Return " + classes.length + " races");
   return data;
 }
+
+exports.getResultsFromSpreadsheet = getResultsFromSpreadsheet;

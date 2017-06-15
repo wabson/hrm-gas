@@ -816,38 +816,6 @@ function objUnzip(obj, keys, ignoreMissing, defaultValue) {
   return values;
 }
 
-/**
- * Search for rows matching a specific search term and return matching rows
- *
- * @param sheet {Sheet} The sheet to search within
- * @param columns {array<object{name, regexp}>}
- * @param useOr {Boolean} True if only one column in a row must match the term for a match, otherwise all columns must match
- * @return {Object[]} Set of matching rows
- * @private
- */
-function searchSheetData_(sheet, columns, useOr) {
-  var rows = tables.getRows(sheet, false);
-  return lookupInTable(rows, columns, useOr);
-}
-
-/**
- * Search for rankings matching a specific term
- *
- * @param spreadsheet {Spreadsheet} Spreadsheet in which to locate the rankings sheet
- * @param term {String} Search term to look for via start-of-item or regexp (if supplied in columns array)
- * @private
- */
-function searchRankings_(spreadsheet, term) {
-  var sheet = spreadsheet.getSheetByName('Rankings');
-  return searchSheetData_(sheet, [
-    { name: 'First name', type: 'regexp', value: new RegExp('^' + term, 'i') },
-    { name: 'Surname', type: 'regexp', value: new RegExp('^' + term, 'i') },
-    { name: 'BCU Number', type: 'regexp', value: new RegExp('^\\s*[A-Z]*\\/?(' + term + ')\\/?[A-Z]*\\s*$', 'i') }
-  ], true);
-}
-
-exports.searchRankings = searchRankings_;
-
 function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
   if (!selectedClass) {
     selectedClass = 'Auto';
@@ -857,7 +825,7 @@ function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
     if (sheetName === null) {
       throw 'Could not find a suitable race';
     }
-    var crewsAddedDue = addDueAmountToEntry_(items, selectedClass, isLate);
+    var crewsAddedDue = addDueAmountToEntry_(items, selectedClass, spreadsheet, isLate);
     if (crewsAddedDue) {
       headers.push('Due');
     }
@@ -871,9 +839,10 @@ function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
 
 exports.addEntry = addEntry;
 
-function addDueAmountToEntry_(members, raceName, isLate) {
+function addDueAmountToEntry_(members, raceName, spreadsheet, isLate) {
   var sheetUtils = new SheetsUtilitiesLibrary({});
-  var driveProps = getDriveProperties(sheetUtils.getCurrentActiveSpreadsheet().getId()), member;
+  spreadsheet = spreadsheet || sheetUtils.getCurrentActiveSpreadsheet();
+  var driveProps = getDriveProperties(spreadsheet.getId()), member;
   isLate = isLate === true;
   var entrySenior = isLate ? driveProps.entrySeniorLate : driveProps.entrySenior;
   var entryJunior = isLate ? driveProps.entryJuniorLate : driveProps.entryJunior;
@@ -919,33 +888,6 @@ function rankingToEntryHeader_(header) {
   return header.toLowerCase() == "division" ? header.substr(0, 3) : header;
 }
 
-function matchTableRow_(row, matchValues, useOr) {
-  var match = useOr !== true, colMatch, propName, propType, propValue;
-  matchValues.forEach(function (toMatch) {
-    propName = toMatch.name;
-    propType = toMatch.type;
-    propValue = toMatch.value;
-    if (propType == 'regexp') {
-      colMatch = propValue.test(''+row[propName]);
-    } else {
-      colMatch = row[propName] === propValue || (''+row[propName]).trim() === (''+propValue).trim();
-    }
-    match = useOr === true ? (match || colMatch) : (match && colMatch);
-  });
-  return match;
-}
-
-function lookupInTable(rows, matchValues, useOr) {
-  var matches = [], match;
-  for (var i = 0; i < rows.length; i++) {
-    match = matchTableRow_(rows[i], matchValues, useOr);
-    if (match) {
-      matches.push(rows[i]);
-    }
-  }
-  return matches;
-}
-
 /**
  * Look through all the current entries and update BCU Number and Expiry with new data from the memberships sheet
  *
@@ -961,7 +903,7 @@ exports.updateEntriesFromMemberships = function updateEntriesFromMemberships() {
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
         if (raceData[j]['Surname'] || raceData[j]['First name']) {
-          var matches = lookupInTable(membershipsData, [
+          var matches = tables.lookupInTable(membershipsData, [
             {name: 'Surname', value: raceData[j]['Surname']},
             {name: 'First name', value: raceData[j]['First name']},
             {name: 'Club', value: raceData[j]['Club']},
@@ -1000,7 +942,7 @@ exports.updateEntriesFromRankings = function updateEntriesFromRankings(replaceEx
         var bcuNum = raceData[j]['bcu number'], classAbbr = raceData[j]['class'], bcuMatch = /(\d+)/.exec(bcuNum);
         if (bcuMatch) {
           Logger.log("BCU Number: " + bcuMatch[1]);
-          var matches = lookupInTable(rankingData, [
+          var matches = tables.lookupInTable(rankingData, [
             {name: 'bcu number', type: 'regexp', value: new RegExp('^' + bcuMatch[1] + '/?[A-Za-z]?$')},
             {name: 'class', value: classAbbr}
           ]);
@@ -1040,13 +982,13 @@ function checkEntriesFromRankings_() {
           var columns = ['Div', 'BCU Number', 'Expiry'];
           var boatNum = raceData[j]['Number'] || raceData[j-1]['Number'], bcuNum = raceData[j]['BCU Number'];
           if (bcuNum) {
-            var matches = lookupInTable(rankingData, [
+            var matches = tables.lookupInTable(rankingData, [
               {name: 'Surname', value: raceData[j]['Surname']},
               {name: 'First name', value: raceData[j]['First name']},
               {name: 'Club', value: raceData[j]['Club']},
               {name: 'Class', value: raceData[j]['Class']}]);
             if (matches.length === 0 && !(typeof bcuNum == 'string' && bcuNum.indexOf('ET ') === 0)) { // Try again based on BCU number
-              matches = lookupInTable(rankingData, [
+              matches = tables.lookupInTable(rankingData, [
                 {name: 'BCU Number', value: raceData[j]['BCU Number']}
               ]);
               columns = ['Div', 'Club', 'Surname', 'First name', 'Class', 'Expiry'];
@@ -1304,7 +1246,7 @@ function getTabName_(crews, ss) {
 function getRaceName_(crews, ss) {
   var div1 = crews[0]['Division'],
       div2 = null;
-  if (crews.length > 1) {
+  if (crews.length > 1 && crews[1]) {
       div2 = crews[1]['Division'];
   } else {
     return parseInt(div1) ? ("Div" + parseInt(div1)) : div1;
@@ -4050,6 +3992,8 @@ function checkEntryDuplicateWarnings(spreadsheet) {
   return warnings;
 }
 
+exports.checkEntryDuplicateWarnings = checkEntryDuplicateWarnings;
+
 /**
  * Look through all the current entries and flag duplicates
  *
@@ -4059,6 +4003,8 @@ function checkEntryDuplicates(spreadsheet) {
   var warnings = checkEntryDuplicateWarnings(spreadsheet);
   uiService.showDialog('Duplicate Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>');
 }
+
+exports.checkEntryDuplicates = checkEntryDuplicates;
 
 /**
  * @public

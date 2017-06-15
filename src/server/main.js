@@ -3,7 +3,6 @@ var uiService = require('./ui-service');
 var web = require('./hrm.server.web');
 var uiUtils = require('./libs/lib.utils.ui.server');
 var dialogs = require('../ui/dialogs.controller.server');
-var uiHome = require('../ui/home.controller.server');
 var apiRaceDetails = require('../ui/dialogs/race-details/dialogs.race-details.server');
 var apiStart = require('../ui/dialogs/start/dialogs.start.server');
 var apiEntries = require('../ui/sidebars/entries/sidebar.entries.server');
@@ -71,7 +70,7 @@ global.dialog_start_submit = apiStart.dialog_start_submit;
 global.dialog_raceDetails_get = apiRaceDetails.dialog_raceDetails_get;
 global.dialog_raceDetails_set = apiRaceDetails.dialog_raceDetails_set;
 
-global.getRaceSheetNamesHTML = uiHome.getRaceSheetNamesHTML;
+global.getRaceSheetNamesHTML = web.getRaceSheetNamesHTML;
 
 global.sidebar_entries_race_info = apiEntries.sidebar_entries_race_info;
 global.sidebar_entries_search = apiEntries.sidebar_entries_search;
@@ -115,6 +114,13 @@ global.doGet = function doGet(e) {
   }
 };
 
+global.getRaceEntriesSummary = web.getRaceEntriesSummary;
+global.getRaceEntries = web.getRaceEntries;
+global.getRaceResultsSummary = web.getRaceResultsSummary;
+global.getRaceResults = web.getRaceResults;
+global.findSpreadsheetRankings = web.findSpreadsheetRankings;
+global.onHTMLAddEntryClick = web.onHTMLAddEntryClick;
+global.checkEntryDuplicateWarningsHTML = web.checkEntryDuplicateWarningsHTML;
 global.saveResultsHTMLForSpreadsheet = web.saveResultsHTMLForSpreadsheet;
 global.saveEntriesHTMLForSpreadsheet = web.saveEntriesHTMLForSpreadsheet;
 global.getScriptUrl = web.getScriptUrl;

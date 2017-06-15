@@ -185,9 +185,40 @@ function clearRankingsIfSheetExists_(ss, addColumns) {
   }
 }
 
+/**
+ * Search for rows matching a specific search term and return matching rows
+ *
+ * @param sheet {Sheet} The sheet to search within
+ * @param columns {array<object{name, regexp}>}
+ * @param useOr {Boolean} True if only one column in a row must match the term for a match, otherwise all columns must match
+ * @return {Object[]} Set of matching rows
+ * @private
+ */
+function searchSheetData_(sheet, columns, useOr) {
+  var rows = tables.getRows(sheet, false);
+  return tables.lookupInTable(rows, columns, useOr);
+}
+
+/**
+ * Search for rankings matching a specific term
+ *
+ * @param spreadsheet {Spreadsheet} Spreadsheet in which to locate the rankings sheet
+ * @param term {String} Search term to look for via start-of-item or regexp (if supplied in columns array)
+ * @private
+ */
+function searchRankings(spreadsheet, term) {
+  var sheet = spreadsheet.getSheetByName('Rankings');
+  return searchSheetData_(sheet, [
+    { name: 'First name', type: 'regexp', value: new RegExp('^' + term, 'i') },
+    { name: 'Surname', type: 'regexp', value: new RegExp('^' + term, 'i') },
+    { name: 'BCU Number', type: 'regexp', value: new RegExp('^\\s*[A-Z]*\\/?(' + term + ')\\/?[A-Z]*\\s*$', 'i') }
+  ], true);
+}
+
 exports.getRankingsWebsiteLastUpdated = getRankingsWebsiteLastUpdated_;
 exports.loadRankingsXLS = loadRankingsXLS;
 exports.getRankingsLastUpdated = getRankingsLastUpdated_;
 exports.getNumRankings = getNumRankings_;
 exports.clearRankingsIfSheetExists = clearRankingsIfSheetExists_;
+exports.searchRankings = searchRankings;
 exports.COLUMN_NAMES = rankingsSheetColumnNames;

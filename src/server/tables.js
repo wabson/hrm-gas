@@ -72,9 +72,37 @@ function getTableHeaders(sheet) {
   }
 }
 
+function matchTableRow_(row, matchValues, useOr) {
+  var match = useOr !== true, colMatch, propName, propType, propValue;
+  matchValues.forEach(function (toMatch) {
+    propName = toMatch.name;
+    propType = toMatch.type;
+    propValue = toMatch.value;
+    if (propType == 'regexp') {
+      colMatch = propValue.test(''+row[propName]);
+    } else {
+      colMatch = row[propName] === propValue || (''+row[propName]).trim() === (''+propValue).trim();
+    }
+    match = useOr === true ? (match || colMatch) : (match && colMatch);
+  });
+  return match;
+}
+
+function lookupInTable(rows, matchValues, useOr) {
+  var matches = [], match;
+  for (var i = 0; i < rows.length; i++) {
+    match = matchTableRow_(rows[i], matchValues, useOr);
+    if (match) {
+      matches.push(rows[i]);
+    }
+  }
+  return matches;
+}
+
 module.exports = {
   getRows: getTableRows,
   setValues: setTableRowValues,
   appendRows: appendTableRowValues,
-  getHeaders: getTableHeaders
+  getHeaders: getTableHeaders,
+  lookupInTable: lookupInTable
 };
