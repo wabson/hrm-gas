@@ -2707,7 +2707,7 @@ exports.calculatePoints = function calculatePoints(scriptProps, ss) {
   var entries = [], sheets = racing.getRaceSheets(ss), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace, isDoublesRace;
   var sheetRange, sheetValues;
   var count, noElapsedValueCount, pointsByBoatNum, pointsAwarded;
-  var boatNum, pd, time, minPoints, lastTime, lastPoints;
+  var boatNum, pd1, pd2, time, minPoints, lastTime, lastPoints;
   var mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
   var club1, club2, posn, notes1, notes2;
   var sortFn = function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);};
@@ -2739,14 +2739,15 @@ exports.calculatePoints = function calculatePoints(scriptProps, ss) {
     mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
     for (var l=0; l<entries.length; l++) {
       boatNum = entries[l].boatNumber;
-      pd = entries[l].values[0][pdColIndex];
+      pd1 = entries[l].values[0][pdColIndex];
+      pd2 = entries[l].values[1] ? entries[l].values[1][pdColIndex] : undefined;
       time = entries[l].values[0][timeColIndex];
       club1 = entries[l].values[0][clubColIndex];
-      club2 = entries[l].values[1] ? entries[l].values[1][clubColIndex] : "";
+      club2 = entries[l].values[1] ? entries[l].values[1][clubColIndex] : '';
       posn = parseInt(entries[l].values[0][posnColIndex]) || 0;
       notes1 = entries[l].values[0][notesColIndex];
-      notes2 = entries[l].values[1] ? entries[l].values[1][notesColIndex] : null;
-      if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0) && notes1 != "ill" && notes2 != "ill") {
+      notes2 = entries[l].values[1] ? entries[l].values[1][notesColIndex] : undefined;
+      if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0) && (notes1 !== 'ill' || notes2 !== undefined && notes2 !== 'ill') && (!isPromotedByMoreThanOneDivision(sheetName, pd1) || pd2 !== undefined && !isPromotedByMoreThanOneDivision(sheetName, pd2))) {
         if (isHaslerRace && (divStr > "3" || isDoublesRace) && boundary && time instanceof Date && boundary < timeInMillis(time)) {
           pointsAwarded = minPoints;
         } else {
@@ -2785,14 +2786,15 @@ exports.calculatePoints = function calculatePoints(scriptProps, ss) {
       continue;
     }
     // Set the values ready to go into the sheet and add to totals by club
-    var bn = 0, clubIndex, points, clubCode;
+    var bn = 0, clubIndex, points, clubCode, notes;
     for (var m=0; m<sheetValues.length; m++) {
       bn = sheetValues[m][0] || bn; // Use last boat number encountered, to cover second person in a K2
       clubCode = sheetValues[m][clubColIndex];
       clubIndex = clubsInRegion.indexOf(clubCode);
+      notes = sheetValues[m][notesColIndex];
       if (clubCode !== '') {
         // Check clubs again, as only one of the K2 partners may be entitled to points
-        if (clubIndex >= 0) {
+        if (clubIndex >= 0 && !isPromotedByMoreThanOneDivision(sheetName, sheetValues[m][clubColIndex][pdColIndex]) && notes !== 'ill') {
           points = pointsByBoatNum[bn];
           colValues[m] = [points || ""];
           if (points) {
@@ -2810,7 +2812,7 @@ exports.calculatePoints = function calculatePoints(scriptProps, ss) {
             }
           }
         } else {
-          Logger.log("Club " + clubCode + " not in region list " + clubsInRegion.join(','));
+          Logger.log("Club " + clubCode + " not in region list " + clubsInRegion.join(',') + " or no points allowed: " + notes);
           colValues[m] = [""];
         }
       } else {
