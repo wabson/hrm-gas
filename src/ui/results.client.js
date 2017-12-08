@@ -335,13 +335,25 @@ function showResultsSummary(races, options) {
       }).setPromotionsDiv123(ssKey, false);
     });
     $("#pd-div4").button().on("click", function () {
+      $("#pd-result").html('Calculating promotions/demotions...');
+      $("#pd-div4").button("disable");
       google.script.run.withSuccessHandler(function (data) {
         $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 4-6');
+        $("#pd-div4").button("enable");
+      }).withFailureHandler(function() {
+        $("#pd-result").html('An error occurred while calculating promotions/demotions  for Divs 4-6');
+        $("#pd-div4").button("enable");
       }).setPromotionsDiv456(ssKey, false);
     });
     $("#pd-div7").button().on("click", function () {
+      $("#pd-result").html('Calculating promotions/demotions...');
+      $("#pd-div7").button("disable");
       google.script.run.withSuccessHandler(function (data) {
         $("#pd-result").html('Applied ' + data.length + ' promotions/demotions  for Divs 7-9');
+        $("#pd-div7").button("enable");
+      }).withFailureHandler(function() {
+        $("#pd-result").html('An error occurred while calculating promotions/demotions  for Divs 7-9');
+        $("#pd-div7").button("enable");
       }).setPromotionsDiv789(ssKey, false);
     });
     $("#points").button().on("click", function () {
