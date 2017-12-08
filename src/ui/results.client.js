@@ -323,6 +323,9 @@ function showResultsSummary(races, options) {
   if (hasEditPermission) {
     html += ('<p><button id="check-finish-times">Check Finish Times</button></p>');
     html += ('<p><button id="publish-results">Publish Results</button></p>');
+    html += ('<p><button id="send-sms-div1">Div 1-3 SMS Results</button></p>');
+    html += ('<p><button id="send-sms-div4">Div 4-6 SMS Results</button></p>');
+    html += ('<p><button id="send-sms-div7">Div 7-9 SMS Results</button></p>');
   }
   div.append(html);
   if (options.allowPd === true) {
@@ -352,6 +355,23 @@ function showResultsSummary(races, options) {
         $("#pd-result").html('An error occurred while calculating points');
       }).calculatePointsFromWeb(ssKey);
     });
+    function enableSmsButton(btnId, sheets) {
+      var btnSelector = '#' + btnId;
+      $(btnSelector).button().on("click", function () {
+        $("#pd-result").html('Sending SMS results...');
+        $(btnSelector).button("disable");
+        google.script.run.withSuccessHandler(function (data) {
+          $("#pd-result").html('Sent SMS messages OK');
+          $("#send-sms-div1").button("enable");
+        }).withFailureHandler(function() {
+          $("#pd-result").html('An error occurred while sending SMS messages');
+          $(btnSelector).button("enable");
+        }).sendRaceResultsSms(ssKey, sheets);
+      });
+    }
+    enableSmsButton("send-sms-div1", ['Div1', 'Div2', 'Div3']);
+    enableSmsButton("send-sms-div4", ['Div4', 'Div5', 'Div6']);
+    enableSmsButton("send-sms-div7", ['Div7', 'Div8', 'Div9']);
   }
   if (hasEditPermission) {
     $("#publish-results").button().on("click", function () {

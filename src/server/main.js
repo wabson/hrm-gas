@@ -74,6 +74,7 @@ global.dialog_raceDetails_set = apiRaceDetails.dialog_raceDetails_set;
 global.getRaceSheetNamesHTML = web.getRaceSheetNamesHTML;
 global.calculatePointsFromWeb = web.calculatePointsFromWeb;
 global.checkFinishDuplicatesForSpreadsheet = web.checkFinishDuplicatesForSpreadsheet;
+global.sendRaceResultsSms = web.sendRaceResultsSms;
 
 // For publishing results
 global.formatTime = dateformat.formatTime;
