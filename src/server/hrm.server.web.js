@@ -271,6 +271,13 @@ function getRaceResultsSummary(key, options) {
 
 exports.getRaceResultsSummary = getRaceResultsSummary;
 
+exports.calculatePointsFromWeb = function calculatePointsFromWeb(ss) {
+  if (typeof ss == 'string') {
+    ss = SpreadsheetApp.openById(ss);
+  }
+  return hrm.calculatePoints(null, ss);
+};
+
 exports.sendResultsSms = function sendResultsSms() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getActiveSheet();
