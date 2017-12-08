@@ -72,6 +72,7 @@ global.dialog_raceDetails_get = apiRaceDetails.dialog_raceDetails_get;
 global.dialog_raceDetails_set = apiRaceDetails.dialog_raceDetails_set;
 
 global.getRaceSheetNamesHTML = web.getRaceSheetNamesHTML;
+global.checkFinishDuplicatesForSpreadsheet = web.checkFinishDuplicatesForSpreadsheet;
 
 // For publishing results
 global.formatTime = dateformat.formatTime;

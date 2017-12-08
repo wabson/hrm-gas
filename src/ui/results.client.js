@@ -370,6 +370,7 @@ function showResultsSummary(races, options) {
     });
     $("#check-finish-times").button().on("click", function () {
       $("#pd-result").html('Checking finish times...');
+      $("#check-finish-times").button("disable");
       google.script.run.withSuccessHandler(function (data) {
         var duplicates = data.duplicates, strangeTimes = data.strangeTimes;
         if (duplicates.length === 0) {
@@ -387,6 +388,10 @@ function showResultsSummary(races, options) {
               return '' + row.number + ' boat ' + row.boatNumber + ', time ' + row.time;
             }).join('<br />'));
         }
+        $("#check-finish-times").button("enable");
+      }).withFailureHandler(function (data) {
+        $("#pd-result").html('Unable to check finish times');
+        $("#check-finish-times").button("enable");
       }).checkFinishDuplicatesForSpreadsheet(ssKey, false);
     });
   }

@@ -90,6 +90,8 @@ function checkFinishDuplicatesForSpreadsheet(ssKey) {
   }
 }
 
+exports.checkFinishDuplicatesForSpreadsheet = checkFinishDuplicatesForSpreadsheet;
+
 /**
  * List HRM files
  *
