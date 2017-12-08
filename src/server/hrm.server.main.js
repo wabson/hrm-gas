@@ -2267,11 +2267,6 @@ function overallZero(divZeroes) {
 
 function pdStatus(values, pFactors, dFactors, raceDiv, sheet, isFinal) {
   var status = "", classDivIndex = getTableColumnIndex("Div", sheet), classColIndex = getTableColumnIndex("Class", sheet), timeColIndex = getTableColumnIndex("Elapsed", sheet), time = timeInMillis(values[timeColIndex]);
-  // Rule 32(h) and 33(g) Paddlers transferred from another division are not eligible for promotion/demotion
-  if (!isFinal && (""+values[0]).indexOf(""+raceDiv) !== 0) {
-    Logger.log("Transferred from another division, skipping");
-    return "";
-  }
   var currDiv = parseInt(values[classDivIndex]), raceClass = (typeof raceClass == "string") ? values[classColIndex] : "";
   // Go through promotion times
   for (var i=0; i<pFactors.length; i++) {
