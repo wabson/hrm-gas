@@ -21,6 +21,7 @@ var publishing = require('./publishing');
 var tables = require('./tables');
 var racing = require('./racing');
 var rankings = require('./rankings');
+var templates = require('./templates');
 var uiService = require('./ui-service');
 var Configuration = require('./libs/lib.configuration');
 var SheetsUtilitiesLibrary = require('./libs/lib.utils.sheets');
@@ -3442,21 +3443,25 @@ function customiseRaceSheet_(sheetInfo, sheet) {
 /**
  * Update the existing spreadsheet from a template
  */
-function setupRaceFromTemplate_(spreadsheet, template, options) {
+function setupRaceFromTemplate(spreadsheet, template, options) {
 
-  var sheets = spreadsheet.getSheets(), templateSheets = template.getSheets(),
-      tempSheet = spreadsheet.insertSheet('Temp' + Date.now());
+  var tempSheet = spreadsheet.insertSheet(0, 'Temp' + Date.now()),
+    sheets = spreadsheet.getSheets(), templateSheets = template.getSheets();
 
   options = options || {};
 
   // Delete preexisting sheets
-  for (var i = 0; i < sheets.length; i++) {
+  for (var i = sheets.length - 1; i > 0; i--) {
     spreadsheet.deleteSheet(sheets[i]);
   }
 
-  // Copy all template sheets into current
-  for (var j = 0; j < templateSheets.length; j++) {
-    templateSheets[j].copyTo(spreadsheet).setName(templateSheets[j].getName());
+  if (template.getSheetByName('Races')) {
+    templates.createFromTemplate(template, spreadsheet);
+  } else {
+    // Copy all template sheets into current
+    for (var j = 0; j < templateSheets.length; j++) {
+      templateSheets[j].copyTo(spreadsheet).setName(templateSheets[j].getName());
+    }
   }
 
   spreadsheet.deleteSheet(tempSheet);
@@ -3484,7 +3489,7 @@ function setupRaceFromTemplate_(spreadsheet, template, options) {
   }
 }
 
-exports.setupRaceFromTemplate = setupRaceFromTemplate_;
+exports.setupRaceFromTemplate = setupRaceFromTemplate;
 
 /**
  * Create a new spreadsheet to manage a race
