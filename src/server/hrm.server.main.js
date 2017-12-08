@@ -463,7 +463,7 @@ function addEntrySets(ssId, entrySets) {
   var results = [];
   var membershipProofRows = [];
   if (ss) {
-    var raceSheetNames = racing.getRaceNames(ss);
+    var raceSheetNames = racing.getRaceSheetNames(ss);
     var entrySetsSheet = ss.getSheetByName(ENTRY_SETS_SHEET_NAME) || ss.insertSheet(ENTRY_SETS_SHEET_NAME);
     entrySetsSheet.getRange(1, 1, 1, ENTRY_SETS_COLUMNS.length).setValues([ENTRY_SETS_COLUMNS]);
     var membershipProofsSheet = ss.getSheetByName(MEMBERSHIP_PROOF_SHEET_NAME) || ss.insertSheet(MEMBERSHIP_PROOF_SHEET_NAME);
@@ -573,6 +573,8 @@ function addEntrySets(ssId, entrySets) {
     throw 'Spreadsheet with ID ' + ssId + ' could not be found';
   }
 }
+
+exports.addEntrySets = addEntrySets;
 
 /**
  * @param sheet

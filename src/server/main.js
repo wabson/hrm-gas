@@ -133,6 +133,8 @@ global.include = uiUtils.includeHTML;
 global.getLastUpdated = web.getLastUpdated;
 global.sendResultsSms = web.sendResultsSms;
 
+global.addEntrySets = hrm.addEntrySets;
+
 /**
  * Called when an add-on is installed.
  * @param {Object} e Apps Script onInstall event object
