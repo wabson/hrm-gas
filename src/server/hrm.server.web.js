@@ -12,7 +12,6 @@ var hrm = require('./hrm.server.main');
 var racing = require('./racing');
 var publishing = require('./publishing');
 var rankings = require('./rankings');
-var results = require('./racing');
 var tables = require('./tables');
 var twilio = require('./twilio');
 
