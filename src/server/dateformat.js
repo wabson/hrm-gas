@@ -93,4 +93,5 @@ exports.formatDate = formatDate;
 exports.formatTime = formatTime;
 exports.formatTimeAbs = formatTimeAbs;
 exports.formatTimePart = formatTimePart;
+exports.formatTimePenalty = formatTimePenalty;
 exports.parseDate = parseDate;

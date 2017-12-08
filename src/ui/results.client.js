@@ -350,12 +350,15 @@ function showResultsSummary(races, options) {
   if (hasEditPermission) {
     $("#publish-results").button().on("click", function () {
       $("#pd-result").html('Publishing results...');
+      $("#publish-results").button("disable");
       google.script.run
         .withSuccessHandler(function (data) {
-          $("#pd-result").html('Published results to <a href="https://googledrive.com/host/' + data.fileId + '" target="_top">web page</a>');
+          $("#pd-result").html('Published results to <a href="https://drive.google.com/file/d/' + data.fileId + '/view" target="_blank">web page</a>');
+          $("#publish-results").button("enable");
         })
         .withFailureHandler(function (data) {
           $("#pd-result").html('Unable to publish results');
+          $("#publish-results").button("enable");
         })
         .saveResultsHTMLForSpreadsheet(ssKey);
     });

@@ -72,6 +72,21 @@ describe('date formatting and parsing', function() {
 
   });
 
+  describe('time allowance/penalty formatting', function() {
+
+    it('should echo empty string back again', function() {
+      expect(dateformat.formatTimePenalty('')).to.equal('');
+    });
+
+    it('should format time penalties', function() {
+      expect(dateformat.formatTimePenalty('1:43:06')).to.equal('includes penalty of 1:43:06');
+    });
+
+    it('should format time allowance', function() {
+      expect(dateformat.formatTimePenalty('-1:22:58')).to.equal('includes allowance of 1:22:58');
+    });
+  });
+
   describe('date parsing', function() {
 
     it('should echo null back again', function() {

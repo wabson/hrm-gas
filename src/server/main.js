@@ -73,6 +73,10 @@ global.dialog_raceDetails_set = apiRaceDetails.dialog_raceDetails_set;
 
 global.getRaceSheetNamesHTML = web.getRaceSheetNamesHTML;
 
+// For publishing results
+global.formatTime = dateformat.formatTime;
+global.formatTimePenalty = dateformat.formatTimePenalty;
+
 global.sidebar_entries_race_info = apiEntries.sidebar_entries_race_info;
 global.sidebar_entries_search = apiEntries.sidebar_entries_search;
 global.sidebar_entries_add = apiEntries.sidebar_entries_add;

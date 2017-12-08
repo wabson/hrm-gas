@@ -1344,25 +1344,25 @@ exports.saveEntriesHTML = function saveEntriesHTML(ss) {
   var htmlFile = publishing.saveEntriesHTML(ss);
   uiService.showLinkDialog('Publish HTML',
     "<p>Race entries published to Google Drive:</p>",
-    "https://googledrive.com/host/" + htmlFile.getId()
+    "https://drive.google.com/file/d/" + htmlFile.getId() + "/view"
   );
   return {fileId: htmlFile.getId()};
 };
 
 /**
- * Save results in HTML formay
+ * Save results in HTML format
  *
  * @public
  * @param {object} e Event information
  */
-function saveResultsHTML(ss) {
+exports.saveResultsHTML = function saveResultsHTML(ss) {
   var htmlFile = publishing.saveResultsHTML(ss);
   uiService.showLinkDialog('Publish HTML',
     "<p>Race results published to Google Drive:</p>",
-    "https://googledrive.com/host/" + htmlFile.getId()
+    "https://drive.google.com/file/d/" + htmlFile.getId() + "/view"
   );
   return {fileId: htmlFile.getId()};
-}
+};
 
 /**
  * Display the URL for accessing results
