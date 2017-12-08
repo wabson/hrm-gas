@@ -3763,39 +3763,60 @@ function autoResizeColumns(sheet) {
   }
 }
 
+function getPrintableExportUrl(ssId) {
+  var url = 'https://docs.google.com/spreadsheets/d/SS_ID/export?'.replace('SS_ID', ssId);
+  var urlExt = 'format=pdf'        // export as pdf / csv / xls / xlsx
+    + '&size=a4'                           // paper size legal / letter / A4
+    + '&portrait=false'                    // orientation, false for landscape
+    + '&fitw=true'           // fit to page width, false for actual size
+    + '&sheetnames=true&printtitle=true'   // show optional headers and footers
+    + '&pagenumbers=true&gridlines=true'   // show page numbers and gridlines
+    + '&fzr=true'                          // repeat row headers (frozen rows) on each page
+    + '&attachment=false';
+    //+ '&gid=';                             // specific sheet gid to use (otherwise includes all sheets)
+  return url + urlExt;
+}
+
 /**
  * @public
- * @param scriptProps
+ * @param ss
  */
-exports.createPrintableEntries = function createPrintableEntries(scriptProps) {
-  scriptProps = scriptProps || {};
-  var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, false, scriptProps.printableEntriesId, scriptProps);
-  uiService.showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Entries", "_blank");
-  return ss;
+exports.createPrintableEntries = function createPrintableEntries(ss) {
+  ss = ss || {};
+  var pss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, false, 'Printable Entries', 'printableEntriesId');
+  uiService.showLinkDialog("Print Entries", "Click to open the printable entry sheets (opens in new tab)", getPrintableExportUrl(pss.getId()), "Printable Entries", "_blank");
+  return pss;
 };
 
-exports.createPrintableResults = function createPrintableResults(scriptProps) {
-  scriptProps = scriptProps || {};
+/**
+ * @public
+ * @param ss
+ */
+exports.createPrintableResults = function createPrintableResults(ss) {
+  ss = ss || {};
   // 'autoResizeColumn' is not available yet in the new version of Google Sheets
   var columnNames = isHaslerRace() ? printableResultColumnNamesHasler : printableResultColumnNames,
-    ss = createPrintableSpreadsheet(null, columnNames, "Posn", true, false, scriptProps.printableResultsId, scriptProps);
-  uiService.showLinkDialog("Print Results", "Click here to access the results", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Results", "_blank");
-  return ss;
+    pss = createPrintableSpreadsheet(null, columnNames, 'Posn', true, false, 'Printable Results', 'printableResultsId');
+  uiService.showLinkDialog("Print Results", "Click to open the printable result sheets", getPrintableExportUrl(pss.getId()), "Printable Results", "_blank");
+  return pss;
 };
 
-function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize, fileId, scriptProps) {
+function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize, sheetType, sheetIdPropName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  name = name || ss.getName() + " (Printable)";
-  autoResize = typeof autoResize != "undefined" ? autoResize : false;
-  var newss = fileId ? SpreadsheetApp.openById(fileId) : SpreadsheetApp.create(name),
+  var driveProps = getDriveProperties(ss.getId());
+  name = name || ss.getName() + " (" + sheetType + ")";
+  autoResize = typeof autoResize !== "undefined" ? autoResize : false;
+  var newss = driveProps && driveProps[sheetIdPropName] ? SpreadsheetApp.openById(driveProps[sheetIdPropName]) : SpreadsheetApp.create(name),
     srcSheets = racing.getRaceSheets(ss);
-  if (fileId) {
+  if (driveProps && driveProps[sheetIdPropName]) {
     newss.insertSheet("Temp" + Math.floor(Date.now() / 1000), 0);
     // Delete preexisting sheets
     var oldSheets = newss.getSheets();
     for (var i = 1; i < oldSheets.length; i++) {
       newss.deleteSheet(oldSheets[i]);
     }
+  } else {
+    publishing.savePublicProperty(ss.getId(), sheetIdPropName, newss.getId());
   }
   var sortFn = function(a,b) {return (parseInt(a.rows[0][sortColumn])||999) - (parseInt(b.rows[0][sortColumn])||999);};
   var entriesReduce = function(previous, a) {
@@ -3842,7 +3863,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       if (autoResize === true) {
         autoResizeColumns(newSheet);
       }
-      setSheetValidation_(newSheet, newss, scriptProps);
+      setSheetValidation_(newSheet, newss, driveProps);
     }
   }
   // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
