@@ -11,15 +11,21 @@ exports.saveEntriesHTML = function saveEntriesHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var template = HtmlService.createTemplateFromFile('entries-static.view'), scriptProps, title, data;
   var publishedEntriesId = null;
+  var raceDate = null;
   try {
     publishedEntriesId = Drive.Properties.get(ss.getId(), 'publishedEntriesId', {
       visibility: 'PUBLIC'
     }).value;
+    raceDate = Drive.Properties.get(ss.getId(), 'raceDate', {
+      visibility: 'PUBLIC'
+    }).value;
+    Logger.log('Drive properties returned publishedEntriesId ' + publishedEntriesId);
   } catch (e) {
     Logger.log('Drive get properties threw exception ', e);
   }
   scriptProps = {
-    publishedEntriesId: publishedResultsId
+    publishedEntriesId: publishedEntriesId,
+    raceDate: raceDate
   };
   title = ss.getName();
   template.title = title;
