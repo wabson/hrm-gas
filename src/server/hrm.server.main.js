@@ -2503,7 +2503,7 @@ function setPromotionsDiv456(ss, isHaslerFinal) {
     if (typeof ss == 'string') {
       ss = SpreadsheetApp.openById(ss);
     }
-    return setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15], [3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]], isHaslerFinal, ss);
+    return setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15, false], [3, 1.233, false], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]], isHaslerFinal, ss);
   } else {
     throw "No spreadsheet was specified";
   }
