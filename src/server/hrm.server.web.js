@@ -248,7 +248,7 @@ function getRaceResults(key, raceName) {
     races: [
       {
         name: raceName,
-        results: racing.getRaceResultsFromSpreadsheet(raceSheet)
+        results: racing.getRaceResultsFromSpreadsheet(tables.getRows(raceSheet))
       }
     ]
   };
