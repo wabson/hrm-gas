@@ -342,8 +342,14 @@ function showResultsSummary(races, options) {
       }).setPromotionsDiv789(ssKey, false);
     });
     $("#points").button().on("click", function () {
+      $("#pd-result").html('Calculating points...');
+      $("#points").button("disable");
       google.script.run.withSuccessHandler(function (data) {
+        $("#points").button("enable");
         $("#pd-result").html('Calculated points OK');
+      }).withFailureHandler(function() {
+        $("#points").button("enable");
+        $("#pd-result").html('An error occurred while calculating points');
       }).calculatePointsFromWeb(ssKey);
     });
   }

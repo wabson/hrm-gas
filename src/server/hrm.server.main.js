@@ -2551,8 +2551,8 @@ exports.calculatePromotions = function calculatePromotions(scriptProps) {
   }
 };
 
-function calculatePointsBoundary(entries, raceName, isHaslerFinal) {
-  var boatNum, pd, time, timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D");
+function calculatePointsBoundary(raceSheet, entries, raceName, isHaslerFinal) {
+  var boatNum, pd, time, timeColIndex = getTableColumnIndex("Elapsed", raceSheet), pdColIndex = getTableColumnIndex("P/D", raceSheet);
   // No cut-off for Div9
   if (raceName[0] == "9") {
     return null;
@@ -2632,12 +2632,19 @@ function sumPoints(values, count) {
   return total;
 }
 
+function isPromotedByMoreThanOneDivision(sheetName, pd) {
+  var divStr = sheetName.replace('Div', '');
+  var isK1Race = /^\d$/.test(divStr);
+  return isK1Race && pd && /^P\d$/.test(pd) && pd < 'P' + (parseInt(divStr) - 1);
+}
+
 /**
  * @public
  * @param scriptProps
+ * @param ss
  */
-exports.calculatePoints = function calculatePoints(scriptProps) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+exports.calculatePoints = function calculatePoints(scriptProps, ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var skipNonComplete = false, raceRegion;
   if (scriptProps) {
     if (scriptProps.haslerRegion) {
@@ -2646,12 +2653,14 @@ exports.calculatePoints = function calculatePoints(scriptProps) {
       throw "No Hasler region is defined";
     }
   } else {
-    var inlineInfo = getRaceInfo_(ss);
+    var inlineInfo = getRaceInfo(ss);
     raceRegion = inlineInfo.regionId || '';
   }
+
+  var raceSheet = ss.getSheets()[0];
   var clubsSheet = ss.getSheetByName("Clubs"), clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
-      clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"),
-      pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
+    clubColIndex = getTableColumnIndex("Club", raceSheet), timeColIndex = getTableColumnIndex("Elapsed", raceSheet), posnColIndex = getTableColumnIndex("Posn", raceSheet),
+    pdColIndex = getTableColumnIndex("P/D", raceSheet), notesColIndex = getTableColumnIndex("Notes", raceSheet), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
   if (clubsSheet !== null) {
     // Clear existing calculated values
     if (clubsSheet.getLastRow() > 1 && clubsSheet.getLastColumn() > 4) {
@@ -2688,7 +2697,7 @@ exports.calculatePoints = function calculatePoints(scriptProps) {
   // TODO Check that promotions have first been calculated...
 
   // For each race...
-  var entries = [], sheets = racing.getRaceSheets(), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace, isDoublesRace;
+  var entries = [], sheets = racing.getRaceSheets(ss), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace, isDoublesRace;
   var sheetRange, sheetValues;
   var count, noElapsedValueCount, pointsByBoatNum, pointsAwarded;
   var boatNum, pd, time, minPoints, lastTime, lastPoints;
@@ -2705,14 +2714,14 @@ exports.calculatePoints = function calculatePoints(scriptProps) {
     isHaslerRace = sheetName.indexOf("Div") === 0;
     isLightningRace = isLightningRaceName_(sheetName);
     isDoublesRace = sheetName.indexOf("_") > -1;
-    sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, numHeaders);
+    sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, sheets[i].getLastColumn());
     sheetValues = sheetRange.getValues();
     colValues = new Array(sheetRange.getNumRows());
     entries = getEntryRowData(sheetRange);
     // Calculate 110% boundary - time of fastest crew NOT promoted for K1 or 110% of winning boat for K2
     // Boats must not have been transferred from another division
     entries.sort(sortFn); // Sort by position, ascending then blanks (non-finishers)
-    boundary = calculatePointsBoundary(entries, divStr, isHaslerFinal);
+    boundary = calculatePointsBoundary(sheets[i], entries, divStr, isHaslerFinal);
     // Allocate points to clubs within the region
     count = (isHaslerFinal && isLightningRace) ? 40 : 20;
     noElapsedValueCount = 0;
@@ -2802,7 +2811,7 @@ exports.calculatePoints = function calculatePoints(scriptProps) {
       }
     }
 
-    var pointsCol = getTableColumnIndex("Points");
+    var pointsCol = getTableColumnIndex("Points", sheets[i]);
     if (pointsCol < 0) {
       throw "Could not find Points column";
     }
