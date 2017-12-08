@@ -2532,7 +2532,7 @@ exports.calculatePromotions = function calculatePromotions(scriptProps) {
   scriptProps = scriptProps || {};
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
       pdSheet = ss.getSheetByName("PandD");
-  var raceRegion = scriptProps.haslerRegion, isHaslerFinal = raceRegion == "HF";
+  var raceRegion = scriptProps.haslerRegion, isHaslerFinal = raceRegion == "ALL";
   if (pdSheet !== null) {
     // Clear existing values
     if (pdSheet.getLastRow() > 1) {
@@ -2667,7 +2667,7 @@ exports.calculatePoints = function calculatePoints(scriptProps, ss) {
   var raceSheet = ss.getSheets()[0];
   var clubsSheet = ss.getSheetByName("Clubs"), clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
     clubColIndex = getTableColumnIndex("Club", raceSheet), timeColIndex = getTableColumnIndex("Elapsed", raceSheet), posnColIndex = getTableColumnIndex("Posn", raceSheet),
-    pdColIndex = getTableColumnIndex("P/D", raceSheet), notesColIndex = getTableColumnIndex("Notes", raceSheet), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
+    pdColIndex = getTableColumnIndex("P/D", raceSheet), notesColIndex = getTableColumnIndex("Notes", raceSheet), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "ALL";
   if (clubsSheet !== null) {
     // Clear existing calculated values
     if (clubsSheet.getLastRow() > 1 && clubsSheet.getLastColumn() > 4) {
