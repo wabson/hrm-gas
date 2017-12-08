@@ -80,7 +80,7 @@
                     this.$('#form-group-region').empty().append(regionSelect.render().$el);
                     google.script.run
                             .withSuccessHandler(_.bind(this.onRaceTemplatesLoaded, this))
-                            .withFailureHandler(_.bind(this.onFailure, this))
+                            .withFailureHandler(_.bind(this.onRaceTemplatesFailure, this))
                             .dialog_start_getRaceTemplates();
                 },
 
@@ -111,8 +111,8 @@
                     this.$('#input-race-name').focus();
                 },
 
-                onFailure: function(error) {
-                    this.$('#messages').addClass('message error').html('<p class="icon icon-error">Sorry, an error occurred</p>');
+                onRaceTemplatesFailure: function(error) {
+                  this.$('#messages').addClass('message error').html('<p class="icon icon-error">Could not load race templates</p>');
                 },
 
                 onRaceInfoLoaded: function(data) {
@@ -166,6 +166,11 @@
                                 .withFailureHandler(_.bind(this.onFailure, this))
                                 .dialog_start_submit(this.spreadsheetId, formData);
                     }
+                },
+
+                onFailure: function(error) {
+                  this.$('#messages').addClass('message error').html('<p class="icon icon-error">Sorry, an error occurred</p>');
+                  this.$('form').restoreSubmit();
                 },
 
                 onCloseClick: function(event) {
