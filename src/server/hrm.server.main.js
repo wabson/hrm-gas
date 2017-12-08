@@ -3877,7 +3877,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
  */
 exports.createClubEntries = function createClubEntries(scriptProps) {
   var ss = createClubSpreadsheet_(null, ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"], scriptProps);
-  uiService.showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Club Entries", "_blank");
+  uiService.showLinkDialog("Club Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Club Entries", "_blank");
   return ss;
 };
 
@@ -3886,14 +3886,16 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
   var driveProps = getDriveProperties(ss.getId());
   var truncateEmpty = true;
   name = name || ss.getName() + " (Clubs)";
-  var newss = scriptProps && scriptProps.clubEntriesId ? SpreadsheetApp.openById(scriptProps.clubEntriesId) : SpreadsheetApp.create(name), srcSheets = racing.getRaceSheets(ss), clubValues = {}, currClub, currDue, currPaid, currClubValues;
-  if (scriptProps && scriptProps.clubEntriesId) {
+  var newss = driveProps && driveProps.clubEntriesSheetId ? SpreadsheetApp.openById(driveProps.clubEntriesSheetId) : SpreadsheetApp.create(name), srcSheets = racing.getRaceSheets(ss), clubValues = {}, currClub, currDue, currPaid, currClubValues;
+  if (driveProps && driveProps.clubEntriesSheetId) {
     newss.insertSheet("Temp" + Math.floor(Date.now() / 1000), 0);
     // Delete preexisting sheets
     var oldSheets = newss.getSheets();
     for (var i = 1; i < oldSheets.length; i++) {
       newss.deleteSheet(oldSheets[i]);
     }
+  } else {
+    publishing.savePublicProperty(ss.getId(), 'clubEntriesSheetId', newss.getId());
   }
   var clubCounts = {}, clubDue = {}, clubPaid = {}, lastRaceNum, raceName, paddlerType,
     fees = { seniors: driveProps.entrySenior, juniors: driveProps.entryJunior, lightnings: driveProps.entryLightning };
@@ -3938,19 +3940,27 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
   };
   // Copy existing sheets
   for (var j = 0; j < srcSheets.length; j++) {
+    Logger.log("Processing entry sheet %s", srcSheets[j].getName());
     if (srcSheets[j].isSheetHidden()) {
+      Logger.log("Skipping %s due to hidden sheet", srcSheets[j].getName());
       continue;
     }
     var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[j]) - 1 : srcSheets[j].getLastRow();
+    Logger.log("Looking at %s rows in sheet", lastRow);
     if (lastRow > 1) {
       raceName = srcSheets[j].getName();
       var srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()),
           entries = getEntryRowData(srcRange, true);
+      Logger.log("Found %s entries in sheet", entries.length);
       entries.forEach(entriesIter);
     }
   }
-  Logger.log(clubCounts);
-  for (var c in clubValues) {
+  var summaryRows = [];
+  summaryRows.push([ 'Club', 'Seniors', 'Juniors', 'Total Divisional', 'Lightnings', 'Total', 'Due', 'Paid' ]);
+  var summarySheet = newss.insertSheet('Summary');
+  var clubCodes = Object.keys(clubValues).sort(), c;
+  for (var k=0; k<clubCodes.length; k++) {
+    c = clubCodes[k];
     if (clubValues.hasOwnProperty(c)) {
       var newSheet = newss.insertSheet(c), values = clubValues[c], targetRange = newSheet.getRange(1, 1, values.length, values[0].length);
       targetRange.setValues(values);
@@ -3969,18 +3979,27 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
       if (columnNames.indexOf("Expiry") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Expiry") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_DATE);
       }
-      setSheetValidation_(newSheet, newss, scriptProps);
+      setSheetValidation_(newSheet, newss, driveProps);
 
-      var extraValues = [];
+      var extraValues = [], totalDue = clubDue[c].seniors + clubDue[c].juniors + clubDue[c].lightnings,
+        totalPaid = clubPaid[c].seniors + clubPaid[c].juniors + clubPaid[c].lightnings,
+        totalDivisional = clubCounts[c].seniors + clubCounts[c].juniors,
+        totalPaddlers = totalDivisional + clubCounts[c].lightnings;
       extraValues.push(['', '', '', '']);
       extraValues.push(['Seniors', clubCounts[c].seniors, clubDue[c].seniors, clubPaid[c].seniors]);
       extraValues.push(['Juniors', clubCounts[c].juniors, clubDue[c].juniors, clubPaid[c].juniors]);
       extraValues.push(['Lightnings', clubCounts[c].lightnings, clubDue[c].lightnings, clubPaid[c].lightnings]);
-      extraValues.push(['', '', clubDue[c].seniors + clubDue[c].juniors + clubDue[c].lightnings, clubPaid[c].seniors + clubPaid[c].juniors + clubPaid[c].lightnings]);
+      extraValues.push(['', '', totalDue, totalPaid]);
       newSheet.getRange(values.length + 1, values[0].length - extraValues[0].length + 1, extraValues.length, extraValues[0].length).setValues(extraValues).setFontFamily(SHEET_FONT_FAMILY);
       newSheet.getRange(values.length + 1, values[0].length - 1, extraValues.length, 2).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+
+      newSheet.setFrozenRows(1);
+
+      summaryRows.push([c, clubCounts[c].seniors, clubCounts[c].juniors, totalDivisional, clubDue[c].lightnings, totalPaddlers, totalDue, totalPaid]);
     }
   }
+  summarySheet.getRange(1, 1, summaryRows.length, summaryRows[0].length).setValues(summaryRows).setFontFamily(SHEET_FONT_FAMILY);
+  summarySheet.getRange(1, 1, 1, summaryRows[0].length).setBorder(true, true, true, true, true, true).setFontWeight("bold").setBackground("#ccffff");
   // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
   newss.deleteSheet(newss.getSheets()[0]);
   return newss;
