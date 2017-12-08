@@ -508,19 +508,24 @@ function addEntrySets(ssId, entrySets) {
               crewMember.paid = dueAmount;
             }
             crewMember.setId = entrySet.id;
-            if (crewMember.membershipProof && crewMember.membershipProof.type == 'upload' && crewMember.membershipProof.uploads) {
-              crewMember.membershipProof.uploads.forEach(function(upload) {
-                var parsedResult = upload.parsedResults[0];
-                membershipProofRows.push({
-                  'Surname': crewMember.surname,
-                  'First name': crewMember.firstName,
-                  'Club': crewMember.club,
-                  'Class': crewMember.className,
-                  'BCU Number': parsedResult ? parsedResult.number : '',
-                  'Expiry': parsedResult ? parseDate(parsedResult.expiry) : '',
-                  'Member name': parsedResult ? parsedResult.name : ''
+            if (crewMember.membershipProof) {
+              if (crewMember.membershipProof.type == 'upload' && crewMember.membershipProof.uploads) {
+                crewMember.membershipProof.uploads.forEach(function(upload) {
+                  var parsedResult = upload.parsedResults[0];
+                  membershipProofRows.push({
+                    'Surname': crewMember.surname,
+                    'First name': crewMember.firstName,
+                    'Club': crewMember.club,
+                    'Class': crewMember.className,
+                    'BCU Number': parsedResult ? parsedResult.number : '',
+                    'Expiry': parsedResult ? dateformat.parseDate(parsedResult.expiry) : '',
+                    'Member name': parsedResult ? parsedResult.name : ''
+                  });
                 });
-              });
+              } else if (crewMember.membershipProof.type == 'et') {
+                crewMember.membershipNumber = 'ET ' + entrySet.race.code;
+                crewMember.membershipExpiry = entrySet.race.raceDate;
+              }
             }
           });
         });
