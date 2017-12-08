@@ -295,7 +295,6 @@ function showResultsSummary(races, options) {
     return 0;
   }
   summaryItems.sort(compareSummary).reverse();
-  html += ('<div id="pd-result"></div>');
   html += ('<table>');
   html += ('  <tr>');
   html += ('     <th>Race Name</th>');
@@ -314,6 +313,7 @@ function showResultsSummary(races, options) {
       '  </tr>';
   }).join('\n');
   html += ('</table>');
+  html += ('<div id="pd-result"></div>');
   if (options.allowPd === true) {
     html += ('<p><button id="pd-div1" disabled>Div 1-3 Promotions</button></p>');
     html += ('<p><button id="pd-div4">Div 4-6 Promotions</button></p>');
