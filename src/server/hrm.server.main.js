@@ -2706,7 +2706,7 @@ exports.calculatePoints = function calculatePoints(scriptProps, ss) {
   // For each race...
   var entries = [], sheets = racing.getRaceSheets(ss), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace, isDoublesRace;
   var sheetRange, sheetValues;
-  var count, noElapsedValueCount, pointsByBoatNum, pointsAwarded;
+  var count, pointsIncrement, noElapsedValueCount, pointsByBoatNum, pointsAwarded;
   var boatNum, pd1, pd2, time, minPoints, lastTime, lastPoints;
   var mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
   var club1, club2, posn, notes1, notes2;
@@ -2731,6 +2731,7 @@ exports.calculatePoints = function calculatePoints(scriptProps, ss) {
     boundary = calculatePointsBoundary(sheets[i], entries, divStr, isHaslerFinal);
     // Allocate points to clubs within the region
     count = (isHaslerFinal && isLightningRace) ? 40 : 20;
+    pointsIncrement = (isHaslerFinal && isLightningRace) ? 2 : 1;
     noElapsedValueCount = 0;
     pointsByBoatNum = new Array(99);
     minPoints = (divStr[0] == "9" ? 2 : 1);
@@ -2762,7 +2763,7 @@ exports.calculatePoints = function calculatePoints(scriptProps, ss) {
         pointsByBoatNum[entries[l].boatNumber] = pointsAwarded;
         lastTime = timeInMillis(time);
         lastPoints = pointsAwarded;
-        count --;
+        count -= pointsIncrement;
       } else {
           pointsByBoatNum[entries[l].boatNumber] = "";
       }
