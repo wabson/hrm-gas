@@ -1,6 +1,7 @@
 /* jshint camelcase: false, node: true */
 /* globals Logger, SpreadsheetApp, Utilities */
 
+var dateformat = require('../../../server/dateformat');
 var hrm = require('../../../server/hrm.server.main');
 var rankings = require('../../../server/rankings');
 var uiUtils = require('../../../server/libs/lib.utils.ui.server');
@@ -26,7 +27,7 @@ exports.sidebar_entries_race_info = function sidebar_entries_race_info(spreadshe
         rankingsSize: rankingsSize,
         lastUpdated: rankingsLastUpdated !== null ?
             Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : null,
-        raceDate: driveProps.raceDate ? Utilities.formatDate(hrm.parseDate(driveProps.raceDate), spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : ''
+        raceDate: driveProps.raceDate ? Utilities.formatDate(dateformat.parseDate(driveProps.raceDate), spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : ''
     };
 };
 

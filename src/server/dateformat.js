@@ -27,7 +27,7 @@ function formatDate(val) {
     if (typeof val == "string") {
       return val.toLowerCase();
     } else {
-      return formatTimePart(val.getDate()) + "/" + formatTimePart(val.getMonth() + 1) + "/" + formatTimePart(val.getYear());
+      return formatTimePart(val.getDate()) + "/" + formatTimePart(val.getMonth() + 1) + "/" + formatTimePart(val.getFullYear());
     }
   } else {
     return "";
@@ -62,7 +62,35 @@ function formatTimePenalty(t) {
   }
 }
 
+function parseDate(dateStr) {
+  if (dateStr === null) {
+    return null;
+  }
+  var parts;
+  var parsedDate;
+  if (dateStr.match(/\d{4}-\d{2}-\d{2}/)) {
+    parts = dateStr.split('-');
+    parsedDate =  new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  } else if (dateStr.match(/\d{2}\/\d{2}\/\d{4}/)) {
+    parts = dateStr.split('/');
+    parsedDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+  } else if (dateStr.match(/\d{2}\/\d{2}\/\d{2}/)) {
+    parts = dateStr.split('/');
+    parsedDate = new Date(2000 + parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+  } else {
+    throw "Unsupported date format for '" + dateStr + "' - must be YYYY-MM-DD or DD/MM/YY[YY]";
+  }
+  var timeMatch = dateStr.match(/(\d{2}):(\d{2}):(\d{2})/);
+  if (timeMatch) {
+    parsedDate.setHours(timeMatch[1]);
+    parsedDate.setMinutes(timeMatch[2]);
+    parsedDate.setSeconds(timeMatch[3]);
+  }
+  return parsedDate;
+}
+
 exports.formatDate = formatDate;
 exports.formatTime = formatTime;
 exports.formatTimeAbs = formatTimeAbs;
 exports.formatTimePart = formatTimePart;
+exports.parseDate = parseDate;

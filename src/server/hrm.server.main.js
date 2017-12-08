@@ -16,6 +16,7 @@
  * These are designed to be called from a Spreadsheet or from a webapp (TODO: provide doGet() function to implement this)
  */
 
+var dateformat = require('./dateformat');
 var publishing = require('./publishing');
 var tables = require('./tables');
 var racing = require('./racing');
@@ -486,7 +487,7 @@ function addEntrySets(ssId, entrySets) {
         'Email': entrySet.email,
         'Phone': entrySet.phone,
         'Team Leader?': entrySet.isTeamLeader ? 'Y' : '',
-        'Entered': parseDate(entrySet.enteredOn),
+        'Entered': dateformat.parseDate(entrySet.enteredOn),
         'Due': parseFloat(entrySet.due) || '',
         'Paid': parseFloat(getTotalPaidForEntrySet(entrySet)) || '',
         'Added': added
@@ -551,7 +552,7 @@ function addEntrySets(ssId, entrySets) {
               'Surname': entry.surname,
               'First name': entry.firstName,
               'BCU Number': entry.membershipNumber,
-              'Expiry': parseDate(entry.membershipExpiry),
+              'Expiry': dateformat.parseDate(entry.membershipExpiry),
               'Club': entry.club,
               'Class': entry.className,
               'Div': entry.division,
@@ -3017,7 +3018,7 @@ function setSheetValidation_(sheet, ss, scriptProps) {
     classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
     divRule = allowedDivs !== null ? SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build() : null,
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
-    expiryCutoff = scriptProps && scriptProps.raceDate ? parseDate(scriptProps.raceDate) : new Date(),
+    expiryCutoff = scriptProps && scriptProps.raceDate ? dateformat.parseDate(scriptProps.raceDate) : new Date(),
     expiryRule = SpreadsheetApp.newDataValidation().requireDateOnOrAfter(expiryCutoff).build();
 
   var lastRow = sheet.getMaxRows(), r, expiryCol = getRaceColumnNumber("Expiry", sheet), paidCol = getRaceColumnNumber("Paid", sheet);
@@ -4013,31 +4014,4 @@ exports.checkEntriesFromRankings = function checkEntriesFromRankings() {
   checkEntriesFromRankings_();
 };
 
-function parseDate(dateStr) {
-  if (dateStr === null) {
-    return null;
-  }
-  var parts;
-  var parsedDate;
-  if (dateStr.match(/\d{4}-\d{2}-\d{2}/)) {
-    parts = dateStr.split('-');
-    parsedDate =  new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-  } else if (dateStr.match(/\d{2}\/\d{2}\/\d{4}/)) {
-    parts = dateStr.split('/');
-    parsedDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-  } else if (dateStr.match(/\d{2}\/\d{2}\/\d{4}/)) {
-    parts = dateStr.split('/');
-    parsedDate = new Date(2000 + parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-  } else {
-      throw "Unsupported date format for '" + dateStr + "' - must be YYYY-MM-DD or DD/MM/YY[YY]";
-  }
-  var timeMatch = dateStr.match(/(\d{2}):(\d{2}):(\d{2})/);
-  if (timeMatch) {
-    parsedDate.setHours(timeMatch[1]);
-    parsedDate.setMinutes(timeMatch[2]);
-    parsedDate.setSeconds(timeMatch[3]);
-  }
-  return parsedDate;
-}
-
-exports.parseDate = parseDate;
+exports.parseDate = dateformat.parseDate;
