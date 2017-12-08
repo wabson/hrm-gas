@@ -3550,11 +3550,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columns) {
 }
 
 function setDriveProperty_(spreadsheetId, name, value) {
-  Drive.Properties.insert({
-    key: name,
-    value: value,
-    visibility: 'PUBLIC'
-  }, spreadsheetId);
+  return publishing.savePublicProperty(spreadsheetId, name, value);
 }
 
 function setDriveProperties(spreadsheetId, values) {

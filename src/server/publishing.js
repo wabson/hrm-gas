@@ -10,12 +10,14 @@ var RESULTS_SS_FILENAME_TMPL = "%s Printable Results";
 exports.saveEntriesHTML = function saveEntriesHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var template = HtmlService.createTemplateFromFile('entries-static.view'), scriptProps, title, data;
-  var publishedResultsId = null;
+  var publishedEntriesId = null;
   try {
-    publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedResultsId', {
+    publishedEntriesId = Drive.Properties.get(ss.getId(), 'publishedEntriesId', {
       visibility: 'PUBLIC'
     }).value;
-  } catch (e) { }
+  } catch (e) {
+    Logger.log('Drive get properties threw exception ', e);
+  }
   scriptProps = {
     publishedEntriesId: publishedResultsId
   };
@@ -32,17 +34,7 @@ exports.saveEntriesHTML = function saveEntriesHTML(ss) {
   if (scriptProps.publishedEntriesId) {
     htmlFile.setContent(outputHtml);
   }
-  try {
-    Drive.Properties.insert({
-      key: 'publishedEntriesId',
-      value: htmlFile.getId(),
-      visibility: 'PUBLIC'
-    }, ss.getId());
-    Logger.log("Set drive publishedEntriesId property to: " + htmlFile.getId());
-  }
-  catch (ex) {
-    Logger.log('Caught exception ', ex);
-  }
+  exports.savePublicProperty(ss.getId(), 'publishedEntriesId', htmlFile.getId());
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
   return htmlFile;
 };
@@ -75,18 +67,23 @@ exports.saveResultsHTML = function saveResultsHTML(ss) {
   if (scriptProps.publishedResultsId) {
     htmlFile.setContent(outputHtml);
   }
-  try {
-    Drive.Properties.insert({
-      key: 'publishedResultsId',
-      value: htmlFile.getId(),
-      visibility: 'PUBLIC'
-    }, ss.getId());
-  }
-  catch (ex) {
-    Logger.log('Caught exception ', ex);
-  }
+  exports.savePublicProperty(ss.getId(), 'publishedResultsId', htmlFile.getId());
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
   return htmlFile;
+};
+
+exports.savePublicProperty = function (spreadsheetId, propertyName, value) {
+  try {
+    Drive.Properties.insert({
+      key: propertyName,
+      value: value,
+      visibility: 'PUBLIC'
+    }, spreadsheetId);
+  }
+  catch (ex) {
+    Logger.log('Caught exception whilst trying to save property %s:', propertyName);
+    Logger.log(ex);
+  }
 };
 
 /**
