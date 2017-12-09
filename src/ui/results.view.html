@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title><?= title ?></title>
+  <style type="text/css">
+    /*=include ./styles.css */
+    .scrolling #results {
+      -webkit-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
+      -moz-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
+      -o-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
+      animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
+    }
+  </style>
+</head>
+<body>
+<div id="page">
+  <div id="results-container">
+    <div id="results">
+      <h1><?= title ?></h1>
+      <div id="file-links"></div>
+      <? if (hasEditPermission && show == "entries") { ?>
+      <div id="dialog-form" title="Add Entry" style="display: none;">
+        <!-- <p class="validateTips"></p> -->
+        <form>
+          <fieldset>
+            <label for="name">Search by name or BCU number</label>
+            <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all" autocorrect="off" autocomplete="off">
+            <!-- Allow form submission with keyboard without duplicating the dialog button -->
+            <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+          </fieldset>
+        </form>
+        <div id="users-contain" class="ui-widget">
+          <table id="users" class="ui-widget ui-widget-content">
+            <thead>
+            <tr class="ui-widget-header ">
+              <th></th> <!-- Radio button -->
+              <th>Name</th>
+              <th>Class</th>
+              <th>Club</th>
+              <th>Division</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+          <button id="add-member">Add to Crew</button>
+          <table id="crew-members" class="ui-widget ui-widget-content">
+            <thead>
+            <tr class="ui-widget-header">
+              <th>Name</th>
+              <th>Class</th>
+              <th>Club</th>
+              <th>Division</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+          <select name="race"><option>Auto</option></select>
+          <button id="add-entry">Add Entry</button>
+          <button id="clear-crew">Clear</button>
+        </div>
+        <div id="add-entry-messages"></div>
+      </div>
+      <div id="actions">
+        <button id="create-user">Add Entry</button>
+        <button id="check-duplicates">Check Duplicates</button>
+      </div>
+      <div id="dialog-check-duplicates" title="Check Duplicates" style="display: none;">
+        <div>Checking...</div>
+      </div>
+      <? } ?>
+      <div id="messages"><p>Loading...</p></div>
+      <div id="results-data">
+        <div id="results-summary"></div>
+        <div id="results-races"></div>
+        <div id="results-pdtimes"></div>
+        <div id="results-club-points"></div>
+        <div id="results-lightning-points"></div>
+        <div id="entries-summary"></div>
+        <div id="entries-data"></div>
+      </div> <!-- end #results-data -->
+    </div> <!-- end #results -->
+  </div> <!-- end #results-container -->
+</div> <!-- end #page -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+<style>
+  label, input { display:block; }
+  input.text { margin-bottom:12px; width:95%; padding: .4em; }
+  fieldset { padding:0; border:0; margin-top:25px; }
+  h1 { font-size: 1.2em; margin: .6em 0; }
+  div#users-contain { width: 350px; margin: 20px 0; }
+  div#users-contain table { margin: 1em 0; border-collapse: collapse; width: 100%; }
+  div#users-contain table td, div#users-contain table th { border: 1px solid #eee; padding: .6em 10px; text-align: left; }
+  .ui-dialog .ui-state-error { padding: .3em; }
+  .validateTips { border: 1px solid transparent; padding: 0.3em; }
+</style>
+<script>
+  $(function() {
+    var dialog, form,
+      name = $( "#name" ),
+      allFields = $( [] ).add( name ),
+      tips = $( ".validateTips" );
+
+    function updateTips( t ) {
+      tips
+        .text( t )
+        .addClass( "ui-state-highlight" );
+      setTimeout(function() {
+        tips.removeClass( "ui-state-highlight", 1500 );
+      }, 500 );
+    }
+
+    function checkLength( o, n, min, max ) {
+      if ( o.val().length > max || o.val().length < min ) {
+        o.addClass( "ui-state-error" );
+        updateTips( "Length of " + n + " must be between " +
+          min + " and " + max + "." );
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    function checkRegexp( o, regexp, n ) {
+      if ( !( regexp.test( o.val() ) ) ) {
+        o.addClass( "ui-state-error" );
+        updateTips( n );
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    function addUser() {
+      var valid = true;
+      allFields.removeClass( "ui-state-error" );
+      valid = valid && checkLength( name, "username", 3, 16 );
+
+      if ( valid ) {
+        $( "#users tbody" ).append( "<tr>" +
+          "<td>" + name.val() + "</td>" +
+          "<td>" + password.val() + "</td>" +
+          "</tr>" );
+        dialog.dialog( "close" );
+      }
+      return valid;
+    }
+
+    function loadRaceNames() {
+      google.script.run.withSuccessHandler(onRaceNamesLoaded).getRaceSheetNamesHTML(key);
+    }
+
+    function onRaceNamesLoaded(resp) {
+      $.each(resp, function(i, name) {
+        $("select[name=race]").append("<option>" + name + "</option>");
+      });
+    }
+
+    function search() {
+      $("#add-member").button("option", "disabled", true);
+      $("#users tbody").html("<tr><td colspan=\"5\">Searching...</td></tr>");
+      google.script.run
+        .withSuccessHandler(onSearchResultsLoaded)
+        .withFailureHandler(onSearchResultsFailure)
+        .findSpreadsheetRankings(key, name.val());
+    }
+
+    function onSearchResultsLoaded(resp) {
+      $( "#users tbody" ).empty().append(resp.map(function(row) { return "<tr>" +
+        "<td><input type=\"radio\" name=\"entry\" value=\"" + row.join("|") + "\" /></td>" +
+        "<td>" + row[1] + " " + row[0] + "</td>" +
+        "<td>" + row[2] + "</td>" +
+        "<td>" + row[3] + "</td>" +
+        "<td>" + row[6] + "</td>" +
+        "</tr>";}));
+      var numCrewMembers = $("#crew-members input[type=hidden]").length;
+      $("#users input[name=entry]").prop("disabled", numCrewMembers >= 2);
+      $("#users input[name=entry]").change(function() {
+        $("#add-member").button("option", "disabled", numCrewMembers >= 2);
+      });
+      var resultsFound = resp.length;
+      if (resultsFound == 1 && numCrewMembers < 2) {
+        $("#users input[name=entry]").prop("checked", true).trigger("change");
+      } else if (resultsFound == 0) {
+        $("#users tbody").html("<tr><td colspan=\"5\">No results found</td></tr>");
+        // TODO indicate nothing there
+      }
+    }
+
+    function onSearchResultsFailure() {
+      $("#users tbody").html("<tr><td colspan=\"5\">Unable to perform search</td></tr>");
+    }
+
+    function onClickAddToCrew() {
+      var selectedVal = $("#users input[name=entry]:checked").val().split("|");
+      $("#crew-members tbody").append("<tr>" +
+        "<td><input type=\"hidden\" name=\"entry\" value=\"" + selectedVal.join("|") + "\" />" +
+        "" + selectedVal[1] + " " + selectedVal[0] + "</td>" +
+        "<td>" + selectedVal[2] + "</td>" +
+        "<td>" + selectedVal[3] + "</td>" +
+        "<td>" + selectedVal[6] + "</td>" +
+        "</tr>");
+      $("#users tbody" ).empty();
+      $("#add-member").button("option", "disabled", true);
+      $("#add-entry").button("option", "disabled", false);
+      name.val("");
+    }
+
+    function crewMemberName(member) {
+      return member[1] + " " + member[0];
+    }
+
+    function onClickAddCrew() {
+      var selected = $("#crew-members input[type=hidden]");
+      var list1 = $(selected[0]).attr("value").split("|"),
+        list2 = selected.length > 1 ? $(selected[1]).attr("value").split("|") : null;
+      var raceName = $("select[name=race]").val();
+      var crewName = crewMemberName(list1) + (list2 ? (" / " + crewMemberName(list2)) : "");
+      if (selected.length > 0 && selected.length <= 2) {
+        google.script.run
+          .withSuccessHandler(onAddCrewSuccess)
+          .withFailureHandler(onAddCrewFailure)
+          .withUserObject({
+            crewName: crewName
+          })
+          .onHTMLAddEntryClick(key, list1, list2, raceName);
+      }
+    }
+
+    function onAddCrewSuccess(result, data) {
+      $("#add-entry-messages").append("Added " + result.boatNumber + " " + data.crewName + " in " + result.sheetName + "<br />");
+      $("#crew-members tbody").empty();
+      $("#add-entry").button("option", "disabled", true);
+      name.focus();
+      google.script.run.withSuccessHandler(onDataReloaded).getRaceEntriesSummary(key);
+    }
+
+    function onAddCrewFailure(result, data) {
+      $("#add-entry-messages").html("Could not add " + data.crewName);
+      $("#add-entry").button("option", "disabled", false);
+    }
+
+    function onClickClearCrew() {
+      $("#crew-members tbody").empty();
+      $("#add-entry").button("option", "disabled", true);
+    }
+
+    dialog = $( "#dialog-form" ).dialog({
+      autoOpen: false,
+      height: 500,
+      width: 600,
+      modal: true,
+      position: { my: "left+40 top+40", at: "left top", of: window },
+      buttons: {
+        //"Create an account": addUser,
+        Done: function() {
+          dialog.dialog( "close" );
+        }
+      },
+      close: function() {
+        form[ 0 ].reset();
+        allFields.removeClass( "ui-state-error" );
+      }
+    });
+
+    form = dialog.find( "form" ).on( "submit", function( event ) {
+      event.preventDefault();
+      search();
+    });
+
+    $( "#create-user" ).button().on( "click", function() {
+      dialog.dialog( "open" );
+    });
+    $( "#add-entry" ).button().on( "click", onClickAddCrew);
+    $("#add-entry").button("option", "disabled", true);
+    $("#clear-crew").button().on("click", onClickClearCrew);
+    $("#add-member").button().on( "click", onClickAddToCrew);
+    $("#add-member").button("option", "disabled", true);
+    $( "#dialog-form" ).css( "display", "block");
+    loadRaceNames();
+
+    // Create duplicates dialog and then unhide the form
+    var checkDuplicatesDialog = $("#dialog-check-duplicates").dialog({
+      autoOpen: false,
+      resizable: false,
+      height: 300,
+      width: 500,
+      position: { my: "left+40 top+40", at: "left top", of: window },
+      modal: true,
+      buttons: {
+        Cancel: function() {
+          $(this).dialog( "close" );
+        }
+      }
+    });
+    $("#dialog-check-duplicates").css("display", "block");
+    // Enable button
+    $("#check-duplicates").button().on("click", function() {
+      checkDuplicatesDialog.dialog("open");
+      $("#dialog-check-duplicates div").html("Checking...");
+      google.script.run.withSuccessHandler(function(warnings) {
+        $("#dialog-check-duplicates div").html(warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>');
+      }).checkEntryDuplicateWarningsHTML(key);
+    });
+  });
+</script>
+<? var url = getScriptUrl(); ?>
+<script>
+  var key = "<?= key ?>", race="<?= race ?>", show = "<?= show ?>", showNotes = "<?= showNotes ?>", scroll = "<?= scroll ?>", checkInterval = "<?= checkInterval ?>", url = "<?= url ?>", hasEditPermission = "<?= hasEditPermission ?>" == "true";
+//=require ./results.client.js
+</script>
+</body>
+</html>

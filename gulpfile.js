@@ -29,6 +29,12 @@ var flatten = require('gulp-flatten');
 var sass = require('gulp-sass');
 var gulpIgnore = require('gulp-ignore');
 
+var browserify = require('browserify');
+var gasify = require('gasify');
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
+var gutil = require('gulp-util');
+
 // minimist structure and defaults for this task configuration
 var knownOptions = {
     string: ['env'],
@@ -71,7 +77,7 @@ gulp.task('compile-latest', ['copy-latest'], function() {
 // Completion of "clean-deployment" is a prerequisite for starting the copy
 // process.
 gulp.task('copy-latest', ['clean-deployment', 'sass', 'copy-code']);
-gulp.task('copy-code', ['copy-server-code', 'copy-client-code', 'copy-environment-specific-code']);
+gulp.task('copy-code', ['gasify-server-code', 'copy-client-code', 'copy-environment-specific-code']);
 
 // Copies all .js that will be run by the Apps Script runtime
 gulp.task('copy-server-code', function copyServerCode() {
@@ -79,6 +85,19 @@ gulp.task('copy-server-code', function copyServerCode() {
             srcRoot + '/server/*.js',
             srcRoot + '/libs/*.js',
             srcRoot + '/ui/**/*.server.js'])
+        .pipe(gulp.dest(dstRoot));
+});
+
+gulp.task('gasify-server-code', function () {
+    var b = browserify({
+        entries: srcRoot+ '/server/main.js',
+        debug: true,
+        plugin: [gasify]
+    });
+
+    return b.bundle()
+        .pipe(source('Code.js'))
+        .pipe(buffer())
         .pipe(gulp.dest(dstRoot));
 });
 

@@ -1,4 +1,6 @@
-function lookupNationalPhoneNumber(phoneNumber) {
+var Configuration = require('./libs/lib.configuration');
+
+exports.lookupNationalPhoneNumber = function lookupNationalPhoneNumber(phoneNumber) {
     var lookupUrl = 'https://lookups.twilio.com/v1/PhoneNumbers/' + phoneNumber + '?CountryCode=GB';
     var options = {
         method: 'get',
@@ -10,13 +12,13 @@ function lookupNationalPhoneNumber(phoneNumber) {
     }
     options.headers = {
         'Authorization': 'Basic ' + Utilities.base64Encode(
-            config.integrations.twilio.accountSid + ':' +config.integrations.twilio.authToke
+            config.integrations.twilio.accountSid + ':' +config.integrations.twilio.authToken
         )
     };
     return UrlFetchApp.fetch(lookupUrl, options);
-}
+};
 
-function sendSms(toNumber, messageBody) {
+exports.sendSms = function sendSms(toNumber, messageBody) {
     var config = Configuration.getCurrent();
     if (!config.integrations || !config.integrations.twilio) {
         throw 'Twilio configuration could not be found';
@@ -42,4 +44,4 @@ function sendSms(toNumber, messageBody) {
     var data = JSON.parse(response);
     Logger.log(data);
     return data;
-}
+};

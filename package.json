@@ -4,39 +4,47 @@
   "description": "HRM clone built on top of Google Apps Script",
   "main": "Code.js",
   "scripts": {
-    "lint": "./node_modules/eslint/bin/eslint.js *.js",
-    "hint": "./node_modules/jshint/bin/jshint --extract=auto *.js src/*.js src/*.html",
-    "upload": "./node_modules/node-google-apps-script/bin/gapps upload",
-    "coverage": "karma start karma.conf.js",
-    "test-server": "./node_modules/mocha/bin/mocha $(find src/* -path *test* -name \\\\*.js -type f)",
+    "hint": "jshint --extract=auto src/server/*.js src/*.html",
+    "upload-dev": "gulp upload-latest --env=dev",
+    "coverage": "npm run coverage-ui-interactive",
+    "coverage-ui-interactive": "karma start karma.conf.js",
+    "coveralls-server": "nyc report --reporter=text-lcov | coveralls",
+    "test-server": "nyc mocha $(find src -name \"*test.js\" -type f)",
     "test-ui": "karma start karma.conf.js --single-run",
-    "test": "npm run test-ui"
+    "test": "npm run test-server && npm run test-ui"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gist.github.com/8196167.git"
+    "url": "https://github.com/wabson/hrm-gas"
   },
   "author": "Will Abson",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://gist.github.com/8196167"
+    "url": "https://github.com/wabson/hrm-gas"
   },
-  "homepage": "https://gist.github.com/8196167",
+  "homepage": "https://github.com/wabson/hrm-gas",
   "devDependencies": {
+    "@types/chai": "^3.5.2",
+    "@types/chai-datetime": "0.0.30",
+    "@types/mocha": "^2.2.41",
+    "@wabson/gulp-include": "2.3.1-paths",
+    "browserify": "^14.1.0",
+    "chai": "^3.5.0",
+    "chai-datetime": "^1.4.1",
+    "coveralls": "^2.13.1",
     "del": "^2.2.0",
-    "eslint": "^1.10.3",
+    "gasify": "^0.1.0",
     "gulp": "^3.9.1",
     "gulp-debug": "^2.1.2",
     "gulp-flatten": "^0.2.0",
     "gulp-ignore": "^2.0.1",
-    "@wabson/gulp-include": "2.3.1-paths",
     "gulp-jshint": "^1.12.0",
     "gulp-rename": "^1.2.2",
     "gulp-replace": "^0.5.4",
     "gulp-replace-path": "^0.4.0",
     "gulp-sass": "^2.3.1",
     "gulp-shell": "^0.5.1",
-    "gulp-util": "^3.0.7",
+    "gulp-util": "^3.0.8",
     "gulp-webserver": "^0.9.1",
     "jasmine": "^2.4.1",
     "jasmine-core": "^2.4.1",
@@ -53,9 +61,14 @@
     "karma-jquery-jasmine": "^0.1.12",
     "karma-phantomjs-launcher": "^1.0.1",
     "minimist": "^1.2.0",
-    "mocha": "^2.3.4",
+    "mocha": "^3.3.0",
     "node-google-apps-script": "^1.1.4",
-    "through2": "^2.0.1"
+    "nyc": "^10.3.0",
+    "retyped-google-apps-script-tsd-ambient": "0.0.0-0",
+    "sinon": "^2.2.0",
+    "through2": "^2.0.1",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
   },
   "dependencies": {
     "backbone": "^1.3.3",

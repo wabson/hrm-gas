@@ -16,11 +16,15 @@
  * These are designed to be called from a Spreadsheet or from a webapp (TODO: provide doGet() function to implement this)
  */
 
-/**
- * Rankings sheet column names
- */
-var rankingsSheetColumnNames = ["Surname", "First name", "Club", "Class", "BCU Number", "Expiry", "Division"];
-var rankingsSheetName = "Rankings";
+var dateformat = require('./dateformat');
+var publishing = require('./publishing');
+var tables = require('./tables');
+var racing = require('./racing');
+var rankings = require('./rankings');
+var templates = require('./templates');
+var uiService = require('./ui-service');
+var Configuration = require('./libs/lib.configuration');
+var SheetsUtilitiesLibrary = require('./libs/lib.utils.sheets');
 
 var STARTS_SHEET_COLUMNS = [[1, 1], ['Race', 'Time']];
 var FINISHES_SHEET_COLUMNS = [[1, 2], ['Boat Num', 'Time', 'Notes', 'Time+/-']];
@@ -54,11 +58,16 @@ var CLASSES_DEFS = [['S', 'Senior Male'],['V', 'Veteran Male'],['J', 'Junior Mal
 var CLASSES_ALL = ['S','V','J','F','VF','JF','C','VC','JC','FC','VFC','JFC'];
 var CLASSES_LIGHTNING = ['J','JF'];
 
+exports.CLASSES_DEFS = CLASSES_DEFS;
+exports.CLASSES_ALL = CLASSES_ALL;
+
 var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_12_MILE = ["1","2","3","4","5","6","7","8","9"];
 var DIVS_8_MILE = ["4","5","6","7","8","9"];
 var DIVS_4_MILE = ["5","6","7","8","9","U12M","U12F","U10M","U10F"];
 var DIVS_LIGHTNING = ["U12M","U12F","U10M","U10F"];
+
+exports.DIVS_ALL = DIVS_ALL;
 
 var LEVY_SENIOR = 2, LEVY_JUNIOR = 2;
 
@@ -115,21 +124,11 @@ var RACE_SHEETS_NATIONALS = [
     ['O59_VMK2', [[900, 20, 'Y']], 2], ['O59_VLK2', [[920, 20, 'Y']], 2],
     ['Mixed', [[940, 60, 'Y']], 2]
 ];
-var EXTRA_SHEETS_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'PandD', 'Summary'];
-var EXTRA_SHEETS_NON_HASLER = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Results', 'Summary'];
-var EXTRA_SHEETS_NATIONALS = ['Starts', 'Finishes', 'Rankings', 'Clubs', 'Divisional Results', 'Singles Results', 'Doubles Results', 'Summary'];
+var EXTRA_SHEETS_HASLER = racing.EXTRA_SHEETS_HASLER;
+var EXTRA_SHEETS_NON_HASLER = racing.EXTRA_SHEETS_NON_HASLER;
+var EXTRA_SHEETS_NATIONALS = racing.EXTRA_SHEETS_NATIONALS;
 
 var PROTECTED_SHEETS = ['Rankings'];
-
-var ListUtils = {
-  trim: function(input) {
-    var output = input.slice();
-    while (output.length > 0 && (output[output.length - 1] === '' || output[output.length - 1] === null)) {
-      output.pop();
-    }
-    return output;
-  }
-};
 
 /**
  * Button handler for load rankings dialog
@@ -146,7 +145,7 @@ function loadRankings(eventInfo) {
     Logger.log("Clearing existing rankings");
     clearRankingsIfSheetExists_(false);
   }
-  loadRankingsXLS(clubId);
+  rankings.loadRankingsXLS(clubId);
   app.close();
   return app;
 }
@@ -156,7 +155,7 @@ function loadRankings(eventInfo) {
  *
  * @public
  */
-function showLoadRankings() {
+exports.showLoadRankings = function showLoadRankings() {
   // Dialog height in pixels
   var dialogHeight = 125;
 
@@ -195,174 +194,7 @@ function showLoadRankings() {
   app.add(mypanel);
 
   ss.show(app);
-}
-
-function loadRankingsPage_() {
-  var pageResp = UrlFetchApp.fetch('http://canoeracing.org.uk/marathon/index.php/latest-marathon-ranking-list/');
-  return pageResp.getContentText().replace('&nbsp;', ' ');
-}
-
-function getMonthNumber_(monthName) {
-  var monthsFull = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
-    monthsAbbr = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'],
-    match = monthsFull.indexOf(monthName.toLowerCase());
-  if (match == -1) {
-    match = monthsAbbr.indexOf(monthName.toLowerCase());
-  }
-  return match;
-}
-
-function getRankingsWebsiteLastUpdated_() {
-  var pageSrc = loadRankingsPage_(),
-      reMatch = /UPDATED?\s+(\d+)[\s\/-]+(\w+)[\s\/-]+(\d{4})/i.exec(pageSrc);
-  if (reMatch) {
-    Logger.log(reMatch[0]);
-    var year = parseInt(reMatch[3]), month = getMonthNumber_(reMatch[2]), day = parseInt(reMatch[1]);
-    if (month > -1) {
-      return new Date(year, month, day, 0, 0, 0);
-    }
-  } else {
-    Logger.log('No match');
-  }
-  return null;
-}
-
-/**
- * Load current Hasler Rankings from the latest Excel file on the marathon web site
- */
-function loadRankingsXLS(ss) {
-  var pageSrc = loadRankingsPage_(),
-    reMatch = /<a href="([\w\/\-_:\.]+.xlsx?)"[\w_\s="]*>RankingList<\/a>/ig.exec(pageSrc);
-  if (!reMatch) {
-    throw("Ranking list URL not found");
-  }
-  var rankingListUrl = reMatch[1], fileName = rankingListUrl.substr(rankingListUrl.lastIndexOf("/") + 1), response = UrlFetchApp.fetch(rankingListUrl);
-  if (response.getResponseCode() == 200) {
-    var file = {
-      title: fileName
-    };
-    var driveFile = Drive.Files.insert(file, response.getBlob(), {
-      convert: true
-    });
-    loadRankingsSheet_(SpreadsheetApp.openById(driveFile.id), ss);
-    DriveApp.removeFile(DriveApp.getFileById(driveFile.id));
-  } else {
-    throw "An error was encountered loading the rankings spreadsheet (code: " + response.getResponseCode() + ")";
-  }
-}
-
-function loadRankingsSheet_(sourceSS, ss, clubName) {
-  // Locate Rankings sheet or create it if it doesn't already exist
-  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(rankingsSheetName) || ss.insertSheet(rankingsSheetName, ss.getSheets().length),
-    sourceSheet = sourceSS.getSheetByName(rankingsSheetName) || sourceSS.getActiveSheet(),
-    sourceRange = sourceSheet.getDataRange(), sourceWidth = sourceRange.getWidth(),
-    sourceHeight = sourceRange.getHeight(), sourceHeaderRange = sourceSheet.getRange(1, 1, 1, sourceWidth);
-
-  if (sourceHeight > 0)
-  {
-    var sourceRow1 = sourceHeaderRange.getValues()[0],
-        headerRange = sheet.getRange(1, 1, 1, sourceWidth), headers = getTableHeaders(sheet);
-
-    if (!(headers && headers.length > 0)) {
-      // Copy header names from the source sheet
-      headers = getTableHeaders(sourceSheet);
-      headerRange.setValues(sourceHeaderRange.getValues());
-      // Set header row format
-      headerRange.setBackgrounds(sourceHeaderRange.getBackgrounds());
-      headerRange.setHorizontalAlignments(sourceHeaderRange.getHorizontalAlignments());
-    }
-
-    var lastUpdated = setRankingsLastUpdated_(sheet, headers, sourceRow1);
-    if (lastUpdated) {
-      var numberFormats = sourceHeaderRange.getNumberFormats();
-      // Override date number format as it does not seem to get applied correctly
-      numberFormats[0][sourceWidth-1] = NUMBER_FORMAT_DATE;
-      headerRange.setNumberFormats(numberFormats);
-    }
-
-    var srcRows = getTableRows(sourceSheet);
-    Logger.log(Utilities.formatString("Found %d total rankings", srcRows.length));
-    if (clubName) {
-      Logger.log(Utilities.formatString("Filtering by club name '%s'", clubName));
-      srcRows = srcRows.filter(function(val) { return val["Club"] == clubName; });
-    }
-    appendTableRowValues(sheet, srcRows);
-    // Set expiration date formats (column F)
-    var expiryColPos = headers.indexOf("Expiry");
-    if (expiryColPos > -1) {
-      sheet.getRange(2, expiryColPos + 1, sourceHeight-1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
-    }
-  }
-}
-
-function cellValueIsDate_(value) {
-  return value instanceof Date || typeof value == 'number';
-}
-
-function cellDateValue_(value) {
-  if (value instanceof Date) {
-    return value;
-  } else if (typeof value == 'number') {
-    var dateVal = new Date(1899, 11, 30, 0, 0, 0);
-    dateVal.setDate(dateVal.getDate() + value);
-    return dateVal;
-  }
-  throw 'Not a valid date type';
-}
-
-function getRankingsLastUpdated_(rankingsSheet) {
-  var lastRow = rankingsSheet.getLastRow(), lastColumn = rankingsSheet.getLastColumn();
-  if (lastRow > 0 && lastColumn > 0) {
-    var rowValues = ListUtils.trim(rankingsSheet.getRange(1, 1, 1, lastColumn).getValues()[0]),
-      lastValue = rowValues[rowValues.length-1];
-    Logger.log(rowValues);
-    Logger.log('Found candidate last updated value ' + lastValue);
-    if (cellValueIsDate_(lastValue)) {
-      return cellDateValue_(lastValue);
-    }
-  }
-  return null;
-}
-
-function getNumRankings_(rankingsSheet) {
-  return Math.max(rankingsSheet.getLastRow() - 1, 0);
-}
-
-function setRankingsLastUpdated_(rankingsSheet, headers, sourceRowValues) {
-  if (sourceRowValues.length > 0) {
-    var lastValue = sourceRowValues[sourceRowValues.length-1], headerRow = headers.slice();
-    if (cellValueIsDate_(lastValue)) {
-      headerRow.push(lastValue);
-      rankingsSheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]);
-      return lastValue;
-    }
-  }
-  return null;
-}
-
-/**
- * Clear all Hasler rankings in the current spreadsheet
- */
-function clearRankings_(ss, addColumns) {
-  addColumns = (addColumns !== undefined) ? addColumns : true;
-  // Locate Rankings sheet or create it if it doesn't already exist
-  var sheet = (ss || SpreadsheetApp.getActiveSpreadsheet()).getSheetByName(rankingsSheetName);
-  if (!sheet) {
-    throw "Could not find Rankings sheet";
-  }
-  sheet.clear();
-  if (addColumns === true) {
-    sheet.appendRow(rankingsSheetColumnNames);
-  }
-}
-
-function clearRankingsIfSheetExists_(ss, addColumns) {
-  var sheet = ss || SpreadsheetApp.getActiveSpreadsheet().getSheetByName(rankingsSheetName);
-  if (sheet !== null) {
-    clearRankings_(ss, addColumns);
-  }
-}
+};
 
 /**
  * Clear all entries in the specified sheet
@@ -377,7 +209,7 @@ function clearEntriesSheet_(sheet) {
 }
 
 function clearAllEntries() {
-  var sheets = getRaceSheets();
+  var sheets = racing.getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     clearEntriesSheet_(sheets[i]);
     setRaceSheetFormatting_(sheets[i]);
@@ -391,7 +223,7 @@ function clearAllEntries() {
  *
  * @public
  */
-function showAddLocalRankings() {
+exports.showAddLocalRankings = function showAddLocalRankings() {
   // Dialog height in pixels
   var dialogHeight = 80;
 
@@ -423,7 +255,7 @@ function showAddLocalRankings() {
   app.add(mypanel);
 
   ss.show(app);
-}
+};
 
 /**
  * Handler for adding Hasler Rankings from a spreadsheet stored in Google Docs. This is intended to be called when the dialog's submit button is clicked.
@@ -431,7 +263,7 @@ function showAddLocalRankings() {
  * @param {object} eventInfo Event information
  * @return {AppInstance} Active application instance
  */
-function addLocalRankings(eventInfo) {
+exports.addLocalRankings = function addLocalRankings(eventInfo) {
   var app = UiApp.getActiveApplication();
   var ssId = eventInfo.parameter.spreadsheetId;
   if (ssId)
@@ -442,14 +274,14 @@ function addLocalRankings(eventInfo) {
   }
   app.close();
   return app;
-}
+};
 
 /**
  * Display the dialog used to add Hasler rankings from a spreadsheet stored in Google Docs
  *
  * @public
  */
-function showAddLocalEntries() {
+exports.showAddLocalEntries = function showAddLocalEntries() {
   // Dialog height in pixels
   var dialogHeight = 130;
 
@@ -465,7 +297,7 @@ function showAddLocalEntries() {
   lb.setVisibleItemCount(1);
 
   // add items to ListBox
-  var files = DriveApp.getFilesByType(MimeType.GOOGLE_SHEETS), file;
+  var files = DriveApp.getFilesByType(MimeType.MICROSOFT_EXCEL), file;
   while (files.hasNext()) {
     file = files.next();
     lb.addItem(file.getName(), file.getId());
@@ -491,14 +323,14 @@ function showAddLocalEntries() {
   app.add(mypanel);
 
   ss.show(app);
-}
+};
 
 /**
  * Display the dialog used to import entries from a CSV file stored in Google Docs
  *
  * @public
  */
-function showImportEntries() {
+exports.showImportEntries = function showImportEntries() {
   // Dialog height in pixels
   var dialogHeight = 130;
 
@@ -542,7 +374,7 @@ function showImportEntries() {
   app.add(mypanel);
 
   ss.show(app);
-}
+};
 
 /**
  * Handler for importing entries from a CSV file stored in Google Docs. This is intended to be called when the dialog's submit button is clicked.
@@ -552,7 +384,7 @@ function showImportEntries() {
  * @param {object} eventInfo Event information
  * @return {AppInstance} Active application instance
  */
-function importEntries(eventInfo) {
+exports.importEntries = function importEntries(eventInfo) {
   var app = UiApp.getActiveApplication();
   var csvId = eventInfo.parameter.spreadsheetId;
   if (csvId)
@@ -619,7 +451,7 @@ function importEntries(eventInfo) {
   }
 
   return app;
-}
+};
 
 function addEntrySets(ssId, entrySets) {
   var ENTRY_SETS_SHEET_NAME = 'Entry Sets';
@@ -632,7 +464,7 @@ function addEntrySets(ssId, entrySets) {
   var results = [];
   var membershipProofRows = [];
   if (ss) {
-    var raceSheetNames = getRaceNames(ss);
+    var raceSheetNames = racing.getRaceSheetNames(ss);
     var entrySetsSheet = ss.getSheetByName(ENTRY_SETS_SHEET_NAME) || ss.insertSheet(ENTRY_SETS_SHEET_NAME);
     entrySetsSheet.getRange(1, 1, 1, ENTRY_SETS_COLUMNS.length).setValues([ENTRY_SETS_COLUMNS]);
     var membershipProofsSheet = ss.getSheetByName(MEMBERSHIP_PROOF_SHEET_NAME) || ss.insertSheet(MEMBERSHIP_PROOF_SHEET_NAME);
@@ -656,7 +488,7 @@ function addEntrySets(ssId, entrySets) {
         'Email': entrySet.email,
         'Phone': entrySet.phone,
         'Team Leader?': entrySet.isTeamLeader ? 'Y' : '',
-        'Entered': parseDate(entrySet.enteredOn),
+        'Entered': dateformat.parseDate(entrySet.enteredOn),
         'Due': parseFloat(entrySet.due) || '',
         'Paid': parseFloat(getTotalPaidForEntrySet(entrySet)) || '',
         'Added': added
@@ -677,19 +509,24 @@ function addEntrySets(ssId, entrySets) {
               crewMember.paid = dueAmount;
             }
             crewMember.setId = entrySet.id;
-            if (crewMember.membershipProof && crewMember.membershipProof.type == 'upload' && crewMember.membershipProof.uploads) {
-              crewMember.membershipProof.uploads.forEach(function(upload) {
-                var parsedResult = upload.parsedResults[0];
-                membershipProofRows.push({
-                  'Surname': crewMember.surname,
-                  'First name': crewMember.firstName,
-                  'Club': crewMember.club,
-                  'Class': crewMember.className,
-                  'BCU Number': parsedResult ? parsedResult.number : '',
-                  'Expiry': parsedResult ? parseDate(parsedResult.expiry) : '',
-                  'Member name': parsedResult ? parsedResult.name : ''
+            if (crewMember.membershipProof) {
+              if (crewMember.membershipProof.type == 'upload' && crewMember.membershipProof.uploads) {
+                crewMember.membershipProof.uploads.forEach(function(upload) {
+                  var parsedResult = upload.parsedResults[0];
+                  membershipProofRows.push({
+                    'Surname': crewMember.surname,
+                    'First name': crewMember.firstName,
+                    'Club': crewMember.club,
+                    'Class': crewMember.className,
+                    'BCU Number': parsedResult ? parsedResult.number : '',
+                    'Expiry': parsedResult ? dateformat.parseDate(parsedResult.expiry) : '',
+                    'Member name': parsedResult ? parsedResult.name : ''
+                  });
                 });
-              });
+              } else if (crewMember.membershipProof.type == 'et') {
+                crewMember.membershipNumber = 'ET ' + entrySet.race.code;
+                crewMember.membershipExpiry = entrySet.race.raceDate;
+              }
             }
           });
         });
@@ -721,7 +558,7 @@ function addEntrySets(ssId, entrySets) {
               'Surname': entry.surname,
               'First name': entry.firstName,
               'BCU Number': entry.membershipNumber,
-              'Expiry': parseDate(entry.membershipExpiry),
+              'Expiry': dateformat.parseDate(entry.membershipExpiry),
               'Club': entry.club,
               'Class': entry.className,
               'Div': entry.division,
@@ -731,17 +568,19 @@ function addEntrySets(ssId, entrySets) {
             };
           }));
         }, []);
-        setTableRowValues(addtoSheet, entryRows, 'Surname', 'Paid', availablePlaces[0][1]);
+        tables.setValues(addtoSheet, entryRows, 'Surname', 'Paid', availablePlaces[0][1]);
       }
     }
     // TODO need to add 'Set ID' column to race sheets
-    setTableRowValues(membershipProofsSheet, membershipProofRows, null, null, membershipProofsSheet.getLastRow()+1);
-    setTableRowValues(entrySetsSheet, entrySetRows, null, null, entrySetsSheet.getLastRow()+1);
+    tables.setValues(membershipProofsSheet, membershipProofRows, null, null, membershipProofsSheet.getLastRow()+1);
+    tables.setValues(entrySetsSheet, entrySetRows, null, null, entrySetsSheet.getLastRow()+1);
     return results;
   } else {
     throw 'Spreadsheet with ID ' + ssId + ' could not be found';
   }
 }
+
+exports.addEntrySets = addEntrySets;
 
 /**
  * @param sheet
@@ -787,7 +626,9 @@ function setRaceInfo_(info, sheet) {
   getRaceInfoCellRange_(sheet).setValues([[info.regionId || '', info.raceName || '']]);
 }
 
-function getRaceInfo_(sheet) {
+exports.setRaceInfo = setRaceInfo_;
+
+function getRaceInfo(sheet) {
   var range =  getRaceInfoCellRange_(sheet);
   if (range !== null) {
     var values = range.getValues();
@@ -799,6 +640,8 @@ function getRaceInfo_(sheet) {
     return {};
   }
 }
+
+exports.getRaceInfo = getRaceInfo;
 
 function getRaceNameCellRange_(sheet) {
   sheet = sheet || SpreadsheetApp.getActiveSpreadsheet();
@@ -827,9 +670,7 @@ function getClubsFromGoogleSheet_(clubsFile) {
 }
 
 /**
- * @param sheet
- *
- * @public
+ * @param clubsFile
  */
 function getClubsFromCsv_(clubsFile) {
   var csvData = clubsFile.getBlob().getDataAsString();
@@ -886,7 +727,7 @@ function appendEntryRows(rows, sheetName) {
         return;
       }
       if (lastRow-nextRow+1 >= rows.length) {
-        setTableRowValues(dstsheet, rows, "Surname", "Paid", nextRow); // TODO Allow numbers to be added
+        tables.setValues(dstsheet, rows, "Surname", "Paid", nextRow); // TODO Allow numbers to be added
         results.push("Added " + numCrews + " crews to " + dstSheetName + (totalPaid > 0 ? (", Paid £" + totalPaid) : ""));
       } else {
         throw "Too many rows to import into " + dstSheetName + " (" + rows.length + " data rows, " + (lastRow-nextRow+1) + " in sheet)";
@@ -908,15 +749,19 @@ function appendEntryRows(rows, sheetName) {
  * @param {object} eventInfo Event information
  * @return {AppInstance} Active application instance
  */
-function addLocalEntries(eventInfo) {
+exports.addLocalEntries = function addLocalEntries(eventInfo) {
   var app = UiApp.getActiveApplication();
   // Because the list box was named "spreadsheetId" and added as a callback element to the
   // button's click event, we have its value available in eventInfo.parameter.spreadsheetId.
   var ssId = eventInfo.parameter.spreadsheetId, srcRows;
   if (ssId)
   {
+    var driveFile = DriveApp.getFileById(ssId);
+    if (driveFile.getMimeType() === MimeType.MICROSOFT_EXCEL) {
+      ssId = uploadAndConvertHRMFile(driveFile).id;
+    }
     var ss = SpreadsheetApp.openById(ssId),
-        sheets = getRaceSheets(ss), sheet, sheetName, results = [], lastNonEmpty = 0;
+        sheets = racing.getRaceSheets(ss), sheet, sheetName, results = [], lastNonEmpty = 0;
 
     var iterFn = function(row, i) {
       if (row["Surname"] || row["First name"]) {
@@ -926,7 +771,7 @@ function addLocalEntries(eventInfo) {
     for (var i=0; i<sheets.length; i++) {
       sheet = sheets[i];
       sheetName = sheet.getName();
-      srcRows = getTableRows(sheet);
+      srcRows = tables.getRows(sheet);
       srcRows.forEach(iterFn);
       srcRows = srcRows.slice(0, lastNonEmpty+1);
       var newResults = appendEntryRows(srcRows, sheetName);
@@ -942,7 +787,42 @@ function addLocalEntries(eventInfo) {
   }
 
   return app;
+};
+
+function uploadAndConvertHRMFile(driveFile) {
+  var newBlob = doHRMConversion(driveFile).getBlob();
+  var sourceFileParents = driveFile.getParents();
+  var file = {
+    title: driveFile.getName().replace(/\.xlsx?$/, ''),
+    parents: sourceFileParents.length === 1 ? sourceFileParents : [ DriveApp.getRootFolder() ]
+  };
+  file = Drive.Files.insert(file, newBlob, {
+    convert: true
+  });
+  return file
 }
+
+function doHRMConversion(file) {
+  var conversionUrl = 'https://hrmio.herokuapp.com/public/upload';
+  return doMultipartPost(conversionUrl, file);
+}
+
+function doMultipartPost(url, file) {
+  var boundary = "xxxxxxxxxx";
+  var payload = Utilities.newBlob(
+    "--"+boundary+"\r\n"
+    + "Content-Disposition: form-data; name=\"file\"; filename=\""+file.getName()+"\"\r\n"
+    + "Content-Type: " + file.getMimeType()+"\r\n\r\n").getBytes()
+    .concat(file.getBlob().getBytes())
+    .concat(Utilities.newBlob("\r\n--"+boundary+"--\r\n").getBytes());
+  var options = {
+    method : "post",
+    contentType : "multipart/form-data; boundary=" + boundary,
+    payload : payload
+  };
+  return UrlFetchApp.fetch(url, options);
+}
+
 
 /**
  * Return a new object generated by assigning the specified values to the set of object properties with the given keys.
@@ -984,37 +864,7 @@ function objUnzip(obj, keys, ignoreMissing, defaultValue) {
   return values;
 }
 
-/**
- * Search for rows matching a specific search term and return matching rows
- *
- * @param sheet {Sheet} The sheet to search within
- * @param columns {array<object{name, regexp}>}
- * @param useOr {Boolean} True if only one column in a row must match the term for a match, otherwise all columns must match
- * @return {Object[]} Set of matching rows
- * @private
- */
-function searchSheetData_(sheet, columns, useOr) {
-  var rows = getTableRows(sheet, false);
-  return lookupInTable(rows, columns, useOr);
-}
-
-/**
- * Search for rankings matching a specific term
- *
- * @param spreadsheet {Spreadsheet} Spreadsheet in which to locate the rankings sheet
- * @param term {String} Search term to look for via start-of-item or regexp (if supplied in columns array)
- * @private
- */
-function searchRankings_(spreadsheet, term) {
-  var sheet = spreadsheet.getSheetByName('Rankings');
-  return searchSheetData_(sheet, [
-    { name: 'First name', type: 'regexp', value: new RegExp('^' + term, 'i') },
-    { name: 'Surname', type: 'regexp', value: new RegExp('^' + term, 'i') },
-    { name: 'BCU Number', type: 'regexp', value: new RegExp('^\\s*[A-Z]*\\/?(' + term + ')\\/?[A-Z]*\\s*$', 'i') }
-  ], true);
-}
-
-function addEntry_(items, headers, selectedClass, spreadsheet, isLate) {
+function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
   if (!selectedClass) {
     selectedClass = 'Auto';
   }
@@ -1023,7 +873,7 @@ function addEntry_(items, headers, selectedClass, spreadsheet, isLate) {
     if (sheetName === null) {
       throw 'Could not find a suitable race';
     }
-    var crewsAddedDue = addDueAmountToEntry_(items, selectedClass, isLate);
+    var crewsAddedDue = addDueAmountToEntry_(items, selectedClass, spreadsheet, isLate);
     if (crewsAddedDue) {
       headers.push('Due');
     }
@@ -1035,9 +885,12 @@ function addEntry_(items, headers, selectedClass, spreadsheet, isLate) {
   }
 }
 
-function addDueAmountToEntry_(members, raceName, isLate) {
+exports.addEntry = addEntry;
+
+function addDueAmountToEntry_(members, raceName, spreadsheet, isLate) {
   var sheetUtils = new SheetsUtilitiesLibrary({});
-  var driveProps = getDriveProperties_(sheetUtils.getCurrentActiveSpreadsheet().getId()), member;
+  spreadsheet = spreadsheet || sheetUtils.getCurrentActiveSpreadsheet();
+  var driveProps = getDriveProperties(spreadsheet.getId()), member;
   isLate = isLate === true;
   var entrySenior = isLate ? driveProps.entrySeniorLate : driveProps.entrySenior;
   var entryJunior = isLate ? driveProps.entryJuniorLate : driveProps.entryJunior;
@@ -1083,49 +936,22 @@ function rankingToEntryHeader_(header) {
   return header.toLowerCase() == "division" ? header.substr(0, 3) : header;
 }
 
-function matchTableRow_(row, matchValues, useOr) {
-  var match = useOr !== true, colMatch, propName, propType, propValue;
-  matchValues.forEach(function (toMatch) {
-    propName = toMatch.name;
-    propType = toMatch.type;
-    propValue = toMatch.value;
-    if (propType == 'regexp') {
-      colMatch = propValue.test(''+row[propName]);
-    } else {
-      colMatch = row[propName] === propValue || (''+row[propName]).trim() === (''+propValue).trim();
-    }
-    match = useOr === true ? (match || colMatch) : (match && colMatch);
-  });
-  return match;
-}
-
-function lookupInTable(rows, matchValues, useOr) {
-  var matches = [], match;
-  for (var i = 0; i < rows.length; i++) {
-    match = matchTableRow_(rows[i], matchValues, useOr);
-    if (match) {
-      matches.push(rows[i]);
-    }
-  }
-  return matches;
-}
-
 /**
  * Look through all the current entries and update BCU Number and Expiry with new data from the memberships sheet
  *
  * @public
  */
-function updateEntriesFromMemberships() {
+exports.updateEntriesFromMemberships = function updateEntriesFromMemberships() {
   var replaceExisting = true;
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), membershipsSheet = ss.getSheetByName('Memberships'), sheets = getRaceSheets(ss);
-  var membershipsData = getTableRows(membershipsSheet), sheet;
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), membershipsSheet = ss.getSheetByName('Memberships'), sheets = racing.getRaceSheets(ss);
+  var membershipsData = tables.getRows(membershipsSheet), sheet;
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
-    var raceData = getTableRows(sheet);
+    var raceData = tables.getRows(sheet);
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
         if (raceData[j]['Surname'] || raceData[j]['First name']) {
-          var matches = lookupInTable(membershipsData, [
+          var matches = tables.lookupInTable(membershipsData, [
             {name: 'Surname', value: raceData[j]['Surname']},
             {name: 'First name', value: raceData[j]['First name']},
             {name: 'Club', value: raceData[j]['Club']},
@@ -1143,28 +969,28 @@ function updateEntriesFromMemberships() {
           }
         }
       }
-      setTableRowValues(sheet, raceData, 'BCU Number', 'Expiry', null, false);
+      tables.setValues(sheet, raceData, 'BCU Number', 'Expiry', null, false);
     }
   }
-}
+};
 
 /**
  * Look through all the current entries and update with any new data from the rankings sheet
  *
  * @public
  */
-function updateEntriesFromRankings(replaceExisting) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = getRaceSheets(ss);
-  var rankingData = getTableRows(rankingsSheet, true), sheet;
+exports.updateEntriesFromRankings = function updateEntriesFromRankings(replaceExisting) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = racing.getRaceSheets(ss);
+  var rankingData = tables.getRows(rankingsSheet, true), sheet;
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
-    var raceData = getTableRows(sheet, true);
+    var raceData = tables.getRows(sheet, true);
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
         var bcuNum = raceData[j]['bcu number'], classAbbr = raceData[j]['class'], bcuMatch = /(\d+)/.exec(bcuNum);
         if (bcuMatch) {
           Logger.log("BCU Number: " + bcuMatch[1]);
-          var matches = lookupInTable(rankingData, [
+          var matches = tables.lookupInTable(rankingData, [
             {name: 'bcu number', type: 'regexp', value: new RegExp('^' + bcuMatch[1] + '/?[A-Za-z]?$')},
             {name: 'class', value: classAbbr}
           ]);
@@ -1180,39 +1006,37 @@ function updateEntriesFromRankings(replaceExisting) {
           }
         }
       }
-      //setTableRowValues(sheet, raceData, "Surname", "Div");
-      setTableRowValues(sheet, raceData, "expiry", "expiry", null, true);
+      //tables.setValues(sheet, raceData, "Surname", "Div");
+      tables.setValues(sheet, raceData, "expiry", "expiry", null, true);
     }
   }
-}
+};
 
 /**
- * @public
- *
  * Look through all the current entries and flag any where data is not consistent with the rankings sheet
  */
 function checkEntriesFromRankings_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = getRaceSheets(ss), warnings = [];
-  var rankingData = getTableRows(rankingsSheet), sheet;
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), rankingsSheet = ss.getSheetByName("Rankings"), sheets = racing.getRaceSheets(ss), warnings = [];
+  var rankingData = tables.getRows(rankingsSheet), sheet;
   var buildIdentity = function(row) {
     return '' + row['Surname'] + ', ' + row['First name'] + ' (' + row['Club'] + ')';
   };
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
-    var raceData = getTableRows(sheet);
+    var raceData = tables.getRows(sheet);
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
         if (raceData[j]['Surname'] || raceData[j]['First name']) {
           var columns = ['Div', 'BCU Number', 'Expiry'];
           var boatNum = raceData[j]['Number'] || raceData[j-1]['Number'], bcuNum = raceData[j]['BCU Number'];
           if (bcuNum) {
-            var matches = lookupInTable(rankingData, [
+            var matches = tables.lookupInTable(rankingData, [
               {name: 'Surname', value: raceData[j]['Surname']},
               {name: 'First name', value: raceData[j]['First name']},
               {name: 'Club', value: raceData[j]['Club']},
               {name: 'Class', value: raceData[j]['Class']}]);
             if (matches.length === 0 && !(typeof bcuNum == 'string' && bcuNum.indexOf('ET ') === 0)) { // Try again based on BCU number
-              matches = lookupInTable(rankingData, [
+              matches = tables.lookupInTable(rankingData, [
                 {name: 'BCU Number', value: raceData[j]['BCU Number']}
               ]);
               columns = ['Div', 'Club', 'Surname', 'First name', 'Class', 'Expiry'];
@@ -1239,83 +1063,7 @@ function checkEntriesFromRankings_() {
       }
     }
   }
-  showDialog('Check Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No problems found</p>');
-}
-
-function setTableRowValues(sheet, values, startColumnName, endColumnName, startRow, convertHeadersToLowerCase) {
-  convertHeadersToLowerCase = typeof convertHeadersToLowerCase != "undefined" ? convertHeadersToLowerCase : false;
-  if (values.length === 0) {
-    return;
-  }
-  startRow = startRow || 2;
-  var headers = getTableHeaders(sheet);
-  if (convertHeadersToLowerCase) {
-    headers = headers.map(function(n) {return n.toLowerCase();});
-  }
-  var startColumnIndex = startColumnName ? headers.indexOf(startColumnName): 0;
-  var endColumnIndex = endColumnName ? headers.indexOf(endColumnName) : 0;
-  if (startColumnIndex == -1) {
-    throw 'Could not find start column ' + startColumnName + ' in columns ' + headers.join(', ');
-  }
-  if (endColumnIndex == -1) {
-    throw 'Could not find end column ' + endColumnName + ' in columns ' + headers.join(', ');
-  }
-  var valueList = new Array(values.length);
-  for (var i = 0; i < values.length; i++) {
-    var row = [];
-    for (var j = (startColumnName ? startColumnIndex : 0); j < (endColumnName ? endColumnIndex + 1 : headers.length); j++) {
-      row.push(values[i][headers[j]] || "");
-    }
-    valueList[i] = row;
-  }
-  sheet.getRange(startRow, (startColumnName ? startColumnIndex + 1 : 1), valueList.length, valueList[0].length).setValues(valueList);
-}
-
-function appendTableRowValues(sheet, values) {
-  setTableRowValues(sheet, values, null, null, sheet.getLastRow()+1);
-}
-
-/**
- * Return an array containing the list of table heading cells taken from row 1 in the given sheet
- *
- * @public
- *
- * Return {array} Array containing the heading cell values, which may be empty if there were no values in row 1
- */
-function getTableHeaders(sheet) {
-  var lastCol = sheet.getLastColumn();
-  if (lastCol > 0) {
-    var range = sheet.getRange(1, 1, 1, lastCol), values = range.getValues();
-    var headers =  values.length > 0 ? values[0] : [];
-    while (headers.length > 0 && (headers[headers.length - 1] === "" || typeof headers[headers.length - 1] != "string")) {
-      headers.pop();
-    }
-    return headers;
-  } else {
-    return [];
-  }
-}
-
-/**
- * Get a complete list of all the rows in the given sheet as an array of objects
- *
- * Return {array} Array containing each row as an object, with properties named according to the table heading name. Array will be empty if no data rows are present.
- */
-function getTableRows(sheet, convertToLowerCase) {
-  convertToLowerCase = typeof convertToLowerCase != "undefined" ? convertToLowerCase : false;
-  if (sheet.getLastRow() < 2)
-    return [];
-  var range = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()), values = range.getValues(), headers = values[0], rows = [], row = null;
-  for (var i=1; i<values.length; i++) {
-    row = {};
-    for (var j=0; j<headers.length; j++) {
-      if (headers[j] && typeof headers[j] == "string") {
-        row[convertToLowerCase ? headers[j].toLowerCase() : headers[j]] = values[i][j];
-      }
-    }
-    rows.push(row);
-  }
-  return rows;
+  uiService.showDialog('Check Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No problems found</p>');
 }
 
 /**
@@ -1474,7 +1222,7 @@ function addRowsToSheet_(rows, headers, sheet, rowPosition) {
     throw("Could not find sheet " + sheetName);
   }
   if (rowPosition > 1) {
-    var targetSheetHeaders = getTableHeaders(sheet),
+    var targetSheetHeaders = tables.getHeaders(sheet),
         headerIndexes = rankingToEntryHeaders_(headers).map(function(header) {
           return targetSheetHeaders.indexOf(header);
         }).filter(function(index) {
@@ -1495,6 +1243,8 @@ function addRowsToSheet_(rows, headers, sheet, rowPosition) {
     throw 'Cannot add to first row';
   }
 }
+
+exports.addRowsToSheet = addRowsToSheet_;
 
 function addEntryToSheet_(rows, headers, sheetName, spreadsheet) {
   var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getSheetByName(sheetName);
@@ -1534,47 +1284,6 @@ function getTabName_(crews, ss) {
 }
 
 /**
- * Look at the tabs of the workbook and return the named races as an array of Strings
- */
-function getRaceSheets(spreadsheet) {
-  var sheets = (spreadsheet || SpreadsheetApp.getActiveSpreadsheet()).getSheets(), raceSheets = [], sheet, sheetName;
-  for (var i=0; i<sheets.length; i++) {
-    sheet = sheets[i];
-    sheetName = sheet.getName();
-    if (EXTRA_SHEETS_HASLER.indexOf(sheetName) > -1 || EXTRA_SHEETS_NATIONALS.indexOf(sheetName) > -1 || EXTRA_SHEETS_NON_HASLER.indexOf(sheetName) > -1 ) {
-      break;
-    }
-    raceSheets.push(sheet);
-  }
-  return raceSheets;
-}
-
-/**
- * Look at the tabs of the workbook and return the named races as an array of Strings
- */
-function getRaceSheetNames(spreadsheet, includeHidden) {
-  includeHidden = typeof includeHidden != "undefined" ? includeHidden : false;
-  var sheets = getRaceSheets(spreadsheet), sheetNames = [];
-  for (var i=0; i<sheets.length; i++) {
-    if (includeHidden === true || !sheets[i].isSheetHidden()) {
-      sheetNames.push(sheets[i].getName());
-    }
-  }
-  return sheetNames;
-}
-
-/**
- * Look at the sheets in the workbook and return the named races as an array of Strings (values will be without the 'Div' prefix)
- */
-function getRaceNames(spreadsheet) {
-  var sheetNames = getRaceSheetNames(spreadsheet), raceNames = [];
-  for (var i=0; i<sheetNames.length; i++) {
-    raceNames.push(sheetNames[i].replace("Div", ""));
-  }
-  return raceNames;
-}
-
-/**
  * Calculate the correct combined division given up to two sets of crew details, then return the name of that division
  *
  * @param {object} crew1 Object representing the first crew member
@@ -1585,7 +1294,7 @@ function getRaceNames(spreadsheet) {
 function getRaceName_(crews, ss) {
   var div1 = crews[0]['Division'],
       div2 = null;
-  if (crews.length > 1) {
+  if (crews.length > 1 && crews[1]) {
       div2 = crews[1]['Division'];
   } else {
     return parseInt(div1) ? ("Div" + parseInt(div1)) : div1;
@@ -1599,7 +1308,7 @@ function getRaceName_(crews, ss) {
       // NEW IMPLEMENTATION
       // As of 2013 K2 races are now combined for Div1/2 and 3/4.
       // Therefore there is no Div1_1, Div2_2, Div3_3 or Div4_4, only Div1_2 and Div3_4
-      var races = getRaceNames(ss), re = /(\d)_(\d)/;
+      var races = racing.getRaceNames(ss), re = /(\d)_(\d)/;
       for (var i=0; i<races.length; i++) {
         var match = races[i].match(re);
         if (match && parseInt(match[1]) <= combinedInt && parseInt(match[2]) >= combinedInt) {
@@ -1660,8 +1369,6 @@ function isHaslerRace(ss) {
 
 /**
  * Return the xRM race type as a string, all uppercase
- *
- * @public
  */
 function getRaceType(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
@@ -1678,34 +1385,31 @@ function getRaceType(ss) {
 }
 
 /**
- * Handler function for closing a dialog
-
- * @return {AppInstance} Active application instance
+ * Save entries in HTML format
  */
-function close() {
-  var app = UiApp.getActiveApplication();
-  app.close();
-  // The following line is REQUIRED for the widget to actually close.
-  return app;
-}
-
-/**
- * Display the URL for accessing results
- *
- * @public
- */
-function showResultsURL() {
-  showWebURL("results");
-}
+exports.saveEntriesHTML = function saveEntriesHTML(ss) {
+  var htmlFile = publishing.saveEntriesHTML(ss);
+  uiService.showLinkDialog('Publish HTML',
+    "<p>Race entries published to Google Drive:</p>",
+    "https://drive.google.com/file/d/" + htmlFile.getId() + "/view"
+  );
+  return {fileId: htmlFile.getId()};
+};
 
 /**
- * Display the URL for accessing results
+ * Save results in HTML format
  *
  * @public
+ * @param {object} e Event information
  */
-function showEntriesURL() {
-  showWebURL("entries");
-}
+exports.saveResultsHTML = function saveResultsHTML(ss) {
+  var htmlFile = publishing.saveResultsHTML(ss);
+  uiService.showLinkDialog('Publish HTML',
+    "<p>Race results published to Google Drive:</p>",
+    "https://drive.google.com/file/d/" + htmlFile.getId() + "/view"
+  );
+  return {fileId: htmlFile.getId()};
+};
 
 /**
  * Display the URL for accessing results
@@ -1714,63 +1418,28 @@ function showWebURL(type) {
   // Create the UiInstance object myapp and set the title text
   var ss = SpreadsheetApp.getActiveSpreadsheet(), capitalizedType = type.charAt(0).toUpperCase() + type.slice(1),
     url = "https://script.google.com/macros/exec?service=" + PROJECT_ID + "&key=" + ss.getId() + "&show=" + type;
-  showLinkDialog('View ' + capitalizedType + ' Summary',
+  uiService.showLinkDialog('View ' + capitalizedType + ' Summary',
     "<p>Use this link to access the live " + type + ":</p>",
     url);
 }
 
 /**
- * Display a dialog with a link, which the user can close with an OK button
+ * Display the URL for accessing results
+ *
+ * @public
  */
-function showLinkDialog(title, text, linkHref, linkText, linkTarget, dialogHeight) {
-  // Dialog height in pixels
-  dialogHeight = dialogHeight||125;
-
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // Create the UiInstance object myapp and set the title text
-  var app = UiApp.createApplication().setTitle(title).setHeight(dialogHeight),
-      mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-
-  mypanel.add(app.createHTML(text));
-  mypanel.add(app.createAnchor(linkText||linkHref, linkHref).setTarget(linkTarget||"_blank"));
-
-  var closeButton = app.createButton('OK');
-  var closeHandler = app.createServerClickHandler('close');
-  closeButton.addClickHandler(closeHandler);
-  mypanel.add(closeButton);
-
-  app.add(mypanel);
-
-  ss.show(app);
-}
+exports.showResultsURL = function showResultsURL() {
+  showWebURL("results");
+};
 
 /**
- * Display a dialog, which the user can close with an OK button
+ * Display the URL for accessing results
+ *
+ * @public
  */
-function showDialog(title, text, dialogHeight) {
-  // Dialog height in pixels
-  dialogHeight = dialogHeight||125;
-
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // Create the UiInstance object myapp and set the title text
-  var app = UiApp.createApplication().setTitle(title).setHeight(dialogHeight),
-      mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-
-  var scroll = app.createScrollPanel().setWidth('100%').setHeight('100px');
-  scroll.add(app.createHTML(text));
-  mypanel.add(scroll);
-
-  var closeButton = app.createButton('OK');
-  var closeHandler = app.createServerClickHandler('close');
-  closeButton.addClickHandler(closeHandler);
-  mypanel.add(closeButton);
-
-  app.add(mypanel);
-
-  ss.show(app);
-}
+exports.showEntriesURL = function showEntriesURL() {
+  showWebURL("entries");
+};
 
 function isLightningRaceName_(raceName) {
   return /U1[02] ?[MF]/i.exec(raceName) !== null || raceName.indexOf("Hody") === 0;
@@ -1781,13 +1450,13 @@ function isLightningRaceName_(raceName) {
  *
  * @public
  */
-function showRaceLevies(scriptProps) {
+exports.showRaceLevies = function showRaceLevies(scriptProps) {
   var totalJnr = 0, totalSnr = 0, totalLightning = 0, totalReceived = 0, totalDue = 0;
-  var sheets = getRaceSheets(), sheet;
+  var sheets = racing.getRaceSheets(), sheet;
   for (var i=0; i<sheets.length; i++) {
     sheet = sheets[i];
     // Iterate through all paddlers' classes (column F)
-    var values = getTableRows(sheet);
+    var values = tables.getRows(sheet);
     for (var j=0; j<values.length; j++) {
       var raceClass = (typeof values[j]['Class'] == "string" && values[j]['Class'] !== null ? values[j]['Class'] : "").toUpperCase().trim(),
           raceName = sheet.getName().replace(" ", ""),
@@ -1842,7 +1511,7 @@ function showRaceLevies(scriptProps) {
   app.add(mypanel);
 
   ss.show(app);
-}
+};
 
 /**
  * Function to display a popup dialog with a prompt, plus OK and Cancel buttons
@@ -1876,42 +1545,42 @@ function showPrompt(title, text, fnName, height) {
 /**
  * OK button handler, so that we avoid polluting clearAllEntries() with UiApp code
  */
-function confirmClearEntries() {
+exports.confirmClearEntries = function confirmClearEntries() {
   clearAllEntries();
   var app = UiApp.getActiveApplication();
   app.close();
   // The following line is REQUIRED for the widget to actually close.
   return app;
-}
+};
 
 /**
  * Display the confirmation dialog used to clear all entries
  *
  * @public
  */
-function showClearEntries() {
+exports.showClearEntries = function showClearEntries() {
   showPrompt('Clear Entries', '<p>Are you sure you want to clear all existing entries/results?</p>', 'confirmClearEntries', 80);
-}
+};
 
 /**
  * OK button handler, so that we avoid polluting clearRankings_() with UiApp code
  */
-function confirmClearRankings() {
+exports.confirmClearRankings = function confirmClearRankings() {
   clearRankings_();
   var app = UiApp.getActiveApplication();
   app.close();
   // The following line is REQUIRED for the widget to actually close.
   return app;
-}
+};
 
 /**
  * Display the confirmation dialog used to clear all rankings
  *
  * @public
  */
-function showClearRankings() {
+exports.showClearRankings = function showClearRankings() {
   showPrompt('Clear Rankings', '<p>Are you sure you want to clear all Hasler rankings? You will need to re-import some rankings before you can add any further race entries.</p>', 'confirmClearRankings', 80);
-}
+};
 
 function getSelectedEntryRows(sheet) {
   // getEntryRows() returns a list of 3-element arrays giving boat number, row number and crew size
@@ -1936,7 +1605,7 @@ function getSelectedEntryRows(sheet) {
  *
  * @public
  */
-function showModifyCrews() {
+exports.showModifyCrews = function showModifyCrews() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet();
 
   // Create the UiInstance object myapp and set the title text
@@ -1952,7 +1621,7 @@ function showModifyCrews() {
   var clb = app.createListBox(false).setId('className').setName('className');
   clb.setVisibleItemCount(1);
   clb.addItem("--Select--", "");
-  var sheetNames = getRaceSheetNames();
+  var sheetNames = racing.getRaceSheetNames();
   for (var i=0; i<sheetNames.length; i++) {
     if (sheetNames[i] != sheet.getName()) {
       clb.addItem(sheetNames[i]);
@@ -1994,7 +1663,7 @@ function showModifyCrews() {
   app.add(mypanel);
 
   ss.show(app);
-}
+};
 
 function moveEntryRows(srcRange, dstSheet) {
   var entries = getEntryRowData(srcRange),
@@ -2034,7 +1703,7 @@ function moveEntryRows(srcRange, dstSheet) {
  * @param {object} eventInfo Event information
  * @return {AppInstance} Active application instance
  */
-function moveCrews(eventInfo) {
+exports.moveCrews = function moveCrews(eventInfo) {
   var app = UiApp.getActiveApplication();
   var action = eventInfo.parameter.moveAction,
       dstSheetName = eventInfo.parameter.className,
@@ -2077,7 +1746,7 @@ function moveCrews(eventInfo) {
     throw "No entries were selected";
   }
   return app;
-}
+};
 
 /**
  * Delete crews button click handler
@@ -2085,7 +1754,7 @@ function moveCrews(eventInfo) {
  * @param {object} eventInfo Event information
  * @return {AppInstance} Active application instance
  */
-function deleteCrews(eventInfo) {
+exports.deleteCrews = function deleteCrews(eventInfo) {
   var app = UiApp.getActiveApplication();
   var action = eventInfo.parameter.delAction,
       sheet = SpreadsheetApp.getActiveSheet();
@@ -2112,14 +1781,14 @@ function deleteCrews(eventInfo) {
     throw "No entries were selected";
   }
   return app;
-}
+};
 
 /**
  * Display the set start times dialog
  *
  * @public
  */
-function showSetStartTimes() {
+exports.showSetStartTimes = function showSetStartTimes() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheet = ss.getActiveSheet();
 
   // Create the UiInstance object myapp and set the title text
@@ -2136,7 +1805,7 @@ function showSetStartTimes() {
   // Drop-down to select Division
   var clb = app.createListBox(false).setName('raceName').setId('setStartTimes-raceName');
   clb.setVisibleItemCount(1);
-  var sheetNames = getRaceSheetNames();
+  var sheetNames = racing.getRaceSheetNames();
   for (var i=0; i<sheetNames.length; i++) {
     clb.addItem(sheetNames[i]);
     if (sheet.getName() == sheetNames[i]) {
@@ -2171,7 +1840,7 @@ function showSetStartTimes() {
   clb.setFocus(true);
 
   ss.show(app);
-}
+};
 
 /**
  * Event handler for keypress in time field - used to detect when the enter key is pressed
@@ -2179,12 +1848,12 @@ function showSetStartTimes() {
  * @param {object} e Event information
  * @return {AppInstance} Active application instance
  */
-function onSetStartTimesEnter(e) {
+exports.onSetStartTimesEnter = function onSetStartTimesEnter(e) {
   if (e.parameter.keyCode==13) {
     return setStartTimes(e);
   }
   return UiApp.getActiveApplication();
-}
+};
 
 /**
  * Set start times button click handler
@@ -2272,6 +1941,7 @@ function setStartTimes(eventInfo) {
   }
   return app;
 }
+exports.setStartTimes = setStartTimes;
 
 function getStartTimeValues_(sheet) {
   var startsSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts"), times = [];
@@ -2293,7 +1963,7 @@ function setStartTimeValues_(sheet, values) {
  *
  * @public
  */
-function showSetFinishTimes() {
+exports.showSetFinishTimes = function showSetFinishTimes() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // Create the UiInstance object myapp and set the title text
@@ -2326,7 +1996,7 @@ function showSetFinishTimes() {
   times.setFocus(true);
 
   ss.show(app);
-}
+};
 
 /**
  * Set start times button click handler
@@ -2334,7 +2004,7 @@ function showSetFinishTimes() {
  * @param {object} eventInfo Event information
  * @return {AppInstance} Active application instance
  */
-function setFinishTimes(eventInfo) {
+exports.setFinishTimes = function setFinishTimes(eventInfo) {
   var app = UiApp.getActiveApplication(),
       lines = eventInfo.parameter.times.split(/\r\n|\r|\n/g), line, parts,
       sheet, finishValues = [], times = [], boatNumber, time, allowance, notes, skip;
@@ -2428,7 +2098,7 @@ function setFinishTimes(eventInfo) {
   app.getElementById("setFinishTimes-result").setText("Set finish times for " + times.length + " crews");
   app.getElementById("setFinishTimes-times").setValue("");
   return app;
-}
+};
 
 function getFinishTimes_(ss) {
   var finishesSheet = (ss || SpreadsheetApp.getActiveSpreadsheet()).getSheetByName("Finishes"), times = [];
@@ -2439,7 +2109,7 @@ function getFinishTimes_(ss) {
 }
 
 function fetchAllEntries_() {
-  var allEntries = [], sheets = getRaceSheets();
+  var allEntries = [], sheets = racing.getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     allEntries = allEntries.concat(getEntryRowData(sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, getTableColumnIndex("Class"))));
   }
@@ -2597,11 +2267,6 @@ function overallZero(divZeroes) {
 
 function pdStatus(values, pFactors, dFactors, raceDiv, sheet, isFinal) {
   var status = "", classDivIndex = getTableColumnIndex("Div", sheet), classColIndex = getTableColumnIndex("Class", sheet), timeColIndex = getTableColumnIndex("Elapsed", sheet), time = timeInMillis(values[timeColIndex]);
-  // Rule 32(h) and 33(g) Paddlers transferred from another division are not eligible for promotion/demotion
-  if (!isFinal && (""+values[0]).indexOf(""+raceDiv) !== 0) {
-    Logger.log("Transferred from another division, skipping");
-    return "";
-  }
   var currDiv = parseInt(values[classDivIndex]), raceClass = (typeof raceClass == "string") ? values[classColIndex] : "";
   // Go through promotion times
   for (var i=0; i<pFactors.length; i++) {
@@ -2834,7 +2499,7 @@ function setPromotionsDiv456(ss, isHaslerFinal) {
     if (typeof ss == 'string') {
       ss = SpreadsheetApp.openById(ss);
     }
-    return setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15], [3, 1.233], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]], isHaslerFinal, ss);
+    return setCoursePromotions([4, 5, 6], [4, 5, 6], [1.283, 1.367, 1.45], [[2, 1.15, false], [3, 1.233, false], [4, 1.317], [5, 1.4]], [[5, 1.333], [6, 1.417], [7, 1.5]], isHaslerFinal, ss);
   } else {
     throw "No spreadsheet was specified";
   }
@@ -2851,15 +2516,19 @@ function setPromotionsDiv789(ss, isHaslerFinal) {
   }
 }
 
+exports.setPromotionsDiv123 = setPromotionsDiv123;
+exports.setPromotionsDiv456 = setPromotionsDiv456;
+exports.setPromotionsDiv789 = setPromotionsDiv789;
+
 /**
  * @public
  * @param scriptProps
  */
-function calculatePromotions(scriptProps) {
+exports.calculatePromotions = function calculatePromotions(scriptProps) {
   scriptProps = scriptProps || {};
   var ss = SpreadsheetApp.getActiveSpreadsheet(),
       pdSheet = ss.getSheetByName("PandD");
-  var raceRegion = scriptProps.haslerRegion, isHaslerFinal = raceRegion == "HF";
+  var raceRegion = scriptProps.haslerRegion, isHaslerFinal = raceRegion == "ALL";
   if (pdSheet !== null) {
     // Clear existing values
     if (pdSheet.getLastRow() > 1) {
@@ -2883,10 +2552,10 @@ function calculatePromotions(scriptProps) {
   } else {
     throw "Cannot find PandD sheet";
   }
-}
+};
 
-function calculatePointsBoundary(entries, raceName, isHaslerFinal) {
-  var boatNum, pd, time, timeColIndex = getTableColumnIndex("Elapsed"), pdColIndex = getTableColumnIndex("P/D");
+function calculatePointsBoundary(raceSheet, entries, raceName, isHaslerFinal) {
+  var boatNum, pd, time, timeColIndex = getTableColumnIndex("Elapsed", raceSheet), pdColIndex = getTableColumnIndex("P/D", raceSheet);
   // No cut-off for Div9
   if (raceName[0] == "9") {
     return null;
@@ -2930,6 +2599,8 @@ function getClubRows(sheet) {
   }
 }
 
+exports.getClubRows = getClubRows;
+
 function getClubCodes(rows, regionCode) {
   var codes = [];
   for (var i=0; i<rows.length; i++) {
@@ -2964,12 +2635,19 @@ function sumPoints(values, count) {
   return total;
 }
 
+function isPromotedByMoreThanOneDivision(sheetName, pd) {
+  var divStr = sheetName.replace('Div', '');
+  var isK1Race = /^\d$/.test(divStr);
+  return isK1Race && pd && /^P\d$/.test(pd) && pd < 'P' + (parseInt(divStr) - 1);
+}
+
 /**
  * @public
  * @param scriptProps
+ * @param ss
  */
-function calculatePoints(scriptProps) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+exports.calculatePoints = function calculatePoints(scriptProps, ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var skipNonComplete = false, raceRegion;
   if (scriptProps) {
     if (scriptProps.haslerRegion) {
@@ -2978,12 +2656,14 @@ function calculatePoints(scriptProps) {
       throw "No Hasler region is defined";
     }
   } else {
-    var inlineInfo = getRaceInfo_(ss);
+    var inlineInfo = getRaceInfo(ss);
     raceRegion = inlineInfo.regionId || '';
   }
+
+  var raceSheet = ss.getSheets()[0];
   var clubsSheet = ss.getSheetByName("Clubs"), clubsRange, clubsInRegion, clubNames, allClubs, allClubNames, haslerPoints, doublesPoints, lightningPoints, unfoundClubs = [],
-      clubColIndex = getTableColumnIndex("Club"), timeColIndex = getTableColumnIndex("Elapsed"), posnColIndex = getTableColumnIndex("Posn"),
-      pdColIndex = getTableColumnIndex("P/D"), notesColIndex = getTableColumnIndex("Notes"), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "HF";
+    clubColIndex = getTableColumnIndex("Club", raceSheet), timeColIndex = getTableColumnIndex("Elapsed", raceSheet), posnColIndex = getTableColumnIndex("Posn", raceSheet),
+    pdColIndex = getTableColumnIndex("P/D", raceSheet), notesColIndex = getTableColumnIndex("Notes", raceSheet), numHeaders = raceSheetColumnNames.length, isHaslerFinal = raceRegion == "ALL";
   if (clubsSheet !== null) {
     // Clear existing calculated values
     if (clubsSheet.getLastRow() > 1 && clubsSheet.getLastColumn() > 4) {
@@ -3020,10 +2700,10 @@ function calculatePoints(scriptProps) {
   // TODO Check that promotions have first been calculated...
 
   // For each race...
-  var entries = [], sheets = getRaceSheets(), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace, isDoublesRace;
+  var entries = [], sheets = racing.getRaceSheets(ss), divStr, boundary, colValues, sheetName, isHaslerRace, isLightningRace, isDoublesRace;
   var sheetRange, sheetValues;
-  var count, noElapsedValueCount, pointsByBoatNum, pointsAwarded;
-  var boatNum, pd, time, minPoints, lastTime, lastPoints;
+  var count, pointsIncrement, noElapsedValueCount, pointsByBoatNum, pointsAwarded;
+  var boatNum, pd1, pd2, time, minPoints, lastTime, lastPoints;
   var mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
   var club1, club2, posn, notes1, notes2;
   var sortFn = function(a,b) {return (parseInt(a.values[0][posnColIndex])||999) - (parseInt(b.values[0][posnColIndex])||999);};
@@ -3037,16 +2717,17 @@ function calculatePoints(scriptProps) {
     isHaslerRace = sheetName.indexOf("Div") === 0;
     isLightningRace = isLightningRaceName_(sheetName);
     isDoublesRace = sheetName.indexOf("_") > -1;
-    sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, numHeaders);
+    sheetRange = sheets[i].getRange(2, 1, sheets[i].getLastRow()-1, sheets[i].getLastColumn());
     sheetValues = sheetRange.getValues();
     colValues = new Array(sheetRange.getNumRows());
     entries = getEntryRowData(sheetRange);
     // Calculate 110% boundary - time of fastest crew NOT promoted for K1 or 110% of winning boat for K2
     // Boats must not have been transferred from another division
     entries.sort(sortFn); // Sort by position, ascending then blanks (non-finishers)
-    boundary = calculatePointsBoundary(entries, divStr, isHaslerFinal);
+    boundary = calculatePointsBoundary(sheets[i], entries, divStr, isHaslerFinal);
     // Allocate points to clubs within the region
     count = (isHaslerFinal && isLightningRace) ? 40 : 20;
+    pointsIncrement = (isHaslerFinal && isLightningRace) ? 2 : 1;
     noElapsedValueCount = 0;
     pointsByBoatNum = new Array(99);
     minPoints = (divStr[0] == "9" ? 2 : 1);
@@ -3055,14 +2736,15 @@ function calculatePoints(scriptProps) {
     mixedClubDoubles = []; // Remember doubles crews from mixed clubs, for Hasler Final points calculation
     for (var l=0; l<entries.length; l++) {
       boatNum = entries[l].boatNumber;
-      pd = entries[l].values[0][pdColIndex];
+      pd1 = entries[l].values[0][pdColIndex];
+      pd2 = entries[l].values[1] ? entries[l].values[1][pdColIndex] : undefined;
       time = entries[l].values[0][timeColIndex];
       club1 = entries[l].values[0][clubColIndex];
-      club2 = entries[l].values[1] ? entries[l].values[1][clubColIndex] : "";
+      club2 = entries[l].values[1] ? entries[l].values[1][clubColIndex] : '';
       posn = parseInt(entries[l].values[0][posnColIndex]) || 0;
       notes1 = entries[l].values[0][notesColIndex];
-      notes2 = entries[l].values[1] ? entries[l].values[1][notesColIndex] : null;
-      if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0) && notes1 != "ill" && notes2 != "ill") {
+      notes2 = entries[l].values[1] ? entries[l].values[1][notesColIndex] : undefined;
+      if (posn > 0 && (!isHaslerRace || clubsInRegion.indexOf(club1) >= 0 || club2 && clubsInRegion.indexOf(club2) >= 0) && (notes1 !== 'ill' || notes2 !== undefined && notes2 !== 'ill') && (!isPromotedByMoreThanOneDivision(sheetName, pd1) || pd2 !== undefined && !isPromotedByMoreThanOneDivision(sheetName, pd2))) {
         if (isHaslerRace && (divStr > "3" || isDoublesRace) && boundary && time instanceof Date && boundary < timeInMillis(time)) {
           pointsAwarded = minPoints;
         } else {
@@ -3077,7 +2759,7 @@ function calculatePoints(scriptProps) {
         pointsByBoatNum[entries[l].boatNumber] = pointsAwarded;
         lastTime = timeInMillis(time);
         lastPoints = pointsAwarded;
-        count --;
+        count -= pointsIncrement;
       } else {
           pointsByBoatNum[entries[l].boatNumber] = "";
       }
@@ -3101,14 +2783,15 @@ function calculatePoints(scriptProps) {
       continue;
     }
     // Set the values ready to go into the sheet and add to totals by club
-    var bn = 0, clubIndex, points, clubCode;
+    var bn = 0, clubIndex, points, clubCode, notes;
     for (var m=0; m<sheetValues.length; m++) {
       bn = sheetValues[m][0] || bn; // Use last boat number encountered, to cover second person in a K2
       clubCode = sheetValues[m][clubColIndex];
       clubIndex = clubsInRegion.indexOf(clubCode);
+      notes = sheetValues[m][notesColIndex];
       if (clubCode !== '') {
         // Check clubs again, as only one of the K2 partners may be entitled to points
-        if (clubIndex >= 0) {
+        if (clubIndex >= 0 && !isPromotedByMoreThanOneDivision(sheetName, sheetValues[m][clubColIndex][pdColIndex]) && notes !== 'ill') {
           points = pointsByBoatNum[bn];
           colValues[m] = [points || ""];
           if (points) {
@@ -3126,7 +2809,7 @@ function calculatePoints(scriptProps) {
             }
           }
         } else {
-          Logger.log("Club " + clubCode + " not in region list " + clubsInRegion.join(','));
+          Logger.log("Club " + clubCode + " not in region list " + clubsInRegion.join(',') + " or no points allowed: " + notes);
           colValues[m] = [""];
         }
       } else {
@@ -3134,7 +2817,7 @@ function calculatePoints(scriptProps) {
       }
     }
 
-    var pointsCol = getTableColumnIndex("Points");
+    var pointsCol = getTableColumnIndex("Points", sheets[i]);
     if (pointsCol < 0) {
       throw "Could not find Points column";
     }
@@ -3194,7 +2877,7 @@ function calculatePoints(scriptProps) {
   if (unfoundClubs.length > 0) {
     clubsSheet.getRange(2, 5, unfoundClubs.length, 2).setValues(unfoundClubs);
   }
-}
+};
 
 // For Hasler races, add the Promotion and Points columns before Notes
 function getRaceColumns(allowsPromotions, allowsPoints) {
@@ -3254,7 +2937,7 @@ function getTableColumnIndex(colName, sheet) {
   if (cached !== null) {
      return +cached; // convert to a number
   }
-  var headers = getTableHeaders(sheet); // takes some time
+  var headers = tables.getHeaders(sheet); // takes some time
   var index = headers.indexOf(colName);
   cache.put(cacheKey, index, 300); // cache for 5 minutes
   return index;
@@ -3301,14 +2984,14 @@ function getRaceColumnA1(colName, sheet) {
  *
  * @public
  */
-function setFormulas(spreadsheet) {
+exports.setFormulas = function setFormulas(spreadsheet) {
   spreadsheet = spreadsheet || SpreadsheetApp.getActiveSpreadsheet();
-  var sheets = getRaceSheets(spreadsheet), useVLookup = spreadsheet.getSheetByName("Starts") !== null;
+  var sheets = racing.getRaceSheets(spreadsheet), useVLookup = spreadsheet.getSheetByName("Starts") !== null;
   for (var i=0; i<sheets.length; i++) {
     setSheetFormulas_(sheets[i]);
     setSheetSpecificFormulas_(sheets[i]);
   }
-}
+};
 
 /**
  * Set forumalas for a single sheet
@@ -3359,15 +3042,15 @@ function setSheetSpecificFormulas_(sheet) {
  *
  * @public
  */
-function setValidation(ss) {
+exports.setValidation = function setValidation(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var sheets = getRaceSheets(ss);
-  var props = getDriveProperties_(ss.getId());
+  var sheets = racing.getRaceSheets(ss);
+  var props = getDriveProperties(ss.getId());
   for (var i=0; i<sheets.length; i++) {
     setSheetValidation_(sheets[i], null, props);
     setSheetSpecificValidation_(sheets[i], null, props);
   }
-}
+};
 
 function buildBCUNumberValidationRule_(sheet, rowNum, regex) {
   var bcuColA1 = getRaceColumnA1("BCU Number", sheet);
@@ -3389,7 +3072,7 @@ function setSheetValidation_(sheet, ss, scriptProps) {
     classRule = SpreadsheetApp.newDataValidation().requireValueInList(CLASSES_ALL, true).build(),
     divRule = allowedDivs !== null ? SpreadsheetApp.newDataValidation().requireValueInList(allowedDivs, true).build() : null,
     clubRule = clubsSheet !== null && clubsSheet.getLastRow() > 0 ? SpreadsheetApp.newDataValidation().requireValueInRange(clubsSheet.getRange(1, 2, clubsSheet.getLastRow(), 1)).build() : null,
-    expiryCutoff = scriptProps && scriptProps.raceDate ? parseDate(scriptProps.raceDate) : new Date(),
+    expiryCutoff = scriptProps && scriptProps.raceDate ? dateformat.parseDate(scriptProps.raceDate) : new Date(),
     expiryRule = SpreadsheetApp.newDataValidation().requireDateOnOrAfter(expiryCutoff).build();
 
   var lastRow = sheet.getMaxRows(), r, expiryCol = getRaceColumnNumber("Expiry", sheet), paidCol = getRaceColumnNumber("Paid", sheet);
@@ -3490,12 +3173,12 @@ function setSheetSpecificValidation_(sheet) {
  *
  * @public
  */
-function setFormatting() {
-  var sheets = getRaceSheets();
+exports.setFormatting = function setFormatting() {
+  var sheets = racing.getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     setRaceSheetFormatting_(sheets[i]);
   }
-}
+};
 
 /**
  * Set formatting on a sheet
@@ -3570,7 +3253,7 @@ function setRaceSheetHeadings_(sheet, columns) {
  * @public
  */
 function setAllRaceSheetHeadings(columns) {
-  var sheets = getRaceSheets(), ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = racing.getRaceSheets(), ss = SpreadsheetApp.getActiveSpreadsheet();
   for (var i=0; i<sheets.length; i++) {
     setRaceSheetHeadings_(sheets[i], columns);
   }
@@ -3629,12 +3312,12 @@ function setProtection_(protection) {
 /**
  * Set protection on all race sheets
  */
-function setProtection() {
-  var sheets = getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") !== null;
+exports.setProtection = function setProtection() {
+  var sheets = racing.getRaceSheets(), useVLookup = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Starts") !== null;
   for (var i=0; i<sheets.length; i++) {
     setRaceSheetProtection_(sheets[i], useVLookup);
   }
-}
+};
 
 /**
  * Set frozen rows and columns for the given race sheet
@@ -3649,12 +3332,12 @@ function setRaceSheetFreezes_(sheet) {
  *
  * @public
  */
-function setFreezes() {
-  var sheets = getRaceSheets();
+exports.setFreezes = function setFreezes() {
+  var sheets = racing.getRaceSheets();
   for (var i=0; i<sheets.length; i++) {
     setRaceSheetFreezes_(sheets[i]);
   }
-}
+};
 
 function RaceSheet(sheetArr) {
   this.sheetName = sheetArr[0];
@@ -3755,21 +3438,25 @@ function customiseRaceSheet_(sheetInfo, sheet) {
 /**
  * Update the existing spreadsheet from a template
  */
-function setupRaceFromTemplate_(spreadsheet, template, options) {
+function setupRaceFromTemplate(spreadsheet, template, options) {
 
-  var sheets = spreadsheet.getSheets(), templateSheets = template.getSheets(),
-      tempSheet = spreadsheet.insertSheet('Temp' + Date.now());
+  var tempSheet = spreadsheet.insertSheet(0, 'Temp' + Date.now()),
+    sheets = spreadsheet.getSheets(), templateSheets = template.getSheets();
 
   options = options || {};
 
   // Delete preexisting sheets
-  for (var i = 0; i < sheets.length; i++) {
+  for (var i = sheets.length - 1; i > 0; i--) {
     spreadsheet.deleteSheet(sheets[i]);
   }
 
-  // Copy all template sheets into current
-  for (var j = 0; j < templateSheets.length; j++) {
-    templateSheets[j].copyTo(spreadsheet).setName(templateSheets[j].getName());
+  if (template.getSheetByName('Races')) {
+    templates.createFromTemplate(template, spreadsheet);
+  } else {
+    // Copy all template sheets into current
+    for (var j = 0; j < templateSheets.length; j++) {
+      templateSheets[j].copyTo(spreadsheet).setName(templateSheets[j].getName());
+    }
   }
 
   spreadsheet.deleteSheet(tempSheet);
@@ -3782,7 +3469,7 @@ function setupRaceFromTemplate_(spreadsheet, template, options) {
   }
 
   if (options.importRankings === true) {
-    loadRankingsXLS(spreadsheet);
+    rankings.loadRankingsXLS(spreadsheet);
   }
 
   setRaceInfo_({
@@ -3796,6 +3483,8 @@ function setupRaceFromTemplate_(spreadsheet, template, options) {
     setRaceType_(spreadsheet.getId(), sourceRaceType.value);
   }
 }
+
+exports.setupRaceFromTemplate = setupRaceFromTemplate;
 
 /**
  * Create a new spreadsheet to manage a race
@@ -3819,7 +3508,7 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columns) {
        setProtection_(sheet.protect().setDescription(sheetNameExtra + ' sheet protection'));
     }
     if (sheetNameExtra == "Rankings") {
-      sheet.appendRow(rankingsSheetColumnNames);
+      sheet.appendRow(rankings.COLUMN_NAMES);
     }
     if (sheetNameExtra == "Starts") {
       sheet.getRange(STARTS_SHEET_COLUMNS[0][0], STARTS_SHEET_COLUMNS[0][1], 1, STARTS_SHEET_COLUMNS[1].length).setValues([STARTS_SHEET_COLUMNS[1]]);
@@ -3856,14 +3545,10 @@ function createRaceSpreadsheet(name, raceSheets, extraSheets, columns) {
 }
 
 function setDriveProperty_(spreadsheetId, name, value) {
-  Drive.Properties.insert({
-    key: name,
-    value: value,
-    visibility: 'PUBLIC'
-  }, spreadsheetId);
+  return publishing.savePublicProperty(spreadsheetId, name, value);
 }
 
-function setDriveProperties_(spreadsheetId, values) {
+function setDriveProperties(spreadsheetId, values) {
   for (var p in values) {
     if (values.hasOwnProperty(p)) {
       setDriveProperty_(spreadsheetId, p, values[p]);
@@ -3871,19 +3556,23 @@ function setDriveProperties_(spreadsheetId, values) {
   }
 }
 
+exports.setDriveProperties = setDriveProperties;
+
 function getDriveProperty_(spreadsheetId, name) {
   return Drive.Properties.get(spreadsheetId, name, {
     visibility: 'PUBLIC'
   });
 }
 
-function getDriveProperties_(spreadsheetId) {
+function getDriveProperties(spreadsheetId) {
   var driveResp = Drive.Properties.list(spreadsheetId), propertyMap = {};
   driveResp.items.forEach(function(p) {
     propertyMap[p.key] = p.value;
   });
   return propertyMap;
 }
+
+exports.getDriveProperties = getDriveProperties;
 
 function setRaceType_(spreadsheetId, raceType) {
   setDriveProperty_(spreadsheetId, 'hrmType', raceType);
@@ -3898,70 +3587,70 @@ function getRaceType_(spreadsheetId) {
  *
  * @public
  */
-function createK4Sheet() {
+exports.createK4Sheet = function createK4Sheet() {
   var raceName = Browser.inputBox(
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_K4), EXTRA_SHEETS_NON_HASLER, getRaceColumns(false, false));
   }
-}
+};
 
 /**
  * Create a new spreadsheet to manage a K2 race, i.e. Luzmore
  *
  * @public
  */
-function createK2Sheet() {
+exports.createK2Sheet = function createK2Sheet() {
   var raceName = Browser.inputBox(
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_K2), EXTRA_SHEETS_NON_HASLER, getRaceColumns(true, false));
   }
-}
+};
 
 /**
  * Create a new spreadsheet to manage a HRM race
  *
  * @public
  */
-function createHRMSheet() {
+exports.createHRMSheet = function createHRMSheet() {
   var raceName = Browser.inputBox(
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_HASLER), EXTRA_SHEETS_HASLER, getRaceColumns(true, true));
   }
-}
+};
 
 /**
  * Create a new spreadsheet to manage an assessment race
  *
  * @public
  */
-function createARMSheet() {
+exports.createARMSheet = function createARMSheet() {
   var raceName = Browser.inputBox(
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_ASS), EXTRA_SHEETS_NON_HASLER, getRaceColumns(true, true));
   }
-}
+};
 
 /**
  * Create a new spreadsheet to manage a National Marathon Champs race
  *
  * @public
  */
-function createNRMSheet() {
+exports.createNRMSheet = function createNRMSheet() {
   var raceName = Browser.inputBox(
     'Enter file name:',
     Browser.Buttons.OK_CANCEL);
   if (raceName) {
     createRaceSpreadsheet(raceName, getRaceSheetsInfo(RACE_SHEETS_NATIONALS), EXTRA_SHEETS_NATIONALS, getRaceColumns(true, true));
   }
-}
+};
 
 
 function getElementsByTagName(element, tagName) {
@@ -3979,7 +3668,7 @@ function getElementsByTagName(element, tagName) {
 /**
  * @public
  */
-function populateFromHtmlResults() {
+exports.populateFromHtmlResults = function populateFromHtmlResults() {
   var raceUrl = Browser.inputBox(
     'Enter results URL:',
     Browser.Buttons.OK_CANCEL
@@ -4053,7 +3742,7 @@ function populateFromHtmlResults() {
     }
   }
     */
-}
+};
 
 function autoResizeAllColumns() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sheets = ss.getSheets();
@@ -4069,39 +3758,60 @@ function autoResizeColumns(sheet) {
   }
 }
 
+function getPrintableExportUrl(ssId) {
+  var url = 'https://docs.google.com/spreadsheets/d/SS_ID/export?'.replace('SS_ID', ssId);
+  var urlExt = 'format=pdf'        // export as pdf / csv / xls / xlsx
+    + '&size=a4'                           // paper size legal / letter / A4
+    + '&portrait=false'                    // orientation, false for landscape
+    + '&fitw=true'           // fit to page width, false for actual size
+    + '&sheetnames=true&printtitle=true'   // show optional headers and footers
+    + '&pagenumbers=true&gridlines=true'   // show page numbers and gridlines
+    + '&fzr=true'                          // repeat row headers (frozen rows) on each page
+    + '&attachment=false';
+    //+ '&gid=';                             // specific sheet gid to use (otherwise includes all sheets)
+  return url + urlExt;
+}
+
 /**
  * @public
- * @param scriptProps
+ * @param ss
  */
-function createPrintableEntries(scriptProps) {
-  scriptProps = scriptProps || {};
-  var ss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, false, scriptProps.printableEntriesId, scriptProps);
-  showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Entries", "_blank");
-  return ss;
-}
+exports.createPrintableEntries = function createPrintableEntries(ss) {
+  ss = ss || {};
+  var pss = createPrintableSpreadsheet(null, printableEntriesColumnNames, null, false, false, 'Printable Entries', 'printableEntriesId');
+  uiService.showLinkDialog("Print Entries", "Click to open the printable entry sheets (opens in new tab)", getPrintableExportUrl(pss.getId()), "Printable Entries", "_blank");
+  return pss;
+};
 
-function createPrintableResults(scriptProps) {
-  scriptProps = scriptProps || {};
+/**
+ * @public
+ * @param ss
+ */
+exports.createPrintableResults = function createPrintableResults(ss) {
+  ss = ss || {};
   // 'autoResizeColumn' is not available yet in the new version of Google Sheets
   var columnNames = isHaslerRace() ? printableResultColumnNamesHasler : printableResultColumnNames,
-    ss = createPrintableSpreadsheet(null, columnNames, "Posn", true, false, scriptProps.printableResultsId, scriptProps);
-  showLinkDialog("Print Results", "Click here to access the results", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Printable Results", "_blank");
-  return ss;
-}
+    pss = createPrintableSpreadsheet(null, columnNames, 'Posn', true, false, 'Printable Results', 'printableResultsId');
+  uiService.showLinkDialog("Print Results", "Click to open the printable result sheets", getPrintableExportUrl(pss.getId()), "Printable Results", "_blank");
+  return pss;
+};
 
-function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize, fileId, scriptProps) {
+function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty, autoResize, sheetType, sheetIdPropName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  name = name || ss.getName() + " (Printable)";
-  autoResize = typeof autoResize != "undefined" ? autoResize : false;
-  var newss = fileId ? SpreadsheetApp.openById(fileId) : SpreadsheetApp.create(name),
-    srcSheets = getRaceSheets(ss);
-  if (fileId) {
+  var driveProps = getDriveProperties(ss.getId());
+  name = name || ss.getName() + " (" + sheetType + ")";
+  autoResize = typeof autoResize !== "undefined" ? autoResize : false;
+  var newss = driveProps && driveProps[sheetIdPropName] ? SpreadsheetApp.openById(driveProps[sheetIdPropName]) : SpreadsheetApp.create(name),
+    srcSheets = racing.getRaceSheets(ss);
+  if (driveProps && driveProps[sheetIdPropName]) {
     newss.insertSheet("Temp" + Math.floor(Date.now() / 1000), 0);
     // Delete preexisting sheets
     var oldSheets = newss.getSheets();
     for (var i = 1; i < oldSheets.length; i++) {
       newss.deleteSheet(oldSheets[i]);
     }
+  } else {
+    publishing.savePublicProperty(ss.getId(), sheetIdPropName, newss.getId());
   }
   var sortFn = function(a,b) {return (parseInt(a.rows[0][sortColumn])||999) - (parseInt(b.rows[0][sortColumn])||999);};
   var entriesReduce = function(previous, a) {
@@ -4148,7 +3858,7 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
       if (autoResize === true) {
         autoResizeColumns(newSheet);
       }
-      setSheetValidation_(newSheet, newss, scriptProps);
+      setSheetValidation_(newSheet, newss, driveProps);
     }
   }
   // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
@@ -4160,25 +3870,27 @@ function createPrintableSpreadsheet(name, columnNames, sortColumn, truncateEmpty
  * @public
  * @param scriptProps
  */
-function createClubEntries(scriptProps) {
+exports.createClubEntries = function createClubEntries(scriptProps) {
   var ss = createClubSpreadsheet_(null, ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"], scriptProps);
-  showLinkDialog("Print Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Club Entries", "_blank");
+  uiService.showLinkDialog("Club Entries", "Click here to access the entries", "https://docs.google.com/spreadsheet/ccc?key=" + ss.getId(), "Club Entries", "_blank");
   return ss;
-}
+};
 
 function createClubSpreadsheet_(name, columnNames, scriptProps) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var driveProps = getDriveProperties_(ss.getId());
+  var driveProps = getDriveProperties(ss.getId());
   var truncateEmpty = true;
   name = name || ss.getName() + " (Clubs)";
-  var newss = scriptProps && scriptProps.clubEntriesId ? SpreadsheetApp.openById(scriptProps.clubEntriesId) : SpreadsheetApp.create(name), srcSheets = getRaceSheets(ss), clubValues = {}, currClub, currDue, currPaid, currClubValues;
-  if (scriptProps && scriptProps.clubEntriesId) {
+  var newss = driveProps && driveProps.clubEntriesSheetId ? SpreadsheetApp.openById(driveProps.clubEntriesSheetId) : SpreadsheetApp.create(name), srcSheets = racing.getRaceSheets(ss), clubValues = {}, currClub, currDue, currPaid, currClubValues;
+  if (driveProps && driveProps.clubEntriesSheetId) {
     newss.insertSheet("Temp" + Math.floor(Date.now() / 1000), 0);
     // Delete preexisting sheets
     var oldSheets = newss.getSheets();
     for (var i = 1; i < oldSheets.length; i++) {
       newss.deleteSheet(oldSheets[i]);
     }
+  } else {
+    publishing.savePublicProperty(ss.getId(), 'clubEntriesSheetId', newss.getId());
   }
   var clubCounts = {}, clubDue = {}, clubPaid = {}, lastRaceNum, raceName, paddlerType,
     fees = { seniors: driveProps.entrySenior, juniors: driveProps.entryJunior, lightnings: driveProps.entryLightning };
@@ -4223,19 +3935,27 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
   };
   // Copy existing sheets
   for (var j = 0; j < srcSheets.length; j++) {
+    Logger.log("Processing entry sheet %s", srcSheets[j].getName());
     if (srcSheets[j].isSheetHidden()) {
+      Logger.log("Skipping %s due to hidden sheet", srcSheets[j].getName());
       continue;
     }
     var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[j]) - 1 : srcSheets[j].getLastRow();
+    Logger.log("Looking at %s rows in sheet", lastRow);
     if (lastRow > 1) {
       raceName = srcSheets[j].getName();
       var srcRange = srcSheets[j].getRange(1, 1, lastRow, srcSheets[j].getLastColumn()),
           entries = getEntryRowData(srcRange, true);
+      Logger.log("Found %s entries in sheet", entries.length);
       entries.forEach(entriesIter);
     }
   }
-  Logger.log(clubCounts);
-  for (var c in clubValues) {
+  var summaryRows = [];
+  summaryRows.push([ 'Club', 'Seniors', 'Juniors', 'Total Divisional', 'Lightnings', 'Total', 'Due', 'Paid' ]);
+  var summarySheet = newss.insertSheet('Summary');
+  var clubCodes = Object.keys(clubValues).sort(), c;
+  for (var k=0; k<clubCodes.length; k++) {
+    c = clubCodes[k];
     if (clubValues.hasOwnProperty(c)) {
       var newSheet = newss.insertSheet(c), values = clubValues[c], targetRange = newSheet.getRange(1, 1, values.length, values[0].length);
       targetRange.setValues(values);
@@ -4254,18 +3974,27 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
       if (columnNames.indexOf("Expiry") > -1) {
         newSheet.getRange(1, columnNames.indexOf("Expiry") + 1, values.length, 1).setNumberFormat(NUMBER_FORMAT_DATE);
       }
-      setSheetValidation_(newSheet, newss, scriptProps);
+      setSheetValidation_(newSheet, newss, driveProps);
 
-      var extraValues = [];
+      var extraValues = [], totalDue = clubDue[c].seniors + clubDue[c].juniors + clubDue[c].lightnings,
+        totalPaid = clubPaid[c].seniors + clubPaid[c].juniors + clubPaid[c].lightnings,
+        totalDivisional = clubCounts[c].seniors + clubCounts[c].juniors,
+        totalPaddlers = totalDivisional + clubCounts[c].lightnings;
       extraValues.push(['', '', '', '']);
       extraValues.push(['Seniors', clubCounts[c].seniors, clubDue[c].seniors, clubPaid[c].seniors]);
       extraValues.push(['Juniors', clubCounts[c].juniors, clubDue[c].juniors, clubPaid[c].juniors]);
       extraValues.push(['Lightnings', clubCounts[c].lightnings, clubDue[c].lightnings, clubPaid[c].lightnings]);
-      extraValues.push(['', '', clubDue[c].seniors + clubDue[c].juniors + clubDue[c].lightnings, clubPaid[c].seniors + clubPaid[c].juniors + clubPaid[c].lightnings]);
+      extraValues.push(['', '', totalDue, totalPaid]);
       newSheet.getRange(values.length + 1, values[0].length - extraValues[0].length + 1, extraValues.length, extraValues[0].length).setValues(extraValues).setFontFamily(SHEET_FONT_FAMILY);
       newSheet.getRange(values.length + 1, values[0].length - 1, extraValues.length, 2).setNumberFormat(NUMBER_FORMAT_CURRENCY);
+
+      newSheet.setFrozenRows(1);
+
+      summaryRows.push([c, clubCounts[c].seniors, clubCounts[c].juniors, totalDivisional, clubDue[c].lightnings, totalPaddlers, totalDue, totalPaid]);
     }
   }
+  summarySheet.getRange(1, 1, summaryRows.length, summaryRows[0].length).setValues(summaryRows).setFontFamily(SHEET_FONT_FAMILY);
+  summarySheet.getRange(1, 1, 1, summaryRows[0].length).setBorder(true, true, true, true, true, true).setFontWeight("bold").setBackground("#ccffff");
   // Finally remove the first sheet (we need this as we're not allowed to delete all sheets up-front)
   newss.deleteSheet(newss.getSheets()[0]);
   return newss;
@@ -4276,12 +4005,12 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
  *
  * @public
  */
-function createNumberBoards() {
+exports.createNumberBoards = function createNumberBoards() {
   createNumberBoards_(null, true);
-}
+};
 
 function createNumberBoards_(name, truncateEmpty) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), srcSheets = getRaceSheets(ss), sheetName;
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), srcSheets = racing.getRaceSheets(ss), sheetName;
   var docname, doc, body;
   var style = {};
   style[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.CENTER;
@@ -4333,10 +4062,10 @@ function createNumberBoards_(name, truncateEmpty) {
  */
 function checkEntryDuplicateWarnings(spreadsheet) {
   var ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet(),
-    sheets = getRaceSheets(ss), sheet, boatNumsByPaddler = {}, warnings = [];
+    sheets = racing.getRaceSheets(ss), sheet, boatNumsByPaddler = {}, warnings = [];
   for (var i = 0; i < sheets.length; i++) {
     sheet = sheets[i];
-    var raceData = getTableRows(sheet);
+    var raceData = tables.getRows(sheet);
     if (raceData.length > 0) {
       for (var j = 0; j < raceData.length; j++) {
         var boatNum = raceData[j]['Number'] || raceData[j-1]['Number'];
@@ -4358,6 +4087,8 @@ function checkEntryDuplicateWarnings(spreadsheet) {
   return warnings;
 }
 
+exports.checkEntryDuplicateWarnings = checkEntryDuplicateWarnings;
+
 /**
  * Look through all the current entries and flag duplicates
  *
@@ -4365,56 +4096,16 @@ function checkEntryDuplicateWarnings(spreadsheet) {
  */
 function checkEntryDuplicates(spreadsheet) {
   var warnings = checkEntryDuplicateWarnings(spreadsheet);
-  showDialog('Duplicate Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>');
+  uiService.showDialog('Duplicate Entries', warnings.length > 0 ? '<p>' + warnings.join('<br/>') + '</p>' : '<p>No duplicates found</p>');
 }
+
+exports.checkEntryDuplicates = checkEntryDuplicates;
 
 /**
  * @public
  */
-function checkEntriesFromRankings() {
+exports.checkEntriesFromRankings = function checkEntriesFromRankings() {
   checkEntriesFromRankings_();
-}
+};
 
-function parseDate(dateStr) {
-  if (dateStr === null) {
-    return null;
-  }
-  var parts;
-  var parsedDate;
-  if (dateStr.match(/\d{4}-\d{2}-\d{2}/)) {
-    parts = dateStr.split('-');
-    parsedDate =  new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-  } else if (dateStr.match(/\d{2}\/\d{2}\/\d{4}/)) {
-    parts = dateStr.split('/');
-    parsedDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-  } else if (dateStr.match(/\d{2}\/\d{2}\/\d{4}/)) {
-    parts = dateStr.split('/');
-    parsedDate = new Date(2000 + parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-  } else {
-      throw "Unsupported date format for '" + dateStr + "' - must be YYYY-MM-DD or DD/MM/YY[YY]";
-  }
-  var timeMatch = dateStr.match(/(\d{2}):(\d{2}):(\d{2})/);
-  if (timeMatch) {
-    parsedDate.setHours(timeMatch[1]);
-    parsedDate.setMinutes(timeMatch[2]);
-    parsedDate.setSeconds(timeMatch[3]);
-  }
-  return parsedDate;
-}
-
-/**
- * Passed into the configuration factory constructor
- * @return {myproj.json.Configuration} Default configuration settings.
- */
-function getDefaultConfiguration_() {
-  return {
-    debug: false,
-    sheets: {
-      debugSpreadsheetId: null
-    },
-    app: {
-      raceTemplatesFolderId: null
-    },
-    integrations: {}
-  };
-}
+exports.parseDate = dateformat.parseDate;

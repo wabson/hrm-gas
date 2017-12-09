@@ -12,20 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * Passed into the configuration factory constructor
+ * @return {myproj.json.Configuration} Default configuration settings.
+ */
+var getDefaultConfiguration = function getDefaultConfiguration() {
+  return {
+    debug: false,
+    sheets: {
+      debugSpreadsheetId: null
+    },
+    app: {
+      raceTemplatesFolderId: null
+    },
+    integrations: {}
+  };
+};
+
 var Configuration = {
   /**
   * Returns the default global settings object. If a developer has added
-  * function 'provideEnvironmentConfiguration_(globals)' to their project, that
+  * function 'provideEnvironmentConfiguration(globals)' to their project, that
   * will be added to the global namespace, and will be visible here to allow
   * the dev to set specific values for their run.
   * @return {myproj.json.Configuration}
   */
   getCurrent: function() {
-    if (typeof getDefaultConfiguration_ === 'undefined') {
-      throw 'You must provide an implementation of getDefaultConfiguration_' +
-          'to use this configuration library.';
-    }
-    var configuration = getDefaultConfiguration_();
+    var configuration = getDefaultConfiguration();
     if (typeof provideEnvironmentConfiguration_ !== 'undefined') {
       configuration = provideEnvironmentConfiguration_(configuration);
     }
@@ -35,3 +48,5 @@ var Configuration = {
     return configuration;
   }
 };
+
+module.exports = Configuration;

@@ -5,8 +5,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title><?= title ?></title>
-<?!= include('ResultsStyles'); ?>
 <style type="text/css">
+/*=require ./styles.css*/
 .scrolling #results {
   -webkit-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
      -moz-animation: position_results <?= defaultScrollPeriod ?>s linear 0s infinite normal;
@@ -296,7 +296,7 @@ $(function() {
 <? var url = getScriptUrl(); ?>
 <script>
 var key = "<?= key ?>", race="<?= race ?>", show = "<?= show ?>", showNotes = "<?= showNotes ?>", scroll = "<?= scroll ?>", checkInterval = "<?= checkInterval ?>", url = "<?= url ?>", hasEditPermission = "<?= hasEditPermission ?>" == "true";
+//=require ./home.controller.client.js
 </script>
-<?!= include('ResultsScript'); ?>
 </body>
 </html>

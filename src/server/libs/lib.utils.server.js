@@ -23,3 +23,5 @@ function logException_(e) {
   Logger.log(e.message);
   Logger.log('\n' + e.stack + '\n');
 }
+
+exports.logException = logException_;
