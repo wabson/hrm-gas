@@ -6,6 +6,7 @@
   "scripts": {
     "hint": "jshint --extract=auto src/server/*.js src/*.html",
     "upload-dev": "gulp upload-latest --env=dev",
+    "upload-test": "gulp upload-latest --env=test",
     "coverage": "npm run coverage-ui-interactive",
     "coverage-ui-interactive": "karma start karma.conf.js",
     "coveralls-server": "nyc report --reporter=text-lcov | coveralls",
