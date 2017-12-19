@@ -10,5 +10,8 @@ end_of_line = lf
 insert_final_newline = false
 trim_trailing_whitespace = true
 
+[src/ui/**/*]
+indent_size = 4
+
 [gulpfile.js]
 indent_size = 4

@@ -7,6 +7,8 @@ module.exports = function(config) {
             'test/ui/mock-services.client.js',
             'src/ui/components/**/*.client.js',
             'src/ui/components/**/*.spec.js',
+            'src/ui/dialogs/**/*.client.js',
+            'src/ui/dialogs/**/*.spec.js',
             'src/ui/sidebars/**/*.client.js',
             'src/ui/sidebars/**/*.spec.js',
             {pattern: 'test/ui/fixtures/*.html', served: true, included: false}
