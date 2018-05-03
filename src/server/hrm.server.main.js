@@ -582,36 +582,6 @@ function addEntrySets(ssId, entrySets) {
 
 exports.addEntrySets = addEntrySets;
 
-/**
- * @param sheet
- */
-function importClubs_(sheet) {
-  var config = Configuration.getCurrent(), clubsFileId = config.app ? config.app.clubsFileId : null, clubsValues;
-  if (clubsFileId) {
-    var clubsFile = DriveApp.getFileById(clubsFileId);
-    if (clubsFile) {
-      var mimeType = clubsFile.getMimeType();
-      if (mimeType == MimeType.GOOGLE_SHEETS) {
-        clubsValues = getClubsFromGoogleSheet_(clubsFile);
-      } else if (mimeType == MimeType.CSV) {
-        clubsValues = getClubsFromCsv_(clubsFile);
-      }
-    } else {
-      throw "Could not find Clubs sheet in file " + clubsFileId;
-    }
-  } else {
-    throw "No clubs file was specified";
-  }
-  var clubsSheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Clubs");
-  if (clubsSheet) {
-    clubsSheet.clear();
-    clubsSheet.getRange(1, 1, clubsValues.length, clubsValues[0].length).setValues(clubsValues);
-    setSheetFormatting_(clubsSheet);
-  } else {
-    throw "Could not find Clubs sheet";
-  }
-}
-
 function getRaceInfoCellRange_(sheet) {
   sheet = sheet || SpreadsheetApp.getActiveSpreadsheet();
   var clubsSheet = sheet.getSheetByName("Clubs");
@@ -656,29 +626,6 @@ function getRegionCellRange_(sheet) {
   var clubsSheet = sheet.getSheetByName("Clubs");
   if (clubsSheet) {
     return clubsSheet.getRange(1, 19);
-  }
-}
-
-function getClubsFromGoogleSheet_(clubsFile) {
-  var clubSs = SpreadsheetApp.openById(clubsFile.getId()),
-      values = clubSs.getSheets()[0].getDataRange().getValues();
-  if (values.length > 0) {
-    return values;
-  } else {
-    throw "Could not find any clubs listed";
-  }
-}
-
-/**
- * @param clubsFile
- */
-function getClubsFromCsv_(clubsFile) {
-  var csvData = clubsFile.getBlob().getDataAsString();
-  var parsedCsv = Utilities.parseCsv(csvData);
-  if (parsedCsv && parsedCsv.length > 0) {
-    return parsedCsv;
-  } else {
-      throw "Could not find any clubs listed";
   }
 }
 
@@ -3460,13 +3407,6 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
   }
 
   spreadsheet.deleteSheet(tempSheet);
-
-  if (options.importClubs === true) {
-    var clubsSheet = spreadsheet.getSheetByName('Clubs');
-    if (clubsSheet) {
-      importClubs_(clubsSheet);
-    }
-  }
 
   if (options.importRankings === true) {
     rankings.loadRankingsXLS(spreadsheet);

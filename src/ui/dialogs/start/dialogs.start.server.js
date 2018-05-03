@@ -39,7 +39,6 @@ exports.dialog_start_submit = function dialog_start_submit(spreadsheetId, formDa
     Logger.log('Setting race region ' + formData.region || 'ALL');
 
     hrm.setupRaceFromTemplate(spreadsheet, template, {
-        importClubs: false,
         importRankings: formData.importRankings === 'y',
         raceRegion: formData.region || 'ALL',
         raceName: formData.name
