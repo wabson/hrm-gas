@@ -7,8 +7,18 @@ deploy_to_project () {
         npm run upload-${1}
 }
 
+deploy_profile=
 if [ "$TRAVIS_EVENT_TYPE" = "push" ]; then
-    if [ "$TRAVIS_BRANCH" = "master" ]; then
-        deploy_to_project test 1q0YEwJXEZTbKT1Bnros3NWj9PZxjT8wB6Xqg1mNb4BSDa685a9oQdrFV
+    if [ "$TRAVIS_BRANCH" = "develop" ]; then
+        deploy_profile="test"
+        deploy_target="$gas_target_test"
+    elif [ "$TRAVIS_BRANCH" = "master" ]; then
+        deploy_profile="prod"
+        deploy_target="$gas_target_prod"
     fi
+fi
+
+if [ -n "$deploy_profile" -a -n "$deploy_target" ]; then
+    echo "Deploying to project $deploy_target with profile $deploy_profile"
+    deploy_to_project "$deploy_profile" "$deploy_target"
 fi
