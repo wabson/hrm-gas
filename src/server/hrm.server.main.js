@@ -3441,9 +3441,13 @@ function setDriveProperties(spreadsheetId, values) {
 exports.setDriveProperties = setDriveProperties;
 
 function getDriveProperty_(spreadsheetId, name) {
-  return Drive.Properties.get(spreadsheetId, name, {
-    visibility: 'PUBLIC'
-  });
+  try {
+    return Drive.Properties.get(spreadsheetId, name, {
+      visibility: 'PUBLIC'
+    });
+  } catch(e) {
+    return null;
+  }
 }
 
 function getDriveProperties(spreadsheetId) {
