@@ -50,11 +50,6 @@ global.setFormatting = hrm.setFormatting;
 global.setProtection = hrm.setProtection;
 global.setFreezes = hrm.setFreezes;
 
-global.createK4Sheet = hrm.createK4Sheet;
-global.createK2Sheet = hrm.createK2Sheet;
-global.createARMSheet = hrm.createARMSheet;
-global.createARMSheet = hrm.createARMSheet;
-global.createNRMSheet = hrm.createNRMSheet;
 global.populateFromHtmlResults = hrm.populateFromHtmlResults;
 global.createPrintableEntries = hrm.createPrintableEntries;
 global.createPrintableResults = hrm.createPrintableResults;
@@ -156,12 +151,6 @@ global.onOpen = function onOpen(e) {
     .addItem('Rankings', 'openRankingsSidebar')
     .addItem('Entries', 'openEntriesSidebar')
     .addItem('Race Details', 'openRaceDetailsDialog')
-    .addSubMenu(ui.createMenu('New')
-      .addItem('HRM Sheet', 'createHRMSheet')
-      .addItem('ARM Sheet', 'createARMSheet')
-      .addItem('NRM Sheet', 'createNRMSheet')
-      .addItem('K2 Sheet', 'createK2Sheet')
-      .addItem('K4 Sheet', 'createK4Sheet'))
     .addSubMenu(ui.createMenu('Rankings')
       .addItem('Load Rankings', 'showLoadRankings')
       .addItem('Load Rankings from File', 'showAddLocalRankings')
