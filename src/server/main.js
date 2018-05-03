@@ -11,11 +11,6 @@ var apiRankings = require('../ui/sidebars/rankings/sidebar.rankings.server');
 
 global.showClearEntries = hrm.showClearEntries;
 global.confirmClearEntries = hrm.confirmClearEntries;
-global.showLoadRankings = hrm.showLoadRankings;
-global.showAddLocalRankings = hrm.showAddLocalRankings;
-global.addLocalRankings = hrm.addLocalRankings;
-global.showClearRankings = hrm.showClearRankings;
-global.confirmClearRankings = hrm.confirmClearRankings;
 global.showAddLocalEntries = hrm.showAddLocalEntries;
 global.showImportEntries = hrm.showImportEntries;
 global.importEntries = hrm.importEntries;
@@ -151,10 +146,6 @@ global.onOpen = function onOpen(e) {
     .addItem('Rankings', 'openRankingsSidebar')
     .addItem('Entries', 'openEntriesSidebar')
     .addItem('Race Details', 'openRaceDetailsDialog')
-    .addSubMenu(ui.createMenu('Rankings')
-      .addItem('Load Rankings', 'showLoadRankings')
-      .addItem('Load Rankings from File', 'showAddLocalRankings')
-      .addItem('Clear Rankings', 'confirmClearRankings'))
     .addSubMenu(ui.createMenu('Entries')
       .addItem('Add Entries from File', 'showAddLocalEntries')
       .addItem('Import Entries from CSV', 'showImportEntries')

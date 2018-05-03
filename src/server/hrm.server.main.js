@@ -131,72 +131,6 @@ var EXTRA_SHEETS_NATIONALS = racing.EXTRA_SHEETS_NATIONALS;
 var PROTECTED_SHEETS = ['Rankings'];
 
 /**
- * Button handler for load rankings dialog
- *
- * @param {object} eventInfo Event information
- * @return {AppInstance} Active application instance
- */
-function loadRankings(eventInfo) {
-  var app = UiApp.getActiveApplication(),
-    clubId = eventInfo.parameter.club,
-    clear = eventInfo.parameter.clear;
-  Logger.log("Clear checkbox: " + (clear == 'true'));
-  if (clear == 'true') {
-    Logger.log("Clearing existing rankings");
-    clearRankingsIfSheetExists_(false);
-  }
-  rankings.loadRankingsXLS(clubId);
-  app.close();
-  return app;
-}
-
-/**
- * Display the load rankings dialog
- *
- * @public
- */
-exports.showLoadRankings = function showLoadRankings() {
-  // Dialog height in pixels
-  var dialogHeight = 125;
-
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // Create the UiInstance object myapp and set the title text
-  var app = UiApp.createApplication().setTitle('Load Hasler Rankings').setHeight(dialogHeight);
-
-  // Create a vertical panel called mypanel and add it to myapp
-  var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-
-  mypanel.add(app.createLabel("This will load rankings from the MRC web site into the spreadsheet. This may take a short while if loading rankings from all clubs."));
-
-  var lb = app.createListBox(false).setId('club').setName('club');
-  lb.setVisibleItemCount(1);
-  lb.addItem("All Clubs", "");
-
-  // add items to ListBox
-  var clubs = getClubRows();
-  for (var i=0; i<clubs.length; i++) {
-    lb.addItem(clubs[i][0], clubs[i][1]);
-  }
-  mypanel.add(lb);
-  var cb = app.createCheckBox("Clear existing records first").setValue(true).setId('clear').setName('clear');
-  mypanel.add(cb);
-
-  var clientHandler =
-    app.createClientHandler().forEventSource().setEnabled(false);
-
-  var closeButton = app.createButton('Load');
-  var closeHandler = app.createServerClickHandler('loadRankings').addCallbackElement(lb).addCallbackElement(cb);
-  closeButton.addClickHandler(closeHandler).addClickHandler(clientHandler);
-  mypanel.add(closeButton);
-
-  // Add my panel to myapp
-  app.add(mypanel);
-
-  ss.show(app);
-};
-
-/**
  * Clear all entries in the specified sheet
  */
 function clearEntriesSheet_(sheet) {
@@ -219,65 +153,7 @@ function clearAllEntries() {
 }
 
 /**
- * Display the dialog used to add Hasler rankings from a spreadsheet stored in Google Docs
- *
- * @public
- */
-exports.showAddLocalRankings = function showAddLocalRankings() {
-  // Dialog height in pixels
-  var dialogHeight = 80;
-
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // Create the UiInstance object myapp and set the title text
-  var app = UiApp.createApplication().setTitle('Add Local Rankings').setHeight(dialogHeight);
-
-  // Create a vertical panel called mypanel and add it to myapp
-  var mypanel = app.createVerticalPanel().setStyleAttribute("width", "100%");
-
-  var lb = app.createListBox(false).setId('spreadsheetId').setName('spreadsheetId');
-  lb.setVisibleItemCount(1);
-
-  // add items to ListBox
-  var files = DriveApp.getFilesByType(MimeType.GOOGLE_SHEETS), file;
-  while (files.hasNext()) {
-    file = files.next();
-    lb.addItem(file.getName(), file.getId());
-  }
-  mypanel.add(lb);
-
-  var closeButton = app.createButton('Add');
-  var closeHandler = app.createServerClickHandler('addLocalRankings').addCallbackElement(lb);
-  closeButton.addClickHandler(closeHandler);
-  mypanel.add(closeButton);
-
-  // Add my panel to myapp
-  app.add(mypanel);
-
-  ss.show(app);
-};
-
-/**
- * Handler for adding Hasler Rankings from a spreadsheet stored in Google Docs. This is intended to be called when the dialog's submit button is clicked.
- *
- * @param {object} eventInfo Event information
- * @return {AppInstance} Active application instance
- */
-exports.addLocalRankings = function addLocalRankings(eventInfo) {
-  var app = UiApp.getActiveApplication();
-  var ssId = eventInfo.parameter.spreadsheetId;
-  if (ssId)
-  {
-    loadRankingsSheet_(SpreadsheetApp.openById(ssId));
-  } else {
-    throw "Could not locate source spreadsheet";
-  }
-  app.close();
-  return app;
-};
-
-/**
- * Display the dialog used to add Hasler rankings from a spreadsheet stored in Google Docs
+ * Display the dialog used to add Hasler entries from a spreadsheet stored in Google Docs
  *
  * @public
  */
@@ -1507,26 +1383,6 @@ exports.confirmClearEntries = function confirmClearEntries() {
  */
 exports.showClearEntries = function showClearEntries() {
   showPrompt('Clear Entries', '<p>Are you sure you want to clear all existing entries/results?</p>', 'confirmClearEntries', 80);
-};
-
-/**
- * OK button handler, so that we avoid polluting clearRankings_() with UiApp code
- */
-exports.confirmClearRankings = function confirmClearRankings() {
-  clearRankings_();
-  var app = UiApp.getActiveApplication();
-  app.close();
-  // The following line is REQUIRED for the widget to actually close.
-  return app;
-};
-
-/**
- * Display the confirmation dialog used to clear all rankings
- *
- * @public
- */
-exports.showClearRankings = function showClearRankings() {
-  showPrompt('Clear Rankings', '<p>Are you sure you want to clear all Hasler rankings? You will need to re-import some rankings before you can add any further race entries.</p>', 'confirmClearRankings', 80);
 };
 
 function getSelectedEntryRows(sheet) {
