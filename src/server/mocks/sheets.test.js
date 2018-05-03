@@ -8,7 +8,8 @@ var FakeRange = function(data, formulas, row, column, numRows, numColumns) {
 };
 FakeRange.prototype = {
   getValues: function() {
-    return [].concat(this.data);
+    var start = this.row - 1;
+    return [].concat(this.data.slice(start, start + this.numRows));
   },
   setValues: function(values) {
     return this.setDataValues(values, this.data);

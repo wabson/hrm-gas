@@ -13,12 +13,22 @@ describe('templates', function() {
   var values1 = [['Column1', 'Column2'], ['Value1', 'Value2']];
   var values2 = [['Column3', 'Column4'], ['Value3', 'Value4']];
   var values3 = [['Column5', 'Column6'], ['Value51', 'Value52']];
-  var racesValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange'], ['Race1', 'Tmpl1', '', '' , '']];
+  var valuesExternal = [['Column567', 'Column085'], ['Value320', 'Value419']];
+  var racesValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type'], ['Race1', 'Tmpl1', '', '' , '', '']];
+  var racesTableValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type'], ['Race1', 'Tmpl1', '', '' , '', 'Table']];
+  var racesExternalValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange'], ['Race77', 'MyOtherSS/Tmpl1', '', '' , '']];
 
   before(function () {
     global.Logger = {
       log: function (arg) {
         // console.log(arg);
+      }
+    };
+    global.SpreadsheetApp = {
+      openById: function (arg) {
+        var ss = new FakeSS();
+        ss.sheets = [ new FakeSheet('Tmpl1', valuesExternal) ];
+        return ss;
       }
     };
   });
@@ -39,6 +49,31 @@ describe('templates', function() {
     expect(destSS.sheets[0].name).to.equal('Race1');
     expect(destSS.sheets[0].data.length).to.equal(2);
     expect(destSS.sheets[0].data[0]).to.equal(values3[0]);
+  });
+
+  it('should throw an error when the sheet is not found', function () {
+    sourceSS.sheets = [sheet1, sheet2, racesSheet];
+    expect(function() { templates.createFromTemplate(sourceSS, destSS) }).to.throw();
+  });
+
+  it('should only the header row of sheets in Table mode', function () {
+    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
+    templates.createFromTemplate(sourceSS, destSS);
+    expect(destSS.sheets.length).to.equal(1);
+    expect(destSS.sheets[0].name).to.equal('Race1');
+    expect(destSS.sheets[0].data.length).to.equal(2);
+    expect(destSS.sheets[0].data[0]).to.equal(values3[0]);
+    expect(destSS.sheets[0].data[1]).to.equal(values3[1]);
+  });
+
+  it('should copy from external sheets when an ID is also provided in the template sheet column', function () {
+    racesSheet = new FakeSheet('Races', racesExternalValues);
+    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
+    templates.createFromTemplate(sourceSS, destSS);
+    expect(destSS.sheets.length).to.equal(1);
+    expect(destSS.sheets[0].name).to.equal('Race77');
+    expect(destSS.sheets[0].data.length).to.equal(2);
+    expect(destSS.sheets[0].data[0]).to.equal(valuesExternal[0]);
   });
 
   it('should create new empty sheets when no template sheet specified', function () {
@@ -94,14 +129,25 @@ describe('templates', function() {
     expect(destSS.sheets[2].hidden).to.equal(true);
   });
 
-  it('should copy formulae from existing sheets based on the template', function () {
-    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
+  it('should modify formulae from existing sheets based on the template for Table sheets', function () {
+    var racesSheet1 = new FakeSheet('Races', racesTableValues);
+    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet1];
     tmplSheet1.formulas = [['', ''], ['=VLOOKUP(A2, Tmpl1!A1:B2, 1)', '']];
     templates.createFromTemplate(sourceSS, destSS);
     expect(destSS.sheets.length).to.equal(1);
     expect(destSS.sheets[0].name).to.equal('Race1');
     expect(destSS.sheets[0].formulas.length).to.equal(2);
     expect(destSS.sheets[0].formulas[1][0]).to.equal('=VLOOKUP(A2, Race1!A1:B2, 1)');
+  });
+
+  it('should NOT modify formulae from existing sheets based on the template for non-Table sheets', function () {
+    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
+    tmplSheet1.formulas = [['', ''], ['=VLOOKUP(A2, Tmpl1!A1:B2, 1)', '']];
+    templates.createFromTemplate(sourceSS, destSS);
+    expect(destSS.sheets.length).to.equal(1);
+    expect(destSS.sheets[0].name).to.equal('Race1');
+    expect(destSS.sheets[0].formulas.length).to.equal(2);
+    expect(destSS.sheets[0].formulas[1][0]).to.equal('=VLOOKUP(A2, Tmpl1!A1:B2, 1)');
   });
 
 });

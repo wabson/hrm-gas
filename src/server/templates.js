@@ -4,6 +4,7 @@ var RACES_SHEET_NAME = 'Races';
 var RACES_COL_NAME = 'Name';
 var RACES_COL_TEMPLATE = 'TemplateSheet';
 var RACES_COL_HIDDEN = 'Hidden';
+var RACES_COL_TYPE = 'Type';
 var RACES_COL_CREW_SIZE = 'CrewSize';
 var RACES_COL_NUM_RANGE = 'NumRange';
 
@@ -26,17 +27,27 @@ exports.createFromTemplate = function createFromTemplate(templateSS, ss) {
   // Name, TemplateSheet, Hidden, StartOrder, CrewSize, NumRange
   for (var i = 0; i<rows.length; i++) {
     row = rows[i];
-    var srcSheet = row[RACES_COL_TEMPLATE] ? templateSS.getSheetByName(row[RACES_COL_TEMPLATE]) : null, srcRange = srcSheet ? srcSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn()) : null;
-    //var dstSheet = ss.insertSheet(row[RACES_COL_NAME], i), dstRange = dstSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn());
+    var sourceSS = templateSS, templateSheetName = row[RACES_COL_TEMPLATE];
+    var slashPosn = templateSheetName.indexOf('/'), referencesExternalSheet = templateSheetName && slashPosn > 0 &&
+      slashPosn < templateSheetName.length - 1;
+    if (referencesExternalSheet) {
+      sourceSS = SpreadsheetApp.openById(templateSheetName.substring(0, slashPosn));
+      templateSheetName = templateSheetName.substring(slashPosn + 1);
+    }
+    var srcSheet = templateSheetName ? sourceSS.getSheetByName(templateSheetName) : null;
+    if (templateSheetName && srcSheet === null) {
+      throw 'Sheet ' + templateSheetName + ' not found';
+    }
+    var srcRange = srcSheet ? srcSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn()) : null;
     var dstSheet = srcSheet ? srcSheet.copyTo(ss).setName(row[RACES_COL_NAME]) : ss.insertSheet(row[RACES_COL_NAME], i);
     if (row[RACES_COL_HIDDEN] === 1) {
       dstSheet.hideSheet();
     }
-    if (srcRange) {
+    if (srcRange && row[RACES_COL_TYPE] === 'Table') {
       var dstRange = dstSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn());
       var formulas = srcRange.getFormulas().map(function(rowFormulas) {
           return rowFormulas.map(function (formula) {
-            return formula ? formula.replace(row[RACES_COL_TEMPLATE], row[RACES_COL_NAME]) : formula;
+            return formula ? formula.replace(templateSheetName, row[RACES_COL_NAME]) : formula;
           });
       });
       dstRange.setFormulas(formulas);
