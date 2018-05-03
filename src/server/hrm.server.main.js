@@ -54,9 +54,9 @@ var BCU_NUMBER_REGEXP = '^(\\d+(?:/[A-Z])?|(SCA|WCA) ?\\d+|INT|[A-Z]{3}\\/\\d+|E
 var BCU_NUMBER_FULL_REGEXP = '^(\\d+(?:/[A-Z])?|(SCA|WCA) ?\\d+|INT)$';
 var VALIDATION_MSG_BCU = 'BCU Number must be in the correct format';
 
-var CLASSES_DEFS = [['S', 'Senior Male'],['V', 'Veteran Male'],['J', 'Junior Male'],['F', 'Senior Female'],['VF', 'Veteran Female'],['JF', 'Junior Female'],['C', 'SM Canoe'],['VC', 'VM Canoe'],['JC', 'JM Canoe'],['FC', 'SF Canoe'],['VFC', 'VF Canoe'],['JFC', 'JF Canoe']];
-var CLASSES_ALL = ['S','V','J','F','VF','JF','C','VC','JC','FC','VFC','JFC'];
-var CLASSES_LIGHTNING = ['J','JF'];
+var CLASSES_DEFS = [['SMK', 'Senior Male Kayak'],['VMK', 'Veteran Male Kayak'],['JMK', 'Junior Male Kayak'],['SFK', 'Senior Female Kayak'],['VFK', 'Veteran Female Kayak'],['JFK', 'Junior Female Kayak'],['SMC', 'Senior Male Canoe'],['VMC', 'Veteran Male Canoe'],['JMC', 'Junior Male Canoe'],['SFC', 'Senior Female Canoe'],['VFC', 'Veteran Female Canoe'],['JFC', 'Junior Female Canoe']];
+var CLASSES_ALL = ['SMK','VMK','JMK','SFK','VFK','JFK','SMC','VMC','JMC','SFC','VFC','JFC'];
+var CLASSES_LIGHTNING = ['JMK','JFK'];
 
 exports.CLASSES_DEFS = CLASSES_DEFS;
 exports.CLASSES_ALL = CLASSES_ALL;
