@@ -7,33 +7,71 @@ var FakeRange = function(data, formulas, row, column, numRows, numColumns) {
   this.numColumns = numColumns;
 };
 FakeRange.prototype = {
+  getWidth: function() {
+    return this.numColumns;
+  },
+  getHeight: function() {
+    return this.numRows;
+  },
   getValues: function() {
-    var start = this.row - 1;
-    return [].concat(this.data.slice(start, start + this.numRows));
+    return this.getDataValues(this.data);
   },
   setValues: function(values) {
     return this.setDataValues(values, this.data);
   },
-  setDataValues: function(values, data) {
-    this.padRowData(this.row - 1 + values.length);
-    if (data.length > 0 && this.numColumns !== data[0].length) {
-      throw 'No of columns in range must be equal to the no of columns in the sheet';
-    }
-    data.splice.apply(data, [this.row - 1, values.length].concat(values));
+  getDataValues: function(data) {
+    var start = this.row - 1;
+    return [].concat(data.slice(start, start + this.numRows).map(function(row) { return [].concat(row) } ));
   },
-  padRowData: function(newSize) {
-    if (this.data.length >= newSize) {
+  setDataValues: function(values, data) {
+    var newLength = Math.max(this.row - 1 + values.length);
+    this.padRowData(data, newLength);
+    if (values.length > 0 && this.numColumns !== values[0].length) {
+      throw 'No of columns in range must be equal to the no of values columns';
+    }
+    if (values.length !== this.numRows) {
+      throw 'No of rows must be equal to the number of rows in the range';
+    }
+    var rowsSlice = data.slice(this.row - 1, this.row - 1 + values.length);
+    rowsSlice.forEach(function(rowData, index) {
+      rowData.splice.apply(rowData, [this.column - 1, values[index].length].concat(values[index]));
+    });
+    //data.splice.apply(data, [this.row - 1, values.length].concat(values));
+  },
+  padRowData: function(data, newSize) {
+    if (data.length >= newSize) {
       return;
     }
-    for (var i=Math.max(0, this.data.length-1); i<newSize; i++) {
-      this.data.push(['']);
+    for (var i=data.length; i<newSize; i++) {
+      data.push(['']);
     }
   },
+  getEmptyValues: function(data) {
+    var start = this.row - 1;
+    return [].concat(data.slice(start, start + this.numRows).map(function(row) { return new Array(row.length); } ));
+  },
   getFormulas: function() {
-    return this.formulas;
+    return this.getDataValues(this.formulas);
   },
   setFormulas: function(values) {
     return this.setDataValues(values, this.formulas);
+  },
+  setNumberFormat: function() {
+  },
+  getNumberFormats: function() {
+    return this.getEmptyValues(this.data);
+  },
+  setNumberFormats: function() {
+  },
+  getBackgrounds: function() {
+    return [];
+  },
+  setBackgrounds: function() {
+  },
+  getHorizontalAlignments: function() {
+    return [];
+  },
+  setHorizontalAlignments: function() {
   }
 };
 
@@ -52,10 +90,13 @@ FakeSheet.prototype = {
     return this.data.length ? this.data[0].length : 1;
   },
   getLastRow: function() {
-    return Math.max(this.data.length, 1);
+    return Math.max(this.data.length, this.formulas.length, 1);
   },
   getRange: function(row, column, numRows, numColumns) {
     return new FakeRange(this.data, this.formulas, row, column, numRows, numColumns);
+  },
+  getDataRange: function() {
+    return new FakeRange(this.data, this.formulas, 1, 1, Math.max(this.data.length, 1), this.data.length ? Math.max(this.data[0].length, 1) : 1);
   },
   setName: function(name) {
     this.name = name;
@@ -69,6 +110,10 @@ FakeSheet.prototype = {
   },
   showSheet: function() {
     this.hidden = false;
+  },
+  clear: function() {
+    this.data = [];
+    this.formulas = [];
   }
 };
 

@@ -3264,10 +3264,6 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
 
   spreadsheet.deleteSheet(tempSheet);
 
-  if (options.importRankings === true) {
-    rankings.loadRankingsXLS(spreadsheet);
-  }
-
   setRaceInfo_({
     regionId: options.raceRegion,
     raceName: options.raceName

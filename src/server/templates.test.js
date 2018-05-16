@@ -86,7 +86,7 @@ describe('templates', function() {
   });
 
   it('should populate race numbers in new sheets', function () {
-    racesSheet.data[1] = ['Race1', '', '', '' , '1:6,7:10'];
+    racesSheet.data[1] = ['Race1', 'Tmpl1', '', '' , '1:6,7:10', 'Table'];
     sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
     templates.createFromTemplate(sourceSS, destSS);
     expect(destSS.sheets.length).to.equal(1);
@@ -103,7 +103,7 @@ describe('templates', function() {
   });
 
   it('should populate race numbers for crews with multiple members', function () {
-    racesSheet.data[1] = ['Race1', '', '', '2' , '1:4'];
+    racesSheet.data[1] = ['Race1', 'Tmpl1', '', '2' , '1:4', 'Table'];
     sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
     templates.createFromTemplate(sourceSS, destSS);
     expect(destSS.sheets.length).to.equal(1);
@@ -148,6 +148,24 @@ describe('templates', function() {
     expect(destSS.sheets[0].name).to.equal('Race1');
     expect(destSS.sheets[0].formulas.length).to.equal(2);
     expect(destSS.sheets[0].formulas[1][0]).to.equal('=VLOOKUP(A2, Tmpl1!A1:B2, 1)');
+  });
+
+  it('should return information on the specified row from the template index', function() {
+    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
+    var templateItem = templates.getTemplateSheetByName(sourceSS, 'Race1');
+    expect(templateItem['Name']).to.equal('Race1');
+    expect(templateItem['TemplateSheet']).to.equal('Tmpl1');
+  });
+
+  it('should return null if the specified row does not exist in the template index', function() {
+    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
+    var templateItem = templates.getTemplateSheetByName(sourceSS, 'DoesNotExist');
+    expect(templateItem).to.equal(null);
+  });
+
+  it('should throw an error if there is no index sheet', function () {
+    sourceSS.sheets = [sheet1, sheet2];
+    expect(function() { templates.getTemplateSheetByName(sourceSS, destSS) }).to.throw();
   });
 
 });

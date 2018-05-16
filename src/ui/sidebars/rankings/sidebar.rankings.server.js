@@ -8,8 +8,8 @@ exports.sidebar_rankings_import = function sidebar_rankings_import(spreadsheetId
 
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
 
-    rankings.clearRankingsIfSheetExists(spreadsheet, false);
-    rankings.loadRankingsXLS(spreadsheet);
+    rankings.clearRankingsIfSheetExists(spreadsheet);
+    rankings.loadRankingsFromTemplate(spreadsheet);
 
     return exports.sidebar_rankings_info(spreadsheetId);
 };
@@ -21,7 +21,7 @@ exports.sidebar_rankings_info = function sidebar_rankings_info(spreadsheetId) {
 
     if (rankingsSheet !== null) {
         rankingsSize = rankings.getNumRankings(rankingsSheet);
-        rankingsLastUpdated = rankingsSize > 0 ? rankings.getRankingsLastUpdated(rankingsSheet) : null;
+        rankingsLastUpdated = rankingsSize > 0 ? rankings.getRankingsSheetLastUpdated(spreadsheet) : null;
     }
 
     return {
@@ -34,7 +34,7 @@ exports.sidebar_rankings_info = function sidebar_rankings_info(spreadsheetId) {
 exports.sidebar_rankings_last_updated = function sidebar_rankings_last_updated(spreadsheetId) {
 
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId),
-        lastUpdated = rankings.getRankingsWebsiteLastUpdated();
+        lastUpdated = rankings.getRankingsTemplateSheetLastUpdated(spreadsheet);
 
     return lastUpdated ? Utilities.formatDate(lastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : null;
 };

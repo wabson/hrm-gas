@@ -8,6 +8,8 @@ var RACES_COL_TYPE = 'Type';
 var RACES_COL_CREW_SIZE = 'CrewSize';
 var RACES_COL_NUM_RANGE = 'NumRange';
 
+var RACE_TYPE_TABLE = 'Table';
+
 var _createNumberValues = function(rangesStr, crewSize) {
   crewSize = crewSize || 1;
   return rangesStr.split(',').reduce(function(values, rangeStr) {
@@ -21,20 +23,40 @@ var _createNumberValues = function(rangesStr, crewSize) {
   }, []);
 };
 
+var _getTemplateSheets = function getTemplate(templateSS) {
+  return tables.getRows(templateSS.getSheetByName(RACES_SHEET_NAME));
+};
+
+exports.getTemplateSheetByName = function getTemplateSheetByName(templateSS, sheetName) {
+  var rows = _getTemplateSheets(templateSS), row;
+  for (var i = 0; i<rows.length; i++) {
+    row = rows[i];
+    if (row[RACES_COL_NAME] === sheetName) {
+      return row;
+    }
+  }
+  return null;
+};
+
+exports.openSheet = function openReferencedSheet(templateSS, sheetName) {
+  var sourceSS = templateSS, templateSheetName = sheetName;
+  var slashPosn = templateSheetName.indexOf('/'), referencesExternalSheet = templateSheetName && slashPosn > 0 &&
+    slashPosn < templateSheetName.length - 1;
+  if (referencesExternalSheet) {
+    sourceSS = SpreadsheetApp.openById(templateSheetName.substring(0, slashPosn));
+    templateSheetName = templateSheetName.substring(slashPosn + 1);
+  }
+  return templateSheetName ? sourceSS.getSheetByName(templateSheetName) : null;
+};
+
 exports.createFromTemplate = function createFromTemplate(templateSS, ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var rows = tables.getRows(templateSS.getSheetByName(RACES_SHEET_NAME)), row;
+  var rows = _getTemplateSheets(templateSS), row, templateSheetName, srcSheet;
   // Name, TemplateSheet, Hidden, StartOrder, CrewSize, NumRange
   for (var i = 0; i<rows.length; i++) {
     row = rows[i];
-    var sourceSS = templateSS, templateSheetName = row[RACES_COL_TEMPLATE];
-    var slashPosn = templateSheetName.indexOf('/'), referencesExternalSheet = templateSheetName && slashPosn > 0 &&
-      slashPosn < templateSheetName.length - 1;
-    if (referencesExternalSheet) {
-      sourceSS = SpreadsheetApp.openById(templateSheetName.substring(0, slashPosn));
-      templateSheetName = templateSheetName.substring(slashPosn + 1);
-    }
-    var srcSheet = templateSheetName ? sourceSS.getSheetByName(templateSheetName) : null;
+    templateSheetName = row[RACES_COL_TEMPLATE];
+    srcSheet = exports.openSheet(templateSS, templateSheetName);
     if (templateSheetName && srcSheet === null) {
       throw 'Sheet ' + templateSheetName + ' not found';
     }
@@ -43,22 +65,23 @@ exports.createFromTemplate = function createFromTemplate(templateSS, ss) {
     if (row[RACES_COL_HIDDEN] === 1) {
       dstSheet.hideSheet();
     }
-    if (srcRange && row[RACES_COL_TYPE] === 'Table') {
+    if (srcRange && row[RACES_COL_TYPE] === RACE_TYPE_TABLE) {
       var dstRange = dstSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn());
       var formulas = srcRange.getFormulas().map(function(rowFormulas) {
           return rowFormulas.map(function (formula) {
             return formula ? formula.replace(templateSheetName, row[RACES_COL_NAME]) : formula;
           });
       });
-      dstRange.setFormulas(formulas);
+      if (formulas.length > 0) {
+        dstRange.setFormulas(formulas);
+      }
       // Re-set headers after setting formulas
       dstSheet.getRange(1, 1, 1, srcSheet.getLastColumn()).setValues(srcSheet.getRange(1, 1, 1, srcSheet.getLastColumn()).getValues());
-    }
-    if (row[RACES_COL_NUM_RANGE]) {
-      var numRange = _createNumberValues(row[RACES_COL_NUM_RANGE], row[RACES_COL_CREW_SIZE]);
-      Logger.log(numRange);
-      dstSheet.getRange(2, 1, numRange.length, 1).setValues(numRange);
-      Logger.log(numRange);
+
+      if (row[RACES_COL_NUM_RANGE]) {
+        var numRange = _createNumberValues(row[RACES_COL_NUM_RANGE], row[RACES_COL_CREW_SIZE]);
+        dstSheet.getRange(2, 1, numRange.length, 1).setValues(numRange);
+      }
     }
   }
 };
