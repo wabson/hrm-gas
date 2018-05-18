@@ -202,13 +202,13 @@ var RankingsUpdateCheck = BaseComponent.extend({
                                 .removeClass()
                                 .addClass('message-box info')
                                 .find('p')
-                                .html('A new version of the ranking list may be available updated ' +
+                                .html('A new version of the ranking list is available updated ' +
                                     dateFormatters.short(new Date(webLastUpdated)));
                     } else {
                         if (this.displayUpToDateConfirmation) {
                             this.$el.css('display', 'block')
                                     .removeClass()
-                                    .addClass('message info')
+                                    .addClass('message-box info')
                                     .find('p')
                                     .html('You have the latest version of the ranking list');
                         }

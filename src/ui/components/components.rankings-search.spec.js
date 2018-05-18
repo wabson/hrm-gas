@@ -248,7 +248,7 @@ describe('Rankings update check component', function() {
                 google.script.run.addData('sidebar_rankings_last_updated', '2016-06-04');
                 this.view.render();
                 expect(this.view.el.innerText)
-                    .toEqual('A new version of the ranking list may be available updated 4 Jun 2016');
+                    .toEqual('A new version of the ranking list is available updated 4 Jun 2016');
             });
 
             it('should indicate a newer version of the ranking list is available when no last updated date is known',
@@ -257,7 +257,7 @@ describe('Rankings update check component', function() {
                     this.view.initialize({});
                     this.view.render();
                     expect(this.view.el.innerText)
-                        .toEqual('A new version of the ranking list may be available updated 3 Jun 2016');
+                        .toEqual('A new version of the ranking list is available updated 3 Jun 2016');
                 });
 
             it('should indicate errors encountered when checking for a newer version of the ranking list', function() {

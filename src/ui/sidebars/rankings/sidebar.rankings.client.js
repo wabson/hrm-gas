@@ -1,3 +1,10 @@
+var dateFormatters = {
+    short: function(d) {
+        var parts = d.toDateString().split(' ');
+        return parts.length === 4 ? [parts[2].replace(/^0/, ''), parts[1], parts[3]].join(' ') : '';
+    }
+};
+
 var RankingsView = BaseComponent.extend({
 
     events: {
@@ -80,7 +87,7 @@ var RankingsView = BaseComponent.extend({
             (data.rankingsSize.toLocaleString ? data.rankingsSize.toLocaleString(): data.rankingsSize) +
             ' known marathon rankings') : 'No marathon rankings have been imported';
             if (data.lastUpdated) {
-                text += ', last updated on ' + data.lastUpdated;
+                text += ', last updated on ' + dateFormatters.short(new Date(data.lastUpdated));
             }
             return text;
         } else {
