@@ -34,12 +34,12 @@ function getRankingsSheetLastUpdated(spreadsheet) {
   return rankingsSheet ? getRankingsLastUpdated_(rankingsSheet) : null;
 }
 
-function loadRankingsFromTemplate(ss) {
+function loadRankingsFromTemplate(ss, clubName) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var rankingsSheet = templates.getTemplateSheetByName(ss, RANKINGS_SHEET_NAME);
   try {
     if (rankingsSheet !== null) {
-      loadRankingsSheet(templates.openSheet(ss, rankingsSheet[RACES_COL_TEMPLATE]), ss);
+      loadRankingsSheet(templates.openSheet(ss, rankingsSheet[RACES_COL_TEMPLATE]), ss, clubName);
     } else {
       Logger.log('No rankings sheet was found in the index');
     }
@@ -139,22 +139,10 @@ function setRankingsLastUpdated_(rankingsSheet, headers, sourceRowValues) {
   return null;
 }
 
-/**
- * Clear all Hasler rankings in the current spreadsheet
- */
-function clearRankings_(ss) {
-  // Locate Rankings sheet or create it if it doesn't already exist
-  var sheet = (ss || SpreadsheetApp.getActiveSpreadsheet()).getSheetByName(RANKINGS_SHEET_NAME);
-  if (!sheet) {
-    throw "Could not find Rankings sheet";
-  }
-  sheet.clear();
-}
-
 function clearRankingsIfSheetExists_(ss) {
-  var sheet = ss || SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RANKINGS_SHEET_NAME);
+  var sheet = (ss || SpreadsheetApp.getActiveSpreadsheet()).getSheetByName(RANKINGS_SHEET_NAME);
   if (sheet !== null) {
-    clearRankings_(ss);
+    sheet.clear();
   }
 }
 

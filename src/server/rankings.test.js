@@ -36,34 +36,29 @@ describe('rankings', function() {
     rankingsSS.sheets = [ rankingsSheet ];
   });
 
-  // it('should parse abbreviated dates', function() {
-  //   var rankings = require('./rankings');
-  //   fetchStub.callsFake(function() {
-  //     return { getContentText: function() { return '<html><body><p>UPDATED 6 FEB 2017</p></body></html>'; } };
-  //   });
-  //   expect(rankings.getRankingsLastUpdated()).to.equalDate(new Date(2017, 1, 6));
-  // });
-  //
-  // it('should parse long dates', function() {
-  //   var rankings = require('./rankings');
-  //   fetchStub.callsFake(function() {
-  //     return { getContentText: function() { return '<html><body><p>UPDATED 17 MARCH 2015</p></body></html>'; } };
-  //   });
-  //   expect(rankings.getRankingsLastUpdated()).to.equalDate(new Date(2015, 2, 17));
-  // });
-  //
-  // it('should return null if no date provided', function() {
-  //   var rankings = require('./rankings');
-  //   fetchStub.callsFake(function() {
-  //     return { getContentText: function() { return '<html><body><p></p></body></html>'; } };
-  //   });
-  //   expect(rankings.getRankingsLastUpdated()).to.equal(null);
-  // });
-
   describe('get information', function() {
 
     it('should return the correct updated date', function() {
       expect(rankings.getRankingsSheetLastUpdated(rankingsSS)).to.equalDate(new Date(2018, 0, 14));
+    });
+
+    it('should return the correct updated date when date is formatted as a number', function() {
+      var newColumns = [].concat(rankingsValues[0]);
+      newColumns[7] = 39448;
+      rankingsSheet.data[0] = newColumns;
+      expect(rankings.getRankingsSheetLastUpdated(rankingsSS)).to.equalDate(new Date(2008, 0, 1));
+    });
+
+    it('should return a null updated date when no date is present in the rankings', function() {
+      var newColumns = [].concat(rankingsValues[0]);
+      newColumns.pop();
+      rankingsSheet.data[0] = newColumns;
+      expect(rankings.getRankingsSheetLastUpdated(rankingsSS)).to.equal(null);
+    });
+
+    it('should return a null updated date if rankings sheet is empty', function() {
+      rankingsSheet.clear();
+      expect(rankings.getRankingsSheetLastUpdated(rankingsSS)).to.equal(null);
     });
 
     it('should return the correct number of rankings', function() {
@@ -89,6 +84,19 @@ describe('rankings', function() {
     it('should load rankings using the template index', function() {
       rankings.loadRankingsFromTemplate(rankingsSS);
       expect(rankings.getNumRankings(rankingsCopySheet)).to.equal(2);
+    });
+
+    it('should load rankings limited by club', function() {
+      rankings.loadRankingsFromTemplate(rankingsSS, 'ELM');
+      expect(rankings.getNumRankings(rankingsCopySheet)).to.equal(1);
+    });
+
+    it('should deal with no update date being present in the source sheet', function() {
+      var newColumns = [].concat(rankingsValues[0]);
+      newColumns.pop();
+      rankingsSheet.data[0] = newColumns;
+      rankings.loadRankingsFromTemplate(rankingsSS);
+      expect(rankings.getRankingsSheetLastUpdated(rankingsSS)).to.equal(null);
     });
 
   });

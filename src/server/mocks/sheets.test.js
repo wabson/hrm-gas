@@ -112,8 +112,8 @@ FakeSheet.prototype = {
     this.hidden = false;
   },
   clear: function() {
-    this.data = [];
-    this.formulas = [];
+    this.data = [[]];
+    this.formulas = [[]];
   }
 };
 

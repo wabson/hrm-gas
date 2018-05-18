@@ -15,7 +15,7 @@ exports.sidebar_entries_race_info = function sidebar_entries_race_info(spreadshe
 
     if (rankingsSheet !== null) {
         rankingsSize = rankings.getNumRankings(rankingsSheet);
-        rankingsLastUpdated = rankingsSize > 0 ? rankings.getRankingsLastUpdated(rankingsSheet) : null;
+        rankingsLastUpdated = rankingsSize > 0 ? rankings.getRankingsSheetLastUpdated(spreadsheet) : null;
     }
 
     var driveProps = hrm.getDriveProperties(spreadsheetId);
