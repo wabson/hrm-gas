@@ -36,7 +36,6 @@ global.setFreezes = hrm.setFreezes;
 global.createPrintableEntries = hrm.createPrintableEntries;
 global.createPrintableResults = hrm.createPrintableResults;
 global.createClubEntries = hrm.createClubEntries;
-global.createNumberBoards = hrm.createNumberBoards;
 global.checkEntriesFromRankings = hrm.checkEntriesFromRankings;
 
 global.close = uiService.close;

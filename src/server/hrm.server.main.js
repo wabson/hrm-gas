@@ -2478,63 +2478,6 @@ function createClubSpreadsheet_(name, columnNames, scriptProps) {
 }
 
 /**
- * Create printable number board inserts for all entries
- *
- * @public
- */
-exports.createNumberBoards = function createNumberBoards() {
-  createNumberBoards_(null, true);
-};
-
-function createNumberBoards_(name, truncateEmpty) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), srcSheets = racing.getRaceSheets(ss), sheetName;
-  var docname, doc, body;
-  var style = {};
-  style[DocumentApp.Attribute.HORIZONTAL_ALIGNMENT] = DocumentApp.HorizontalAlignment.CENTER;
-  style[DocumentApp.Attribute.FONT_FAMILY] = DocumentApp.FontFamily.ARIAL;
-  style[DocumentApp.Attribute.FONT_SIZE] = 230;
-  style[DocumentApp.Attribute.BOLD] = true;
-  var lastbn = 0;
-  function appendNumber(body, num) {
-    if (("" + num).length > 3) {
-      style[DocumentApp.Attribute.FONT_SIZE] = 200;
-    } else {
-      style[DocumentApp.Attribute.FONT_SIZE] = 230;
-    }
-    body.appendParagraph(num).setAttributes(style);
-    body.appendParagraph(num).setAttributes(style);
-  }
-  // Copy existing sheets
-  var entryIter = function(a) {
-    // Add the boat, twice
-    appendNumber(body, a.boatNumber);
-    lastbn = a.boatNumber;
-  };
-  for (var i = 0; i < srcSheets.length; i++) {
-    if (srcSheets[i].isSheetHidden() || srcSheets[i].getSheetProtection().isProtected()) {
-      continue;
-    }
-    sheetName = srcSheets[i].getName();
-    docname = (name || ss.getName()) + " (Number Boards " + sheetName + ")";
-    doc = DocumentApp.create(docname);
-    body = doc.getBody();
-    var lastRow = truncateEmpty ? getNextEntryRow(srcSheets[i]) - 1 : srcSheets[i].getLastRow();
-    if (lastRow > 1) {
-      var srcRange = srcSheets[i].getRange(1, 1, lastRow, srcSheets[i].getLastColumn()), entries = getEntryRowData(srcRange, !truncateEmpty);
-      // Add entries into the document
-      entries.forEach(entryIter);
-      // Add 10 more onto the end (or 5 for K2s)
-      var numToAdd = sheetName.match(/Div\d_\d/) ? 5 : 10;
-      for (var j = lastbn + 1; j <= lastbn + numToAdd; j++) {
-        appendNumber(body, j);
-      }
-    }
-    doc.saveAndClose();
-  }
-  return doc;
-}
-
-/**
  * Look through all the current entries and flag duplicates
  */
 function checkEntryDuplicateWarnings(spreadsheet) {
