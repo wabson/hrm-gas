@@ -33,7 +33,6 @@ global.setFormatting = hrm.setFormatting;
 global.setProtection = hrm.setProtection;
 global.setFreezes = hrm.setFreezes;
 
-global.populateFromHtmlResults = hrm.populateFromHtmlResults;
 global.createPrintableEntries = hrm.createPrintableEntries;
 global.createPrintableResults = hrm.createPrintableResults;
 global.createClubEntries = hrm.createClubEntries;
