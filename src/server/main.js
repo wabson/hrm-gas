@@ -33,12 +33,6 @@ global.onSetStartTimesEnter = hrm.onSetStartTimesEnter;
 global.showSetFinishTimes = hrm.showSetFinishTimes;
 global.setFinishTimes = hrm.setFinishTimes;
 
-global.calculatePromotions = hrm.calculatePromotions;
-global.setPromotionsDiv123 = hrm.setPromotionsDiv123;
-global.setPromotionsDiv456 = hrm.setPromotionsDiv456;
-global.setPromotionsDiv789 = hrm.setPromotionsDiv789;
-global.calculatePoints = hrm.calculatePoints;
-
 global.setFormulas = hrm.setFormulas;
 global.setValidation = hrm.setValidation;
 global.setFormatting = hrm.setFormatting;
@@ -169,8 +163,6 @@ global.onOpen = function onOpen(e) {
     .addSubMenu(ui.createMenu('Results')
     //   .addItem('Set Start Times', 'showSetStartTimes')
     //   .addItem('Set Finish Times', 'showSetFinishTimes')
-      .addItem('Calculate Promotions', 'calculatePromotions')
-      .addItem('Calculate Points', 'calculatePoints')
       .addItem('Set Formulas', 'setFormulas')
       .addSeparator()
       .addItem('Live Results', 'showResultsURL')
