@@ -27,12 +27,6 @@ global.showResultsURL = hrm.showResultsURL;
 global.showEntriesURL = hrm.showEntriesURL;
 global.showRaceLevies = hrm.showRaceLevies;
 
-global.showSetStartTimes = hrm.showSetStartTimes;
-global.setStartTimes = hrm.setStartTimes;
-global.onSetStartTimesEnter = hrm.onSetStartTimesEnter;
-global.showSetFinishTimes = hrm.showSetFinishTimes;
-global.setFinishTimes = hrm.setFinishTimes;
-
 global.setFormulas = hrm.setFormulas;
 global.setValidation = hrm.setValidation;
 global.setFormatting = hrm.setFormatting;
@@ -161,8 +155,6 @@ global.onOpen = function onOpen(e) {
       .addSeparator()
       .addItem('Finance Summary', 'showRaceLevies'))
     .addSubMenu(ui.createMenu('Results')
-    //   .addItem('Set Start Times', 'showSetStartTimes')
-    //   .addItem('Set Finish Times', 'showSetFinishTimes')
       .addItem('Set Formulas', 'setFormulas')
       .addSeparator()
       .addItem('Live Results', 'showResultsURL')
