@@ -27,12 +27,6 @@ global.showResultsURL = hrm.showResultsURL;
 global.showEntriesURL = hrm.showEntriesURL;
 global.showRaceLevies = hrm.showRaceLevies;
 
-global.setFormulas = hrm.setFormulas;
-global.setValidation = hrm.setValidation;
-global.setFormatting = hrm.setFormatting;
-global.setProtection = hrm.setProtection;
-global.setFreezes = hrm.setFreezes;
-
 global.createPrintableEntries = hrm.createPrintableEntries;
 global.createPrintableResults = hrm.createPrintableResults;
 global.createClubEntries = hrm.createClubEntries;
@@ -139,10 +133,6 @@ global.onOpen = function onOpen(e) {
       .addItem('Update from Memberships', 'updateEntriesFromMemberships')
       .addItem('Check against Rankings', 'checkEntriesFromRankings')
       .addItem('Clear Entries', 'showClearEntries')
-      .addItem('Set Formatting', 'setFormatting')
-      .addItem('Set Formulas', 'setFormulas')
-      .addItem('Set Protection', 'setProtection')
-      .addItem('Set Validation', 'setValidation')
       .addSeparator()
       .addItem('Modify Crews', 'showModifyCrews')
       .addSeparator()
