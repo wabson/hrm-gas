@@ -1,6 +1,4 @@
-var hrm = require('./hrm.server.main');
-var web = require('./hrm.server.web');
-var dateformat = require('./dateformat');
+var uiUtils = require('./libs/lib.utils.ui.server');
 var dialogs = require('../ui/dialogs.controller.server');
 var apiRaceDetails = require('../ui/dialogs/race-details/dialogs.race-details.server');
 var apiStart = require('../ui/dialogs/start/dialogs.start.server');
@@ -28,6 +26,8 @@ global.openStartDialog = dialogs.openStartDialog;
 global.openRaceDetailsDialog = dialogs.openRaceDetailsDialog;
 global.openRankingsSidebar = dialogs.openRankingsSidebar;
 global.openEntriesSidebar = dialogs.openEntriesSidebar;
+
+global.include = uiUtils.includeHTML;
 
 /**
  * Called when an add-on is installed.
