@@ -67,14 +67,12 @@ function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
     selectedClass = 'Auto';
   }
   if (items.length > 0) {
-    var sheetName = ('Auto' == selectedClass) ? getTabName_(items || [], spreadsheet) : selectedClass;
+    var sheetName = ('Auto' === selectedClass) ? getTabName_(items || [], spreadsheet) : selectedClass;
     if (sheetName === null) {
       throw 'Could not find a suitable race';
     }
-    var crewsAddedDue = addDueAmountToEntry_(items, selectedClass, spreadsheet, isLate);
-    if (crewsAddedDue) {
-      headers.push('Due');
-    }
+    addIsLateToEntry_(items, isLate);
+    headers.push('Late?');
     var result = addEntryToSheet_(items, headers, sheetName, spreadsheet);
     result.sheetName = sheetName;
     return result;
@@ -85,27 +83,12 @@ function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
 
 exports.addEntry = addEntry;
 
-function addDueAmountToEntry_(members, raceName, spreadsheet, isLate) {
-  var sheetUtils = new SheetsUtilitiesLibrary({});
-  spreadsheet = spreadsheet || sheetUtils.getCurrentActiveSpreadsheet();
-  var driveProps = getDriveProperties(spreadsheet.getId()), member;
-  isLate = isLate === true;
-  var entrySenior = isLate ? driveProps.entrySeniorLate : driveProps.entrySenior;
-  var entryJunior = isLate ? driveProps.entryJuniorLate : driveProps.entryJunior;
-  var entryLightning = isLate ? driveProps.entryLightningLate : driveProps.entryLightning;
-  if (entrySenior && entryJunior) {
-    for (var i = 0; i<members.length; i++) {
-      member = members[i];
-      if (isLightningRaceName_(raceName)) {
-        member['Due'] = entryLightning || null;
-      }
-      if (member['Class']) {
-        member['Due'] = member['Class'].indexOf('J') > -1 ? entryJunior : entrySenior;
-      }
-    }
-    return members;
+function addIsLateToEntry_(members, isLate) {
+  var member;
+  for (var i = 0; i<members.length; i++) {
+    member = members[i];
+    member['Late?'] = isLate === true;
   }
-  return null;
 }
 
 /**
@@ -131,7 +114,7 @@ function rankingToEntryHeaders_(rankingHeaders) {
 }
 
 function rankingToEntryHeader_(header) {
-  return header.toLowerCase() == "division" ? header.substr(0, 3) : header;
+  return header.toLowerCase() === "division" ? header.substr(0, 3) : header;
 }
 
 /**
