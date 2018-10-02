@@ -62,29 +62,6 @@ function getRaceInfo(sheet) {
 
 exports.getRaceInfo = getRaceInfo;
 
-function findMatchingRaceSheet(raceName, sheets) {
-  var ass = SpreadsheetApp.getActiveSpreadsheet(), sheet = null;
-  if (!sheets) { // First try simple match
-    sheet = ass.getSheetByName(raceName);
-  }
-  if (sheet === null) {
-    var k2re = /Div(\d)_(\d)/, nameMatch = raceName.match(k2re);
-    if (nameMatch) { // K2 divisional race?
-      sheets = sheets || ass.getSheets(); // Fall back to active SS sheets if no list provided
-      for (var i=0; i<sheets.length; i++) {
-        var match = sheets[i].getName().match(k2re);
-        // Does the potential destination sheet 'include' the source sheet? e.g. Div3_4 includes Div3_3 and Div4_4, Div 4_6 (hypothetical) would include Div5_6
-        if (match && parseInt(match[1]) <= parseInt(nameMatch[1]) && parseInt(match[2]) >= parseInt(nameMatch[2])) {
-          sheet = sheets[i];
-          break;
-        }
-      }
-    }
-    return sheet;
-  }
-  return sheet;
-}
-
 function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
   if (!selectedClass) {
     selectedClass = 'Auto';
@@ -155,41 +132,6 @@ function rankingToEntryHeaders_(rankingHeaders) {
 
 function rankingToEntryHeader_(header) {
   return header.toLowerCase() == "division" ? header.substr(0, 3) : header;
-}
-
-/**
- * Return a full list of the taken entry placeholders on the given sheet
- * TODO This can be replaced with getEntryRowData()
- *
- * @return {array} Array of three-element arrays with the first element of each member representing the boat number, the second the row number and the second the number of rows available in the entry
- */
-function getEntryRows(sheet) {
-  Logger.log("getEntryRows: Sheet " + sheet.getName());
-  // Find the latest row with a number but without a name in the sheet
-  var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 4), values = range.getValues(), rows = [], currEntry = null;
-  for (var i=0; i<values.length; i++) {
-    if (values[i][0] && !((""+values[i][1]).trim() === "" && (""+values[i][2]).trim() === "" && (""+values[i][3]).trim() === "")) { // Number present and a name or BCU number
-      Logger.log("getEntryRows: Add " + values[i][0]);
-      if (currEntry !== null) {
-        rows.push(currEntry);
-      }
-      currEntry = [values[i][0], i+2, 1];
-    } else if ((""+values[i][0]).trim() === "") { // No number
-      if (currEntry !== null) {
-        currEntry[2] ++;
-      }
-    } else { // Number present but no details, this is not a completed entry
-      if (currEntry !== null) {
-        rows.push(currEntry);
-      }
-      currEntry = null;
-    }
-  }
-  // There may still be an entry in the buffer
-  if (currEntry !== null) {
-    rows.push(currEntry);
-  }
-  return rows;
 }
 
 /**
