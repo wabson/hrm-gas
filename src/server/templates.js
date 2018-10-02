@@ -97,6 +97,7 @@ var orderSheetsBasedOnTemplate = function orderSheetsBasedOnTemplate(rows, templ
       ss.moveActiveSheet(row[RACES_COL_INDEX]);
     }
   }
+  ss.setActiveSheet(ss.getSheets()[0]);
 };
 
 exports.createFromTemplate = function createFromTemplate(templateSS, ss) {

@@ -125,6 +125,9 @@ var FakeSS = function() {
   this.activeSheet = null;
 };
 FakeSS.prototype = {
+  getSheets: function getSheets() {
+    return this.sheets;
+  },
   getSheetByName: function(name) {
     var match = this.sheets.find(function(s) {
       return s.name === name;
@@ -136,6 +139,9 @@ FakeSS.prototype = {
     this.sheets.push(newSheet);
     this.setActiveSheet(newSheet);
     return newSheet;
+  },
+  getActiveSheet: function() {
+    return this.activeSheet;
   },
   setActiveSheet: function(sheet) {
     this.activeSheet = sheet;

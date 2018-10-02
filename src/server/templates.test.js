@@ -160,6 +160,13 @@ describe('templates', function() {
     expect(destSS.sheets[1].name).to.equal('Race2');
   });
 
+  it('should set the first sheet as the active one', function () {
+    var racesSheet1 = new FakeSheet('Races', racesUnorderedValues);
+    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet1];
+    templates.createFromTemplate(sourceSS, destSS);
+    expect(destSS.getActiveSheet().name).to.equal('Race1');
+  });
+
   it('should return information on the specified row from the template index', function() {
     sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
     var templateItem = templates.getTemplateSheetByName(sourceSS, 'Race1');
