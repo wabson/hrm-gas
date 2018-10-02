@@ -62,15 +62,15 @@ var createSheetsFromTemplate = function createSheetsFromTemplate(rows, templateS
     }
     var srcRange = srcSheet ? srcSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn()) : null;
     var dstSheet = srcSheet ? srcSheet.copyTo(ss).setName(row[RACES_COL_NAME]) : ss.insertSheet(row[RACES_COL_NAME], i);
-    if (row[RACES_COL_HIDDEN] === 1) {
+    if (row[RACES_COL_HIDDEN] === 1 || row[RACES_COL_HIDDEN] === true) {
       dstSheet.hideSheet();
     }
     if (srcRange && row[RACES_COL_TYPE] === RACE_TYPE_TABLE) {
       var dstRange = dstSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn());
       var formulas = srcRange.getFormulas().map(function(rowFormulas) {
-          return rowFormulas.map(function (formula) {
-            return formula ? formula.replace(templateSheetName, row[RACES_COL_NAME]) : formula;
-          });
+        return rowFormulas.map(function (formula) {
+          return formula ? formula.replace(templateSheetName, row[RACES_COL_NAME]) : formula;
+        });
       });
       if (formulas.length > 0) {
         dstRange.setFormulas(formulas);
