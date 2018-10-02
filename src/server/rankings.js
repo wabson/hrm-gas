@@ -41,10 +41,8 @@ function loadRankingsFromTemplate(ss, clubName) {
     if (rankingsSheet !== null) {
       loadRankingsSheet(templates.openSheet(ss, rankingsSheet[RACES_COL_TEMPLATE]), ss, clubName);
     } else {
-      Logger.log('No rankings sheet was found in the index');
     }
   } catch (e) {
-    Logger.log(e);
     // Races sheet may not be present
   }
 }
@@ -79,9 +77,7 @@ function loadRankingsSheet(sourceSheet, ss, clubName) {
     }
 
     var srcRows = tables.getRows(sourceSheet);
-    Logger.log(Utilities.formatString("Found %d total rankings", srcRows.length));
     if (clubName) {
-      Logger.log(Utilities.formatString("Filtering by club name '%s'", clubName));
       srcRows = srcRows.filter(function (val) {
         return val["Club"] == clubName;
       });
@@ -115,7 +111,6 @@ function getRankingsLastUpdated_(rankingsSheet) {
   if (lastRow > 0 && lastColumn > 0) {
     var rowValues = listTrim(rankingsSheet.getRange(1, 1, 1, lastColumn).getValues()[0]),
       lastValue = rowValues[rowValues.length-1];
-    Logger.log('Found candidate last updated value ' + lastValue);
     if (cellValueIsDate_(lastValue)) {
       return cellDateValue_(lastValue);
     }

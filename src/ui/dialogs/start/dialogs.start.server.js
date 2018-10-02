@@ -36,8 +36,6 @@ exports.dialog_start_getRaceInfo = function dialog_start_getRaceInfo(spreadsheet
 exports.dialog_start_submit = function dialog_start_submit(spreadsheetId, formData) {
     var spreadsheet = SpreadsheetApp.openById(spreadsheetId), template = SpreadsheetApp.openById(formData.type);
 
-    Logger.log('Setting race region ' + formData.region || 'ALL');
-
     hrm.setupRaceFromTemplate(spreadsheet, template, {
         importRankings: formData.importRankings === 'y',
         raceRegion: formData.region || 'ALL',

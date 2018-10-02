@@ -333,7 +333,6 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
 
   var sourceRaceType = getRaceType_(template.getId());
   if (sourceRaceType) {
-    Logger.log('Setting race type ' + sourceRaceType.value);
     setRaceType_(spreadsheet.getId(), sourceRaceType.value);
   }
 }

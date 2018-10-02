@@ -19,9 +19,7 @@ exports.saveEntriesHTML = function saveEntriesHTML(ss) {
     raceDate = Drive.Properties.get(ss.getId(), 'raceDate', {
       visibility: 'PUBLIC'
     }).value;
-    Logger.log('Drive properties returned publishedEntriesId ' + publishedEntriesId);
   } catch (e) {
-    Logger.log('Drive get properties threw exception ', e);
   }
   scriptProps = {
     publishedEntriesId: publishedEntriesId,
@@ -87,8 +85,6 @@ exports.savePublicProperty = function (spreadsheetId, propertyName, value) {
     }, spreadsheetId);
   }
   catch (ex) {
-    Logger.log('Caught exception whilst trying to save property %s:', propertyName);
-    Logger.log(ex);
   }
 };
 
@@ -111,11 +107,9 @@ function getResultsFromSpreadsheet(ss) {
   var pdSheet = ss.getSheetByName("PandD"), pdTimes = null, coursePdTimes = [], lastCourse = "", thisCourse = "";
   if (pdSheet && pdSheet.getLastRow() > 1) {
     pdTimes = [];
-    Logger.log("Reading PD times");
     var pdValues = pdSheet.getRange(2, 12, pdSheet.getLastRow()-1, 2).getValues();
     for (var k=0; k<pdValues.length; k++) {
       if (pdValues[k][0] && pdValues[k][1] && pdValues[k][1] instanceof Date) {
-        Logger.log("Found time " + pdValues[k][0]);
         thisCourse = pdValues[k][0].split(/K\d/)[0];
         if (lastCourse != thisCourse) {
           coursePdTimes = []; // Reset the list of times
@@ -132,7 +126,6 @@ function getResultsFromSpreadsheet(ss) {
   }
   var clubsSheet = ss.getSheetByName("Clubs"), clubPoints = [], lightningPoints = [];
   if (clubsSheet && clubsSheet.getLastRow() > 1) {
-    Logger.log("Reading club points");
     var clubRows = clubsSheet.getRange(2, 8, clubsSheet.getLastRow()-1, 4).getValues();
     for (var l=0; l<clubRows.length; l++) {
       if (clubRows[l][0]) {
@@ -144,7 +137,6 @@ function getResultsFromSpreadsheet(ss) {
         });
       }
     }
-    Logger.log("Reading lightning points");
     var lightningRows = clubsSheet.getRange(2, 13, clubsSheet.getLastRow()-1, 3).getValues();
     for (var m=0; m<lightningRows.length; m++) {
       if (lightningRows[m][0]) {
@@ -162,7 +154,6 @@ function getResultsFromSpreadsheet(ss) {
   data.races = classes;
   data.lastUpdated = getLastUpdated(ss.getId());
   data.allowPd = pdSheet !== null;
-  Logger.log("Return " + classes.length + " races");
   return data;
 }
 
