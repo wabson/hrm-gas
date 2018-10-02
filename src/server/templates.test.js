@@ -16,6 +16,7 @@ describe('templates', function() {
   var valuesExternal = [['Column567', 'Column085'], ['Value320', 'Value419']];
   var racesValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type'], ['Race1', 'Tmpl1', '', '' , '', '']];
   var racesTableValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type'], ['Race1', 'Tmpl1', '', '' , '', 'Table']];
+  var racesUnorderedValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type', 'Index'], ['Race2', 'Tmpl1', '', '' , '', '', 2], ['Race1', 'Tmpl1', '', '' , '', '', 1]];
   var racesExternalValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange'], ['Race77', 'MyOtherSS/Tmpl1', '', '' , '']];
 
   before(function () {
@@ -148,6 +149,15 @@ describe('templates', function() {
     expect(destSS.sheets[0].name).to.equal('Race1');
     expect(destSS.sheets[0].formulas.length).to.equal(2);
     expect(destSS.sheets[0].formulas[1][0]).to.equal('=VLOOKUP(A2, Tmpl1!A1:B2, 1)');
+  });
+
+  it('should create sheets in the specified order according to the index column', function () {
+    var racesSheet1 = new FakeSheet('Races', racesUnorderedValues);
+    sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet1];
+    templates.createFromTemplate(sourceSS, destSS);
+    expect(destSS.sheets.length).to.equal(2);
+    expect(destSS.sheets[0].name).to.equal('Race1');
+    expect(destSS.sheets[1].name).to.equal('Race2');
   });
 
   it('should return information on the specified row from the template index', function() {

@@ -143,8 +143,6 @@ global.onOpen = function onOpen(e) {
       .addSeparator()
       .addItem('Finance Summary', 'showRaceLevies'))
     .addSubMenu(ui.createMenu('Results')
-      .addItem('Set Formulas', 'setFormulas')
-      .addSeparator()
       .addItem('Live Results', 'showResultsURL')
       .addItem('Publish Results', 'saveResultsHTML')
       .addItem('Print Results', 'createPrintableResults')

@@ -83,8 +83,11 @@ var FakeSheet = function(name, data) {
 };
 FakeSheet.prototype = {
   copyTo: function(ss) {
-    ss.sheets.push(this);
-    return this;
+    var newSheet = new FakeSheet(this.name, this.data);
+    newSheet.hidden = this.hidden;
+    newSheet.formulas = this.formulas;
+    ss.sheets.push(newSheet);
+    return newSheet;
   },
   getLastColumn: function() {
     return this.data.length ? this.data[0].length : 1;
@@ -119,6 +122,7 @@ FakeSheet.prototype = {
 
 var FakeSS = function() {
   this.sheets = [];
+  this.activeSheet = null;
 };
 FakeSS.prototype = {
   getSheetByName: function(name) {
@@ -130,7 +134,28 @@ FakeSS.prototype = {
   insertSheet: function(name, index) {
     var newSheet = new FakeSheet(name);
     this.sheets.push(newSheet);
+    this.setActiveSheet(newSheet);
     return newSheet;
+  },
+  setActiveSheet: function(sheet) {
+    this.activeSheet = sheet;
+  },
+  moveActiveSheet: function(index) {
+    if (this.activeSheet === null) {
+      throw 'Active sheet not set';
+    }
+    var matchIndex = this.sheets.findIndex(function(s) {
+      return s.name === this.activeSheet.name;
+    }, this);
+    if (matchIndex === -1) {
+      throw 'Active sheet was not found';
+    }
+    if (index < 1 || index > this.sheets.length) {
+      throw 'Index must be greater than zero and less than or equal to the number of sheets';
+    }
+    var newIndex = index - 1;
+    this.sheets.splice(newIndex, 0, this.activeSheet);
+    this.sheets.splice(newIndex < matchIndex ? matchIndex + 1 : matchIndex, 1);
   }
 };
 

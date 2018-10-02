@@ -7,6 +7,7 @@ var RACES_COL_HIDDEN = 'Hidden';
 var RACES_COL_TYPE = 'Type';
 var RACES_COL_CREW_SIZE = 'CrewSize';
 var RACES_COL_NUM_RANGE = 'NumRange';
+var RACES_COL_INDEX = 'Index';
 
 var RACE_TYPE_TABLE = 'Table';
 
@@ -49,9 +50,8 @@ exports.openSheet = function openReferencedSheet(templateSS, sheetName) {
   return templateSheetName ? sourceSS.getSheetByName(templateSheetName) : null;
 };
 
-exports.createFromTemplate = function createFromTemplate(templateSS, ss) {
-  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var rows = _getTemplateSheets(templateSS), row, templateSheetName, srcSheet;
+var createSheetsFromTemplate = function createSheetsFromTemplate(rows, templateSS, ss) {
+  var row, templateSheetName, srcSheet;
   // Name, TemplateSheet, Hidden, StartOrder, CrewSize, NumRange
   for (var i = 0; i<rows.length; i++) {
     row = rows[i];
@@ -84,4 +84,24 @@ exports.createFromTemplate = function createFromTemplate(templateSS, ss) {
       }
     }
   }
+};
+
+var orderSheetsBasedOnTemplate = function orderSheetsBasedOnTemplate(rows, templateSS, ss) {
+  var row, currentSheet;
+  // Name, TemplateSheet, Hidden, StartOrder, CrewSize, NumRange
+  for (var i = 0; i<rows.length; i++) {
+    row = rows[i];
+    currentSheet = ss.getSheetByName(row[RACES_COL_NAME]);
+    ss.setActiveSheet(currentSheet);
+    if (row[RACES_COL_INDEX]) {
+      ss.moveActiveSheet(row[RACES_COL_INDEX]);
+    }
+  }
+};
+
+exports.createFromTemplate = function createFromTemplate(templateSS, ss) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  var rows = _getTemplateSheets(templateSS);
+  createSheetsFromTemplate(rows, templateSS, ss);
+  orderSheetsBasedOnTemplate(rows, templateSS, ss);
 };
