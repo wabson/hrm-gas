@@ -13,6 +13,7 @@ global.dialog_raceDetails_get = apiRaceDetails.dialog_raceDetails_get;
 global.dialog_raceDetails_set = apiRaceDetails.dialog_raceDetails_set;
 
 global.sidebar_entries_race_info = apiEntries.sidebar_entries_race_info;
+global.sidebar_entries_races = apiEntries.sidebar_entries_races;
 global.sidebar_entries_search = apiEntries.sidebar_entries_search;
 global.sidebar_entries_add = apiEntries.sidebar_entries_add;
 global.sidebar_entries_link = apiEntries.sidebar_entries_link;

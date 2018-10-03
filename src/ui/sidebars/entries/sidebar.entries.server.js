@@ -3,6 +3,7 @@
 
 var dateformat = require('../../../server/dateformat');
 var hrm = require('../../../server/hrm.server.main');
+var racing = require('../../../server/racing');
 var rankings = require('../../../server/rankings');
 var uiUtils = require('../../../server/libs/lib.utils.ui.server');
 
@@ -18,7 +19,7 @@ exports.sidebar_entries_race_info = function sidebar_entries_race_info(spreadshe
         rankingsLastUpdated = rankingsSize > 0 ? rankings.getRankingsSheetLastUpdated(spreadsheet) : null;
     }
 
-    var driveProps = hrm.getDriveProperties(spreadsheetId);
+    var raceProps = hrm.getRaceDateInfo(spreadsheet);
 
     return {
         classes: hrm.CLASSES_DEFS,
@@ -27,8 +28,12 @@ exports.sidebar_entries_race_info = function sidebar_entries_race_info(spreadshe
         rankingsSize: rankingsSize,
         lastUpdated: rankingsLastUpdated !== null ?
             Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : null,
-        raceDate: driveProps.raceDate ? Utilities.formatDate(dateformat.parseDate(driveProps.raceDate), spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : ''
+        raceDate: raceProps.raceDate ? Utilities.formatDate(raceProps.raceDate, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : ''
     };
+};
+
+exports.sidebar_entries_races = function sidebar_entries_races(ssKey) {
+    return racing.getRaceSheetNames(SpreadsheetApp.openById(ssKey));
 };
 
 exports.sidebar_entries_search = function sidebar_entries_search(spreadsheetId, term) {

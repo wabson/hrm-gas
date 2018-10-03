@@ -301,7 +301,7 @@ var AddEntryView = BaseComponent.extend({
     loadRaceNames_: function() {
         google.script.run
             .withSuccessHandler(_.bind(this.onRaceNamesLoaded, this))
-            .getRaceSheetNamesHTML(this.spreadsheetId);
+            .sidebar_entries_races(this.spreadsheetId);
     },
 
     loadRaceInfo_: function() {
