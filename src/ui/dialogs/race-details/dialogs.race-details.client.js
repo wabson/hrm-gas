@@ -23,7 +23,7 @@ var RaceDetailsDialog = BaseComponent.extend({
                     }),
                     new FormSelectField({
                         fieldId: 'region',
-                        label: 'Race Region',
+                        label: 'Hasler Region',
                         selectList: new SelectList({
                             id: 'select-region',
                             name: 'raceRegion',
