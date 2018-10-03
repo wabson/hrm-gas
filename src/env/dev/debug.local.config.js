@@ -15,7 +15,6 @@ function provideEnvironmentConfiguration_(configuration) {
     configuration.debug = true;
 
     configuration.app.raceTemplatesFolderId = '0B8A0SXNo_BkZYkIzZnNiTzRGNms';
-    configuration.app.clubsFileId = '1oUTH3FMWPd4HqyKA1AiaA1U3h9SZ1kVEGmS2B9bSxxs';
 
     return configuration;
 }
