@@ -100,9 +100,35 @@ var orderSheetsBasedOnTemplate = function orderSheetsBasedOnTemplate(rows, templ
   ss.setActiveSheet(ss.getSheets()[0]);
 };
 
+var updateSheetFormulasAndValidation = function updateSheetFormulasAndValidation(sheet) {
+  var lastCol = sheet.getDataRange().getLastColumn(), lastRow = sheet.getDataRange().getLastRow();
+  var range = sheet.getRange(1, 1, lastRow, lastCol);
+  var formulas = range.getFormulas();
+  var contents = range.getValues();
+  var dataValidations = range.getDataValidations();
+  var rangeWidth = range.getWidth(), rangeHeight = range.getHeight();
+  for (var r = 0; r < rangeHeight; r++) {
+    for (var c = 0; c < rangeWidth; c++) {
+      if (formulas[r][c].length > 1) {
+        contents[r][c] = formulas[r][c];
+      }
+    }
+  }
+  range.clearContent().clearDataValidations().setValues(contents).setDataValidations(dataValidations);
+};
+
+var updateAllSheetFormulas = function orderSheetsBasedOnTemplate(rows, ss) {
+  var currentSheet;
+  for (var i = 0; i<rows.length; i++) {
+    currentSheet = ss.getSheetByName(rows[i][RACES_COL_NAME]);
+    updateSheetFormulasAndValidation(currentSheet);
+  }
+};
+
 exports.createFromTemplate = function createFromTemplate(templateSS, ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var rows = _getTemplateSheets(templateSS);
   createSheetsFromTemplate(rows, templateSS, ss);
+  updateAllSheetFormulas(rows, ss);
   orderSheetsBasedOnTemplate(rows, templateSS, ss);
 };
