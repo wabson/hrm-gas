@@ -31,23 +31,21 @@ var DIVS_ALL = ["1","2","3","4","5","6","7","8","9","10","U12M","U12F","U10M","U
 
 exports.DIVS_ALL = DIVS_ALL;
 
-function getRaceInfoCellRange_(sheet) {
-  sheet = sheet || SpreadsheetApp.getActiveSpreadsheet();
-  var clubsSheet = sheet.getSheetByName("Clubs");
+function getMetaInfoCellRange_(ss, sheetName, range) {
+  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  var clubsSheet = ss.getSheetByName(sheetName);
   if (clubsSheet) {
-    return clubsSheet.getRange(1, 19, 1, 2);
+    return clubsSheet.getRange(range[0], range[1], range[2], range[3]);
   } else {
     return null;
   }
 }
 
-function setRaceInfo_(info, sheet) {
-  getRaceInfoCellRange_(sheet).setValues([[info.regionId || '', info.raceName || '']]);
+function getRaceInfoCellRange_(ss) {
+  return getMetaInfoCellRange_(ss, 'Clubs', [1, 19, 1, 2]);
 }
 
-exports.setRaceInfo = setRaceInfo_;
-
-function getRaceInfo(sheet) {
+function getRaceInfo_(sheet) {
   var range =  getRaceInfoCellRange_(sheet);
   if (range !== null) {
     var values = range.getValues();
@@ -60,7 +58,71 @@ function getRaceInfo(sheet) {
   }
 }
 
-exports.getRaceInfo = getRaceInfo;
+function setRaceInfo_(info, sheet) {
+  getRaceInfoCellRange_(sheet).setValues([[info.regionId || '', info.raceName || '']]);
+}
+
+exports.getRaceInfo = getRaceInfo_;
+exports.setRaceInfo = setRaceInfo_;
+
+function getEntryFeesInfoCellRange_(ss) {
+  return getMetaInfoCellRange_(ss, 'Entry Fees', [2, 2, 5, 2]);
+}
+
+function getEntryFeesInfo_(ss) {
+  var range =  getEntryFeesInfoCellRange_(ss);
+  if (range !== null) {
+    var values = range.getValues();
+    return {
+      entryJunior: values[0][0],
+      entrySenior: values[1][0],
+      entryVeteran: values[2][0],
+      entryDiv10: values[3][0],
+      entryLightning: values[4][0],
+      entryJuniorLate: values[0][1],
+      entrySeniorLate: values[1][1],
+      entryVeteranLate: values[2][1],
+      entryDiv10Late: values[3][1],
+      entryLightningLate: values[4][1]
+    };
+  } else {
+    return {};
+  }
+}
+
+function setEntryFeesInfo_(info, ss) {
+  getEntryFeesInfoCellRange_(ss).setValues([
+    [info.entryJunior || '', info.entryJuniorLate || ''],
+    [info.entrySenior || '', info.entrySeniorLate || ''],
+    [info.entryVeteran || '', info.entryVeteranLate || ''],
+    [info.entryDiv10 || '', info.entryDiv10Late || ''],
+    [info.entryLightning || '', info.entryLightningLate || '']
+  ]);
+}
+
+exports.getEntryFeesInfo = getEntryFeesInfo_;
+exports.setEntryFeesInfo = setEntryFeesInfo_;
+
+function getRaceDateCellRange_(ss) {
+  return getMetaInfoCellRange_(ss, 'Entry Fees', [1, 5, 1, 1]);
+}
+
+function getRaceDateInfo_(ss) {
+  var range =  getRaceDateCellRange_(ss);
+  if (range !== null) {
+    var values = range.getValues();
+    return { raceDate: values[0][0] };
+  } else {
+    return {};
+  }
+}
+
+function setRaceDateInfo_(info, ss) {
+  getRaceDateCellRange_(ss).setValues([[info.raceDate || '']]);
+}
+
+exports.getRaceDateInfo = getRaceDateInfo_;
+exports.setRaceDateInfo = setRaceDateInfo_;
 
 function addEntry(items, headers, selectedClass, spreadsheet, isLate) {
   if (!selectedClass) {

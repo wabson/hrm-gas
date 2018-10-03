@@ -39,12 +39,6 @@ var RaceDetailsDialog = BaseComponent.extend({
                         label: 'Race Date',
                         name: 'raceDate',
                         required: true
-                    }),
-                    new FormField({
-                        type: 'checkbox',
-                        label: 'Re-apply sheet validation',
-                        name: 'setValidation',
-                        value: 'y'
                     })
                 ],
                 {
@@ -59,8 +53,22 @@ var RaceDetailsDialog = BaseComponent.extend({
                         }),
                         new FormField({
                             type: 'number',
+                            label: 'Veteran',
+                            name: 'entryVeteran',
+                            placeholder: '0.00',
+                            step: '0.01'
+                        }),
+                        new FormField({
+                            type: 'number',
                             label: 'Junior',
                             name: 'entryJunior',
+                            placeholder: '0.00',
+                            step: '0.01'
+                        }),
+                        new FormField({
+                            type: 'number',
+                            label: 'Div10',
+                            name: 'entryDiv10',
                             placeholder: '0.00',
                             step: '0.01'
                         }),
@@ -85,8 +93,22 @@ var RaceDetailsDialog = BaseComponent.extend({
                         }),
                         new FormField({
                             type: 'number',
+                            label: 'Veteran',
+                            name: 'entryVeteranLate',
+                            placeholder: '0.00',
+                            step: '0.01'
+                        }),
+                        new FormField({
+                            type: 'number',
                             label: 'Junior',
                             name: 'entryJuniorLate',
+                            placeholder: '0.00',
+                            step: '0.01'
+                        }),
+                        new FormField({
+                            type: 'number',
+                            label: 'Div10',
+                            name: 'entryDiv10Late',
                             placeholder: '0.00',
                             step: '0.01'
                         }),
