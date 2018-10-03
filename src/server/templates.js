@@ -117,7 +117,7 @@ var updateSheetFormulasAndValidation = function updateSheetFormulasAndValidation
   range.clearContent().clearDataValidations().setValues(contents).setDataValidations(dataValidations);
 };
 
-var updateAllSheetFormulas = function orderSheetsBasedOnTemplate(rows, ss) {
+var updateAllSheetFormulas = function updateAllSheetFormulas(rows, ss) {
   var currentSheet;
   for (var i = 0; i<rows.length; i++) {
     currentSheet = ss.getSheetByName(rows[i][RACES_COL_NAME]);

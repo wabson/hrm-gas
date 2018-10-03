@@ -23,7 +23,6 @@
         lastUpdated: '2016-04-24',
         rankingsSize: 32323
     });
-    runner.addData('getRaceSheetNamesHTML', ['Div1', 'Div2', 'Div3']);
     runner.addData('sidebar_rankings_last_updated', '2016-04-23');
     runner.addData('sidebar_entries_search', [{
         'First name': 'WILLIAM',
@@ -57,6 +56,7 @@
         clubs: [['Addlestone CC', 'ADS', 'LS'], ['Richmond CC', 'RIC', 'LS'], ['Royal CC', 'ROY', 'LS']],
         raceDate: '2016-05-26'
     });
+    runner.addData('sidebar_entries_races', ['Div1', 'Div2', 'Div3']);
     runner.addData('dialog_raceDetails_get', {
         raceName: 'Test Race',
         raceRegion: 'MID',

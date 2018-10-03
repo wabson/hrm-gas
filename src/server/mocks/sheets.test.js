@@ -1,3 +1,6 @@
+var isFormula = function isFormula(val) {
+  return typeof val === 'string' && val.indexOf('=') === 0;
+};
 var FakeRange = function(data, formulas, row, column, numRows, numColumns) {
   this.data = data;
   this.formulas = formulas;
@@ -13,15 +16,34 @@ FakeRange.prototype = {
   getHeight: function() {
     return this.numRows;
   },
+  getLastRow: function() {
+    return this.row + this.numRows - 1;
+  },
+  getLastColumn: function() {
+    return this.column + this.numColumns - 1;
+  },
   getValues: function() {
     return this.getDataValues(this.data);
   },
   setValues: function(values) {
-    return this.setDataValues(values, this.data);
+    var formulaValues = this.copyAndTransformValues_(values, function(val) {
+      return isFormula(val) ? val : '';
+    });
+    var dataValues = this.copyAndTransformValues_(values, function(val) {
+      return !isFormula(val) ? val : '';
+    });
+    this.setDataValues(dataValues, this.data);
+    this.setDataValues(formulaValues, this.formulas);
+    return this;
+  },
+  getEmptyData: function() {
+    return (new Array(this.numRows).fill([])).map(function() { return (new Array(this.numColumns)).fill('') }, this );
   },
   getDataValues: function(data) {
     var start = this.row - 1;
-    return [].concat(data.slice(start, start + this.numRows).map(function(row) { return [].concat(row) } ));
+    var base = this.getEmptyData(), items = [].concat(data.slice(start, start + this.numRows).map(function(row) { return [].concat(row) } ));
+    var ret = base.map(function(blankRow, rowIdx) { return blankRow.map(function(blankVal, colIdx) { return items[rowIdx] && items[rowIdx][colIdx] ? items[rowIdx][colIdx] : blankVal })});
+    return ret;
   },
   setDataValues: function(values, data) {
     var newLength = Math.max(this.row - 1 + values.length);
@@ -36,7 +58,7 @@ FakeRange.prototype = {
     rowsSlice.forEach(function(rowData, index) {
       rowData.splice.apply(rowData, [this.column - 1, values[index].length].concat(values[index]));
     });
-    //data.splice.apply(data, [this.row - 1, values.length].concat(values));
+    return this;
   },
   padRowData: function(data, newSize) {
     if (data.length >= newSize) {
@@ -54,14 +76,38 @@ FakeRange.prototype = {
     return this.getDataValues(this.formulas);
   },
   setFormulas: function(values) {
-    return this.setDataValues(values, this.formulas);
+    var formulaValues = this.copyAndTransformValues_(values, function(val) {
+      return isFormula(val) ? val : '';
+    });
+    var dataValues = this.copyAndTransformValues_(values, function(val) {
+      return '';
+    });
+    this.setDataValues(dataValues, this.data);
+    this.setDataValues(formulaValues, this.formulas);
+    return this;
   },
-  setNumberFormat: function() {
+  copyAndTransformValues_: function copyAndTransformValuesIfMatch(values, transformFn) {
+    return values.map(function(row, rowIdx) {
+      return row.map(function(col, colIdx) {
+        return transformFn(col, colIdx);
+      })
+    });
   },
   getNumberFormats: function() {
     return this.getEmptyValues(this.data);
   },
+  setNumberFormat: function() {
+  },
   setNumberFormats: function() {
+  },
+  getDataValidations: function() {
+    return this.getEmptyValues(this.data);
+  },
+  setDataValidations: function() {
+    return this;
+  },
+  clearDataValidations: function() {
+    return this;
   },
   getBackgrounds: function() {
     return [];
@@ -72,6 +118,11 @@ FakeRange.prototype = {
     return [];
   },
   setHorizontalAlignments: function() {
+  },
+  clearContent: function() {
+    this.setValues(this.getEmptyData());
+    this.setFormulas(this.getEmptyData());
+    return this;
   }
 };
 

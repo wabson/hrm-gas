@@ -83,7 +83,9 @@ describe('templates', function() {
     templates.createFromTemplate(sourceSS, destSS);
     expect(destSS.sheets.length).to.equal(1);
     expect(destSS.sheets[0].name).to.equal('Race1');
-    expect(destSS.sheets[0].data.length).to.equal(0);
+    expect(destSS.sheets[0].data.length).to.equal(1);
+    expect(destSS.sheets[0].data[0].length).to.equal(1);
+    expect(destSS.sheets[0].data[0][0]).to.equal('');
   });
 
   it('should populate race numbers in new sheets', function () {

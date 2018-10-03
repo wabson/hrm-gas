@@ -7,7 +7,7 @@ describe('Entries sidebar', function() {
     describe('rendering', function() {
 
         beforeEach(function () {
-            google.script.run.addData('getRaceSheetNamesHTML', ['Sheet1', 'Sheet2']);
+            google.script.run.addData('sidebar_entries_races', ['Sheet1', 'Sheet2']);
             google.script.run.addData('sidebar_entries_race_info', {
                 classes: [],
                 divisions: [],
