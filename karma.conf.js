@@ -5,6 +5,7 @@ module.exports = function(config) {
             'node_modules/underscore/underscore.js',
             'node_modules/backbone/backbone.js',
             'test/ui/mock-services.client.js',
+            'src/ui/jquery-custom.client.js',
             'src/ui/components/**/*.client.js',
             'src/ui/components/**/*.spec.js',
             'src/ui/dialogs/**/*.client.js',

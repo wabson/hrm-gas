@@ -47,26 +47,40 @@ FakeRange.prototype = {
   },
   setDataValues: function(values, data) {
     var newLength = Math.max(this.row - 1 + values.length);
-    this.padRowData(data, newLength);
-    if (values.length > 0 && this.numColumns !== values[0].length) {
-      throw 'No of columns in range must be equal to the no of values columns';
+    var newRowLength = this.column - 1 + this.numColumns;
+    this.padRows(data, newLength);
+    this.padColumns(data, newRowLength);
+    if (values.length > 0) {
+      if (!values.every(function(rowValues) { return this.numColumns === rowValues.length }, this)) {
+        throw 'No of columns in range must be equal to the no of values columns';
+      }
     }
     if (values.length !== this.numRows) {
       throw 'No of rows must be equal to the number of rows in the range';
     }
     var rowsSlice = data.slice(this.row - 1, this.row - 1 + values.length);
     rowsSlice.forEach(function(rowData, index) {
-      rowData.splice.apply(rowData, [this.column - 1, values[index].length].concat(values[index]));
-    });
+      var itemsToRemove = values[index].length;
+      rowData.splice.apply(rowData, [this.column - 1, itemsToRemove].concat(values[index]));
+    }, this);
     return this;
   },
-  padRowData: function(data, newSize) {
+  pad: function pad(data, newSize, fillItem) {
     if (data.length >= newSize) {
       return;
     }
     for (var i=data.length; i<newSize; i++) {
-      data.push(['']);
+      var fillCopy = Array.isArray(fillItem) ? [].concat(fillItem) : fillItem;
+      data.push(fillCopy);
     }
+  },
+  padRows: function(data, newSize) {
+    this.pad(data, newSize, ['']);
+  },
+  padColumns: function(data, newSize) {
+    data.forEach(function(rowData) {
+      this.pad(rowData, newSize, '');
+    }, this);
   },
   getEmptyValues: function(data) {
     var start = this.row - 1;
@@ -147,10 +161,25 @@ FakeSheet.prototype = {
     return Math.max(this.data.length, this.formulas.length, 1);
   },
   getRange: function(row, column, numRows, numColumns) {
+    if (row < 1) {
+      throw 'Row must be greater than 1';
+    }
+    if (column < 1) {
+      throw 'Column must be greater than 1';
+    }
+    if (numRows < 1) {
+      throw 'Number of rows must be greater than 1';
+    }
+    if (numColumns < 1) {
+      throw 'Number of columns must be greater than 1';
+    }
     return new FakeRange(this.data, this.formulas, row, column, numRows, numColumns);
   },
   getDataRange: function() {
     return new FakeRange(this.data, this.formulas, 1, 1, Math.max(this.data.length, 1), this.data.length ? Math.max(this.data[0].length, 1) : 1);
+  },
+  getName: function() {
+    return this.name;
   },
   setName: function(name) {
     this.name = name;
@@ -190,6 +219,9 @@ FakeSS.prototype = {
     this.sheets.push(newSheet);
     this.setActiveSheet(newSheet);
     return newSheet;
+  },
+  getNumSheets: function() {
+    return this.sheets.length;
   },
   getActiveSheet: function() {
     return this.activeSheet;

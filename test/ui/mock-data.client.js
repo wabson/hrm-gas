@@ -68,4 +68,5 @@
         entryJuniorLate: 8,
         entryLightningLate: 2.5
     });
+    runner.addData('dialog_import_getOAuthToken', 'blahToken');
 })();

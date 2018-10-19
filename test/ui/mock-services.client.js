@@ -35,3 +35,18 @@ var google = {
         }
     }
 };
+
+google.picker = {
+    Response: {
+        ACTION: 'Action',
+        DOCUMENTS: 'Documents'
+    },
+    Action: {
+        PICKED: 'Picked'
+    },
+    Document: {
+        ID: 'id',
+        NAME: 'name',
+        URL: 'url'
+    }
+};

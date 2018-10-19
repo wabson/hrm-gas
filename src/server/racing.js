@@ -154,6 +154,12 @@ function sortResults(r1, r2) {
  * Look at the tabs of the workbook and return the named races as an array of Strings
  */
 function getRaceSheets(spreadsheet) {
+  var namesFromIndex = getRaceSheetNamesFromIndex(spreadsheet);
+  if (namesFromIndex !== null) {
+    return namesFromIndex.map(function(sheetName) {
+      return spreadsheet.getSheetByName(sheetName);
+    });
+  }
   var sheets = (spreadsheet || SpreadsheetApp.getActiveSpreadsheet()).getSheets(), raceSheets = [], sheet, sheetName;
   for (var i=0; i<sheets.length; i++) {
     sheet = sheets[i];
@@ -164,6 +170,19 @@ function getRaceSheets(spreadsheet) {
     raceSheets.push(sheet);
   }
   return raceSheets;
+}
+
+function getRaceSheetNamesFromIndex(ss) {
+  var racesSheet = ss.getSheetByName('Races');
+  if (racesSheet !== null) {
+    return tables.getRows(racesSheet).filter(function(row) {
+      return row['Type'] === 'Table';
+    }).map(function(row) {
+      return row['Name'];
+    });
+  } else {
+    return null;
+  }
 }
 
 /**

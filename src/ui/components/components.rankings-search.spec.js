@@ -161,7 +161,6 @@ describe('Rankings search component', function() {
             it('should not submit the form if the query field is empty', function() {
                 var changedValues;
                 this.form.data.on('change:values', function(items) {
-                    console.log(arguments);
                     changedValues = items;
                 });
                 this.form.$el.submit();
@@ -171,7 +170,6 @@ describe('Rankings search component', function() {
             it('should update the data model "values" attribute when search results received', function() {
                 var changedValues;
                 this.form.data.on('change:values', function(items) {
-                    console.log(arguments);
                     changedValues = items;
                 });
                 this.form.$el.find('input').val('searchTerm1');

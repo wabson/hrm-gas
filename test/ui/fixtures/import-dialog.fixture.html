@@ -1,0 +1,35 @@
+<div id="import-dialog">
+  <div id="messages"></div>
+  <form>
+    <div class="block form-group">
+      <label for="btn-select-file">Import from file</label>
+      <input id="btn-select-file" type="button" value="Select file" class="inline" disabled />
+      <span id="selected-file-name"></span>
+      <input type="hidden" id="input-selected-file-id" name="sourceFileId" required />
+      <input type="hidden" id="input-selected-file-name" name="sourceFileName" />
+    </div>
+    <div class="block form-group">
+      <div class="inline form-group">
+        <input type="checkbox" id="checkbox-create-entryset" name="createEntrySet" value="y">
+        <label for="checkbox-create-entryset">Name this entry set</label>
+        <input type="text" id="input-entry-set-name" name="entrySetName" class="inline" value="" disabled>
+      </div>
+    </div>
+    <div class="block form-group">
+      <div class="inline form-group">
+        <input type="checkbox" id="checkbox-import-paid" name="importPaid" value="y">
+        <label for="checkbox-import-paid">Import Paid amounts in sheets</label>
+      </div>
+    </div>
+    <div class="block form-group">
+      <input id="btn-import" type="submit" value="Import" class="action" disabled />
+    </div>
+    <div id="import-results" class="block form-group">
+      <div class="summary"></div>
+      <ul class="details"></ul>
+    </div>
+    <div class="block form-group">
+      <input id="btn-cancel" type="button" value="Done" />
+    </div>
+  </form>
+</div>

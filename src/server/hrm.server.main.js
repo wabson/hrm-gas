@@ -15,6 +15,7 @@
  *
  */
 
+var crewSheets = require('./crew-sheets');
 var dateformat = require('./dateformat');
 var publishing = require('./publishing');
 var tables = require('./tables');
@@ -179,35 +180,6 @@ function rankingToEntryHeader_(header) {
   return header.toLowerCase() === "division" ? header.substr(0, 3) : header;
 }
 
-/**
- * Return a full list of the remaining entry placeholders on the given sheet
- *
- * @return {array} Array of three-element arrays with the first element of each member representing the boat number, the second the row number and the second the number of rows available in the entry
- */
-function getNextEntryRows(sheet) {
-  // Find the latest row with a number but without a name in the sheet
-  var range = sheet.getRange(2, 1, sheet.getLastRow()-1, 2), values = range.getValues(), rows = [], currEntry = null;
-  for (var i=0; i<values.length; i++) {
-    if (values[i][0] && values[i][1] === "") { // Number present but no name
-      if (currEntry !== null) {
-        rows.push(currEntry);
-      }
-      currEntry = [values[i][0], i+2, 1];
-    } else if ((""+values[i][0]).trim() === "" && values[i][1] === "") { // No number, no name
-      if (currEntry !== null) {
-        currEntry[2] ++;
-      }
-    } else { // Name present but no number, entry is not valid
-      currEntry = null;
-    }
-  }
-  // There may still be an entry in the buffer
-  if (currEntry !== null) {
-    rows.push(currEntry);
-  }
-  return rows;
-}
-
 function addRowsToSheet_(rows, headers, sheet, rowPosition) {
   // Check that sheet exists!
   if (!sheet) {
@@ -244,12 +216,12 @@ function addEntryToSheet_(rows, headers, sheetName, spreadsheet) {
   if (!sheet) {
     throw("Could not find sheet " + sheetName);
   }
-  var nextRows = getNextEntryRows(sheet),
+  var nextRows = crewSheets.getAvailableRows(sheet, true, 1, 2),
       nextBoatNum = (nextRows.length > 0) ? nextRows[0][0] : 0,
       nextRowPos = (nextRows.length > 0) ? nextRows[0][1] : 0,
       nextRowSize = (nextRows.length > 0) ? nextRows[0][2] : 0;
   if (nextRowPos > 0) {
-    if (nextRowSize != rows.length) {
+    if (nextRowSize !== rows.length) {
       throw("Could not add entry of size " + rows.length + " in row " + nextRowPos + " (" + nextRowSize + " rows available)");
     }
     addRowsToSheet_(rows, headers, sheet, nextRowPos);

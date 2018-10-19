@@ -9,12 +9,12 @@
  *     The current configuration settings, updated with test settings.
  */
 function provideEnvironmentConfiguration_(configuration) {
-    //TODO: (blog post reader) Change ID below to a Spreadsheet ID you can read
     configuration.sheets.debugSpreadsheetId =
         '1uLT2QyiqKdCRGLNuG0X0QU97c0OQiEWtiQHHGaBDWA0';
     configuration.debug = true;
 
     configuration.app.raceTemplatesFolderId = '1OT6_GP_4OpU5L9M6vWY6ZeLD8VFJ_sjV';
+    configuration.app.pickerApiKey = 'AIzaSyBsoV5pZCkM_BIzapfvHgnf4fq49izRTKI';
 
     return configuration;
 }

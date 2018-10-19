@@ -102,7 +102,6 @@ var StartDialog = BaseComponent.extend({
             if (typeSelectEl) {
                 formData.type = $(typeSelectEl.options[typeSelectEl.selectedIndex]).attr('data-drive-file-id');
             }
-            console.log(formData);
             $form.disableSubmit();
             google.script.run
                 .withSuccessHandler(_.bind(function() {

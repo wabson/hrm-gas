@@ -20,6 +20,75 @@ function getTableRows(sheet, convertToLowerCase) {
   return rows;
 }
 
+function setTableRangeValues(dstSheet, values, startRow) { // TODO Exclude boat numbers
+  if (values.length === 0) {
+    return;
+  }
+  var headers = getTableHeaders(dstSheet);
+  var columnsWithValues = values.reduce(function(accumulator, currentRow) {
+    return accumulator.concat(Object.keys(currentRow).filter(function(colName) {
+      return currentRow[colName] !== null && currentRow[colName] !== '';
+    }));
+  }, []).filter(function(item, pos, items) { // return only unique values
+    return items.indexOf(item) >= pos;
+  });
+  var columnPositionsWithValues = columnsWithValues.map(function(colName) {
+    return headers.indexOf(colName);
+  });
+  var columnRanges = getRangeBoundaries(columnPositionsWithValues);
+  var columnIndexes = columnRanges.map(function(range) {
+    var rangeLength = range[1] - range[0] + 1;
+    return Array.apply(null, Array(rangeLength)).map(function(item, pos) { return range[0] + pos });
+  });
+  var rangeColumnHeadings = columnIndexes.map(function(rangeIndexes) {
+    return rangeIndexes.map(function(i) { return headers[i]; });
+  });
+  var rangesValues = rangeColumnHeadings.map(function(headings) {
+    return values.map(function(rowValues) {
+      return headings.map(function(heading) {
+        return rowValues[heading];
+      });
+    });
+  });
+  var dstRanges = columnRanges.map(function(range) {
+    return dstSheet.getRange(startRow, range[0] + 1, values.length, range[1] - range[0] + 1);
+  });
+  dstRanges.forEach(function(range, index) {
+      range.setValues(rangesValues[index]);
+  });
+}
+
+function getRangeValues(columns, ranges, values) {
+  return ranges.map(function(range) {
+    return values.map(function(row) {
+      return row[columns[range]];
+    });
+  });
+}
+
+function sortNumber(a, b) {
+  return a - b;
+}
+
+function getRangeBoundaries(positions) {
+  positions.sort(sortNumber);
+  var currentPos, lastPos = -1, currentRangeStart = -1, boundaries = [];
+  for (var i=0; i<positions.length; i++) {
+    currentPos = positions[i];
+    if (currentRangeStart === -1) {
+      currentRangeStart = currentPos;
+    } else if (currentPos > lastPos + 1) {
+      boundaries.push([currentRangeStart, lastPos]);
+      currentRangeStart = currentPos;
+    }
+    lastPos = currentPos;
+  }
+  if (currentRangeStart > -1 && lastPos > -1) {
+    boundaries.push([currentRangeStart, lastPos]);
+  }
+  return boundaries;
+}
+
 function setTableRowValues(sheet, values, startColumnName, endColumnName, startRow, convertHeadersToLowerCase) {
   convertHeadersToLowerCase = typeof convertHeadersToLowerCase != "undefined" ? convertHeadersToLowerCase : false;
   if (values.length === 0) {
@@ -102,6 +171,7 @@ function lookupInTable(rows, matchValues, useOr) {
 module.exports = {
   getRows: getTableRows,
   setValues: setTableRowValues,
+  setRangeValues: setTableRangeValues,
   appendRows: appendTableRowValues,
   getHeaders: getTableHeaders,
   lookupInTable: lookupInTable

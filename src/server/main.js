@@ -2,6 +2,7 @@ var uiUtils = require('./libs/lib.utils.ui.server');
 var dialogs = require('../ui/dialogs.controller.server');
 var apiRaceDetails = require('../ui/dialogs/race-details/dialogs.race-details.server');
 var apiStart = require('../ui/dialogs/start/dialogs.start.server');
+var apiImport = require('../ui/dialogs/import/dialogs.import.server');
 var apiEntries = require('../ui/sidebars/entries/sidebar.entries.server');
 var apiRankings = require('../ui/sidebars/rankings/sidebar.rankings.server');
 
@@ -11,6 +12,9 @@ global.dialog_start_submit = apiStart.dialog_start_submit;
 
 global.dialog_raceDetails_get = apiRaceDetails.dialog_raceDetails_get;
 global.dialog_raceDetails_set = apiRaceDetails.dialog_raceDetails_set;
+
+global.dialog_import_getOAuthToken = apiImport.dialog_import_getOAuthToken;
+global.dialog_import_importEntries = apiImport.dialog_import_importEntries;
 
 global.sidebar_entries_race_info = apiEntries.sidebar_entries_race_info;
 global.sidebar_entries_races = apiEntries.sidebar_entries_races;
@@ -25,6 +29,7 @@ global.sidebar_rankings_insert = apiRankings.sidebar_rankings_insert;
 
 global.openStartDialog = dialogs.openStartDialog;
 global.openRaceDetailsDialog = dialogs.openRaceDetailsDialog;
+global.openImportDialog = dialogs.openImportDialog;
 global.openRankingsSidebar = dialogs.openRankingsSidebar;
 global.openEntriesSidebar = dialogs.openEntriesSidebar;
 
@@ -47,6 +52,7 @@ global.onOpen = function onOpen(e) {
   menu.addItem('Start', 'openStartDialog')
     .addItem('Rankings', 'openRankingsSidebar')
     .addItem('Add Entries', 'openEntriesSidebar')
+    .addItem('Import Entries', 'openImportDialog')
     .addItem('Race Details', 'openRaceDetailsDialog');
   menu.addToUi();
 };

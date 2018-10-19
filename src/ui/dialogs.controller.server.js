@@ -1,9 +1,17 @@
+var Configuration = require('../server/libs/lib.configuration');
+
 var DIALOG_DEFAULT_WIDTH = 500, DIALOG_DEFAULT_HEIGHT = 340, SIDEBAR_DEFAULT_WIDTH = 300;
 
 function openModalDialog_(templateFile, options) {
     options = options || {};
+    var templateParams = options.templateParams || {};
     var template = HtmlService.createTemplateFromFile(templateFile);
     template.spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
+    for (var prop in templateParams) {
+        if (templateParams.hasOwnProperty(prop)) {
+            template[prop] = templateParams[prop];
+        }
+    }
     var html = template.evaluate()
         .setSandboxMode(HtmlService.SandboxMode.IFRAME)
         .setWidth(options.width || DIALOG_DEFAULT_WIDTH)
@@ -30,6 +38,20 @@ exports.openRaceDetailsDialog = function openRaceDetailsDialog() {
     openModalDialog_('dialogs.race-details.view', {
         title: 'Race details',
         height: 360
+    });
+};
+exports.openImportDialog = function openImportDialog() {
+    var dialogWidth = 600, dialogHeight = 425;
+    var config = Configuration.getCurrent();
+    openModalDialog_('dialogs.import.view', {
+        title: 'Import Entries',
+        width: dialogWidth,
+        height: dialogHeight,
+        templateParams: {
+            pickerApiKey: config.app.pickerApiKey,
+            dialogWidth: dialogWidth,
+            dialogHeight: dialogHeight
+        }
     });
 };
 exports.openRankingsSidebar = function openRankingsSidebar() {

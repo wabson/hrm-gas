@@ -14,6 +14,7 @@ function provideEnvironmentConfiguration_(configuration) {
     configuration.debug = false;
 
     configuration.app.raceTemplatesFolderId = '14Zwl1QVTdEGRxcOwtOajfdFKg8REwAJZ';
+    configuration.app.pickerApiKey = 'AIzaSyDfxh3k14ackYHm4oxNFIDwV7zxg5MDWi4';
 
     return configuration;
 }

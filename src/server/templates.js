@@ -28,6 +28,8 @@ var _getTemplateSheets = function getTemplate(templateSS) {
   return tables.getRows(templateSS.getSheetByName(RACES_SHEET_NAME));
 };
 
+exports.getTemplateRows = _getTemplateSheets;
+
 exports.getTemplateSheetByName = function getTemplateSheetByName(templateSS, sheetName) {
   var rows = _getTemplateSheets(templateSS), row;
   for (var i = 0; i<rows.length; i++) {
