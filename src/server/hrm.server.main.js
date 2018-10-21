@@ -349,12 +349,23 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
     spreadsheet.deleteSheet(sheets[i]);
   }
 
-  if (template.getSheetByName('Races')) {
-    templates.createFromTemplate(template, spreadsheet);
+  var compiledTemplateId = getCompiledTemplateId_(template.getId());
+
+  if (compiledTemplateId) {
+    var compiledTemplate = SpreadsheetApp.openById(compiledTemplateId.value), compiledSheets = compiledTemplate.getSheets();
+    for (var k = 0; k < compiledSheets.length; k++) {
+      compiledSheets[k].copyTo(spreadsheet).setName(compiledSheets[k].getName());
+    }
+    var templateRows = templates.getTemplateRows(spreadsheet);
+    templates.refreshFormulasAndValidations(templateRows, spreadsheet);
   } else {
-    // Copy all template sheets into current
-    for (var j = 0; j < templateSheets.length; j++) {
-      templateSheets[j].copyTo(spreadsheet).setName(templateSheets[j].getName());
+    if (template.getSheetByName('Races')) {
+      templates.createFromTemplate(template, spreadsheet);
+    } else {
+      // Copy all template sheets into current
+      for (var j = 0; j < templateSheets.length; j++) {
+        templateSheets[j].copyTo(spreadsheet).setName(templateSheets[j].getName());
+      }
     }
   }
 
@@ -413,4 +424,8 @@ function setRaceType_(spreadsheetId, raceType) {
 
 function getRaceType_(spreadsheetId) {
   return getDriveProperty_(spreadsheetId, 'hrmType');
+}
+
+function getCompiledTemplateId_(spreadsheetId) {
+  return getDriveProperty_(spreadsheetId, 'compiledTemplate');
 }

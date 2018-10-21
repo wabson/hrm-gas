@@ -103,8 +103,7 @@ var orderSheetsBasedOnTemplate = function orderSheetsBasedOnTemplate(rows, templ
 };
 
 var updateSheetFormulasAndValidation = function updateSheetFormulasAndValidation(sheet) {
-  var lastCol = sheet.getDataRange().getLastColumn(), lastRow = sheet.getDataRange().getLastRow();
-  var range = sheet.getRange(1, 1, lastRow, lastCol);
+  var range = sheet.getDataRange();
   var formulas = range.getFormulas();
   var contents = range.getValues();
   var dataValidations = range.getDataValidations();
@@ -126,6 +125,8 @@ var updateAllSheetFormulas = function updateAllSheetFormulas(rows, ss) {
     updateSheetFormulasAndValidation(currentSheet);
   }
 };
+
+exports.refreshFormulasAndValidations = updateAllSheetFormulas;
 
 exports.createFromTemplate = function createFromTemplate(templateSS, ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
