@@ -210,9 +210,6 @@ function getRaceNames(spreadsheet) {
   return raceNames;
 }
 
-exports.EXTRA_SHEETS_HASLER = EXTRA_SHEETS_HASLER;
-exports.EXTRA_SHEETS_NON_HASLER = EXTRA_SHEETS_NON_HASLER;
-exports.EXTRA_SHEETS_NATIONALS = EXTRA_SHEETS_NATIONALS;
 exports.getRaceSheets = getRaceSheets;
 exports.getRaceSheetNames = getRaceSheetNames;
 exports.getRaceNames = getRaceNames;

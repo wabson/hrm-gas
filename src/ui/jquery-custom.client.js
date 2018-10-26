@@ -28,24 +28,32 @@ $.fn.serializeObject = function()
  */
 $.fn.disableSubmit = function(tempLabel)
 {
-    var $buttons, tagName = this[0].tagName.toLocaleLowerCase();
+    var $buttons = $([]), $inputs = $([]), tagName = this[0].tagName.toLocaleLowerCase();
     tempLabel = tempLabel || 'Processing';
-    if (tagName == 'button' || tagName == 'input') {
+    if (tagName === 'input') {
+        $inputs = this;
+    } else if (tagName === 'button') {
         $buttons = this;
     } else {
-        $buttons = this.find('input[type="submit"]');
+        $inputs = this.find('input[type="submit"]');
+        $buttons = this.find('button[type="submit"]');
     }
-    $buttons.attr('data-orig-value', $buttons.val()).val(tempLabel).prop('disabled', true);
+    $buttons.attr('data-orig-value', $buttons.html()).html(tempLabel).prop('disabled', true);
+    $inputs.attr('data-orig-value', $buttons.val()).val(tempLabel).prop('disabled', true);
     return this;
 };
 $.fn.restoreSubmit = function()
 {
-    var $buttons, tagName = this[0].tagName.toLocaleLowerCase();
-    if (tagName == 'button' || tagName == 'input') {
+    var $buttons = $([]), $inputs = $([]), tagName = this[0].tagName.toLocaleLowerCase();
+    if (tagName === 'input') {
+        $inputs = this;
+    } else if (tagName === 'button') {
         $buttons = this;
     } else {
-        $buttons = this.find('input[type="submit"]');
+        $inputs = this.find('input[type="submit"]');
+        $buttons = this.find('button[type="submit"]');
     }
-    $buttons.val($buttons.attr('data-orig-value')).prop('disabled', false);
+    $buttons.html($buttons.attr('data-orig-value')).prop('disabled', false);
+    $inputs.val($buttons.attr('data-orig-value')).prop('disabled', false);
     return this;
 };

@@ -17,12 +17,11 @@
 
 var crewSheets = require('./crew-sheets');
 var dateformat = require('./dateformat');
-var publishing = require('./publishing');
+var drive = require('./drive');
 var tables = require('./tables');
 var racing = require('./racing');
 var rankings = require('./rankings');
 var templates = require('./templates');
-var SheetsUtilitiesLibrary = require('./libs/lib.utils.sheets');
 
 var CLASSES_DEFS = [['SMK', 'Senior Male Kayak'],['VMK', 'Veteran Male Kayak'],['JMK', 'Junior Male Kayak'],['SFK', 'Senior Female Kayak'],['VFK', 'Veteran Female Kayak'],['JFK', 'Junior Female Kayak'],['SMC', 'Senior Male Canoe'],['VMC', 'Veteran Male Canoe'],['JMC', 'Junior Male Canoe'],['SFC', 'Senior Female Canoe'],['VFC', 'Veteran Female Canoe'],['JFC', 'Junior Female Canoe']];
 
@@ -384,48 +383,14 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
 
 exports.setupRaceFromTemplate = setupRaceFromTemplate;
 
-function setDriveProperty_(spreadsheetId, name, value) {
-  return publishing.savePublicProperty(spreadsheetId, name, value);
-}
-
-function setDriveProperties(spreadsheetId, values) {
-  for (var p in values) {
-    if (values.hasOwnProperty(p)) {
-      setDriveProperty_(spreadsheetId, p, values[p]);
-    }
-  }
-}
-
-exports.setDriveProperties = setDriveProperties;
-
-function getDriveProperty_(spreadsheetId, name) {
-  try {
-    return Drive.Properties.get(spreadsheetId, name, {
-      visibility: 'PUBLIC'
-    });
-  } catch(e) {
-    return null;
-  }
-}
-
-function getDriveProperties(spreadsheetId) {
-  var driveResp = Drive.Properties.list(spreadsheetId), propertyMap = {};
-  driveResp.items.forEach(function(p) {
-    propertyMap[p.key] = p.value;
-  });
-  return propertyMap;
-}
-
-exports.getDriveProperties = getDriveProperties;
-
 function setRaceType_(spreadsheetId, raceType) {
-  setDriveProperty_(spreadsheetId, 'hrmType', raceType);
+  drive.savePublicProperty(spreadsheetId, 'hrmType', raceType);
 }
 
 function getRaceType_(spreadsheetId) {
-  return getDriveProperty_(spreadsheetId, 'hrmType');
+  return drive.getPublicProperty(spreadsheetId, 'hrmType', null);
 }
 
 function getCompiledTemplateId_(spreadsheetId) {
-  return getDriveProperty_(spreadsheetId, 'compiledTemplate');
+  return drive.getPublicProperty(spreadsheetId, 'compiledTemplate', null);
 }

@@ -69,4 +69,19 @@
         entryLightningLate: 2.5
     });
     runner.addData('dialog_import_getOAuthToken', 'blahToken');
+    runner.addData('dialog_print_getResultsInfo', {
+      spreadsheet: {
+        lastUpdated: '2018-10-22T05:24:49Z'
+      },
+      entriesSheets: [{
+        id: '1',
+        name: 'Elmbridge 2018 (Printable Entries)',
+        lastUpdated: '2018-10-21T16:20:32Z'
+      }],
+      resultsSheets: [{
+        id: '2',
+        name: 'Elmbridge 2018 (Printable Results)',
+        lastUpdated: '2018-10-24T14:41:55Z'
+      }]
+    });
 })();

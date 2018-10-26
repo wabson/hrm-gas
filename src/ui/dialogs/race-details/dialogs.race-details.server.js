@@ -1,5 +1,6 @@
 /* jshint camelcase: false */
 
+var drive = require('../../../server/drive');
 var hrm = require('../../../server/hrm.server.main');
 var uiUtils = require('../../../server/libs/lib.utils.ui.server');
 
@@ -8,7 +9,7 @@ exports.dialog_raceDetails_get = function dialog_raceDetails_get(spreadsheetId) 
     var inlineInfo = hrm.getRaceInfo(spreadsheet);
     var entryFeesInfo = hrm.getEntryFeesInfo(spreadsheet);
     var raceDateInfo = hrm.getRaceDateInfo(spreadsheet);
-    var driveProps = hrm.getDriveProperties(spreadsheetId);
+    var driveProps = drive.getDriveProperties(spreadsheetId);
     return uiUtils.jsonSafeObj({
         raceName: inlineInfo.raceName || spreadsheet.getName(),
         raceRegion: inlineInfo.regionId || '',

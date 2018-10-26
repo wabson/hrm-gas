@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <?!= include('forms.head.include'); ?>
+    <style type="text/css">
+        #warning-content {
+            display: none;
+        }
+        .sheet-label {
+            margin-right: 100px;
+        }
+        .sheet-actions {
+            padding-top: 4px;
+            width: 80px;
+            float: right;
+        }
+        div.create {
+            display: none;
+        }
+        div.actions a {
+            padding-right: 5px;
+        }
+        div.updated .material-icons {
+            font-size: 14px;
+            vertical-align: -3px;
+            padding-left: 5px;
+        }
+        button.print .material-icons {
+            font-size: 18px;
+            color: white;
+            vertical-align: middle;
+        }
+        button.print span {
+            text-transform: uppercase;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div id="print-dialog">
+    <div id="messages"></div>
+    <form>
+        <fieldset class="block" id="printable-entries">
+            <label>Race Entries</label>
+            <div class="block create">
+                <button type="button" class="create">Create Printable Entries</button>
+            </div>
+            <div class="block file-list">Loading...</div>
+        </fieldset>
+        <fieldset class="block" id="printable-results">
+            <label>Race Results</label>
+            <div class="block create">
+                <button type="button" class="create">Create Printable Results</button>
+            </div>
+            <div class="block file-list">Loading...</div>
+        </fieldset>
+        <div class="block form-group">
+            <input id="btn-cancel" type="button" value="Done" />
+        </div>
+    </form>
+</div>
+<?!= include('forms.script.include'); ?>
+<?!= include('components/components.base'); ?>
+<script>
+    var spreadSheetId = '<?= spreadsheetId ?>';
+</script>
+<script>
+    //=require ./dialogs.print.client.js
+    $(function() {
+        new PrintDialog({
+            el: '#print-dialog',
+            spreadsheetId: spreadSheetId
+        }).render();
+    });
+</script>
+<!--=include mock-services.html -->
+</body>
+</html>

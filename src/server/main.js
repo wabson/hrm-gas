@@ -3,6 +3,7 @@ var dialogs = require('../ui/dialogs.controller.server');
 var apiRaceDetails = require('../ui/dialogs/race-details/dialogs.race-details.server');
 var apiStart = require('../ui/dialogs/start/dialogs.start.server');
 var apiImport = require('../ui/dialogs/import/dialogs.import.server');
+var apiPrint = require('../ui/dialogs/print/dialogs.print.server');
 var apiEntries = require('../ui/sidebars/entries/sidebar.entries.server');
 var apiRankings = require('../ui/sidebars/rankings/sidebar.rankings.server');
 
@@ -15,6 +16,13 @@ global.dialog_raceDetails_set = apiRaceDetails.dialog_raceDetails_set;
 
 global.dialog_import_getOAuthToken = apiImport.dialog_import_getOAuthToken;
 global.dialog_import_importEntries = apiImport.dialog_import_importEntries;
+
+global.dialog_print_getResultsInfo = apiPrint.dialog_print_getRenditions;
+global.dialog_print_createEntriesSheet = apiPrint.dialog_print_createEntriesSheet;
+global.dialog_print_updateEntriesSheet = apiPrint.dialog_print_updateEntriesSheet;
+global.dialog_print_createResultsSheet = apiPrint.dialog_print_createResultsSheet;
+global.dialog_print_updateResultsSheet = apiPrint.dialog_print_updateResultsSheet;
+global.dialog_print_deleteSheet = apiPrint.dialog_print_deleteSheet;
 
 global.sidebar_entries_race_info = apiEntries.sidebar_entries_race_info;
 global.sidebar_entries_races = apiEntries.sidebar_entries_races;
@@ -30,6 +38,7 @@ global.sidebar_rankings_insert = apiRankings.sidebar_rankings_insert;
 global.openStartDialog = dialogs.openStartDialog;
 global.openRaceDetailsDialog = dialogs.openRaceDetailsDialog;
 global.openImportDialog = dialogs.openImportDialog;
+global.openPrintDialog = dialogs.openPrintDialog;
 global.openRankingsSidebar = dialogs.openRankingsSidebar;
 global.openEntriesSidebar = dialogs.openEntriesSidebar;
 
@@ -53,6 +62,7 @@ global.onOpen = function onOpen(e) {
     .addItem('Rankings', 'openRankingsSidebar')
     .addItem('Add Entries', 'openEntriesSidebar')
     .addItem('Import Entries', 'openImportDialog')
-    .addItem('Race Details', 'openRaceDetailsDialog');
+    .addItem('Race Details', 'openRaceDetailsDialog')
+    .addItem('Print Sheets', 'openPrintDialog');
   menu.addToUi();
 };

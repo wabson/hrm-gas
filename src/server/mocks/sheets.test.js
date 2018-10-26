@@ -113,6 +113,7 @@ FakeRange.prototype = {
   setNumberFormat: function() {
   },
   setNumberFormats: function() {
+    return this;
   },
   getDataValidations: function() {
     return this.getEmptyValues(this.data);
@@ -127,11 +128,25 @@ FakeRange.prototype = {
     return [];
   },
   setBackgrounds: function() {
+    return this;
   },
   getHorizontalAlignments: function() {
     return [];
   },
   setHorizontalAlignments: function() {
+    return this;
+  },
+  setFontFamily: function() {
+    return this;
+  },
+  setBorder: function() {
+    return this;
+  },
+  setFontWeight: function() {
+    return this;
+  },
+  setBackground: function() {
+    return this;
   },
   clearContent: function() {
     this.setValues(this.getEmptyData());
@@ -145,6 +160,7 @@ var FakeSheet = function(name, data) {
   this.data = (data || []).concat([]);
   this.hidden = false;
   this.formulas = [];
+  this.numFrozenRows = 0;
 };
 FakeSheet.prototype = {
   copyTo: function(ss) {
@@ -197,6 +213,17 @@ FakeSheet.prototype = {
   clear: function() {
     this.data = [[]];
     this.formulas = [[]];
+  },
+  getFrozenRows: function() {
+    return this.numFrozenRows;
+  },
+  setFrozenRows: function(numRows) {
+    this.numFrozenRows = numRows;
+    return this;
+  },
+  getColumnWidth: function() {
+  },
+  setColumnWidth: function() {
   }
 };
 
@@ -245,6 +272,13 @@ FakeSS.prototype = {
     var newIndex = index - 1;
     this.sheets.splice(newIndex, 0, this.activeSheet);
     this.sheets.splice(newIndex < matchIndex ? matchIndex + 1 : matchIndex, 1);
+  },
+  deleteSheet: function(sheet) {
+    for (var i=this.sheets.length - 1; i>=0; i--) {
+      if (this.sheets[i].getName() === sheet.getName()) {
+        this.sheets.splice(i, 1);
+      }
+    }
   }
 };
 

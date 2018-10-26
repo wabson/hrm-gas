@@ -1,26 +1,16 @@
 var dateformat = require('./dateformat');
+var drive = require('./drive');
 var results = require('./racing');
 var tables = require('./tables');
 
 var ENTRIES_HTML_FILENAME_TMPL = "%s Entries";
-var ENTRIES_SS_FILENAME_TMPL = "%s Printable Entries";
 var RESULTS_HTML_FILENAME_TMPL = "%s Results";
-var RESULTS_SS_FILENAME_TMPL = "%s Printable Results";
 
 exports.saveEntriesHTML = function saveEntriesHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var template = HtmlService.createTemplateFromFile('entries-static.view'), scriptProps, title, data;
-  var publishedEntriesId = null;
-  var raceDate = null;
-  try {
-    publishedEntriesId = Drive.Properties.get(ss.getId(), 'publishedEntriesId', {
-      visibility: 'PUBLIC'
-    }).value;
-    raceDate = Drive.Properties.get(ss.getId(), 'raceDate', {
-      visibility: 'PUBLIC'
-    }).value;
-  } catch (e) {
-  }
+  var publishedEntriesId = drive.getPublicProperty(ss.getId(), 'publishedEntriesId', null).value;
+  var raceDate = drive.getPublicProperty(ss.getId(), 'raceDate', null).value;
   scriptProps = {
     publishedEntriesId: publishedEntriesId,
     raceDate: raceDate
@@ -38,7 +28,7 @@ exports.saveEntriesHTML = function saveEntriesHTML(ss) {
   if (scriptProps.publishedEntriesId) {
     htmlFile.setContent(outputHtml);
   }
-  exports.savePublicProperty(ss.getId(), 'publishedEntriesId', htmlFile.getId());
+  drive.savePublicProperty(ss.getId(), 'publishedEntriesId', htmlFile.getId());
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
   return htmlFile;
 };
@@ -46,13 +36,7 @@ exports.saveEntriesHTML = function saveEntriesHTML(ss) {
 exports.saveResultsHTML = function saveResultsHTML(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
   var template = HtmlService.createTemplateFromFile('results-static.view'), scriptProps, title, data, outputHtml;
-  var publishedResultsId = null;
-  try {
-    publishedResultsId = Drive.Properties.get(ss.getId(), 'publishedResultsId', {
-      visibility: 'PUBLIC'
-    }).value;
-  } catch (e) {
-  }
+  var publishedResultsId = drive.getPublicProperty(ss.getId(), 'publishedResultsId', null).value;
   scriptProps = {
     publishedResultsId: publishedResultsId
   };
@@ -71,21 +55,9 @@ exports.saveResultsHTML = function saveResultsHTML(ss) {
   if (scriptProps.publishedResultsId) {
     htmlFile.setContent(outputHtml);
   }
-  exports.savePublicProperty(ss.getId(), 'publishedResultsId', htmlFile.getId());
+  drive.savePublicProperty(ss.getId(), 'publishedResultsId', htmlFile.getId());
   htmlFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
   return htmlFile;
-};
-
-exports.savePublicProperty = function (spreadsheetId, propertyName, value) {
-  try {
-    Drive.Properties.insert({
-      key: propertyName,
-      value: value,
-      visibility: 'PUBLIC'
-    }, spreadsheetId);
-  }
-  catch (ex) {
-  }
 };
 
 /**

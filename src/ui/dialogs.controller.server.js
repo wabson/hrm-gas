@@ -54,6 +54,15 @@ exports.openImportDialog = function openImportDialog() {
         }
     });
 };
+exports.openPrintDialog = function openPrintDialog() {
+    var dialogWidth = 400, dialogHeight = 290;
+    var config = Configuration.getCurrent();
+    openModalDialog_('dialogs.print.view', {
+        title: 'Print Sheets',
+        width: dialogWidth,
+        height: dialogHeight
+    });
+};
 exports.openRankingsSidebar = function openRankingsSidebar() {
     openSidebar_('sidebar.rankings.view', {
         title: 'Rankings'
