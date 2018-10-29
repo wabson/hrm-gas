@@ -51,7 +51,7 @@ var PrintDialog = BaseComponent.extend({
             year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric'
         };
         var dateObj = new Date(dateStr);
-        if (Intl && typeof Intl.DateTimeFormat === 'function') {
+        if (typeof Intl === 'object' && typeof Intl.DateTimeFormat === 'function') {
             return new Intl.DateTimeFormat('en-GB', formatOptions).format(dateObj);
         } else {
             return dateObj.toString();
@@ -160,7 +160,6 @@ var PrintDialog = BaseComponent.extend({
     },
 
     onUpdateFailure: function(data, userObj) {
-        console.log(userObj.renditionId);
         this.$('div[data-spreadsheet-id="'+userObj.renditionId+'"] a.update').html('Update');
         this.showError_('Sorry, an error occurred');
     },
