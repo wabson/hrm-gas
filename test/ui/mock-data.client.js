@@ -84,4 +84,19 @@
         lastUpdated: '2018-10-24T14:41:55Z'
       }]
     });
+    runner.addData('dialog_print_createEntriesSheet', {
+      spreadsheet: {
+        lastUpdated: '2018-10-22T05:24:49Z'
+      },
+      entriesSheets: [],
+      resultsSheets: []
+    });
+    runner.addData('dialog_import_importEntries', {
+      numCrews: 1,
+      sheets: [{
+        name: 'Div1',
+        crews: {
+          numCrews: 1}
+      }]
+    });
 })();

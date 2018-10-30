@@ -83,9 +83,9 @@ var PrintDialog = BaseComponent.extend({
         this.toggleCreateButton(data.resultsSheets, 'results');
     },
 
-    onCreateEntriesClick: function() {
+    onCreateEntriesClick: function(e) {
         this.clearError_();
-        this.$('button.create').disableSubmit();
+        $(e.currentTarget).disableSubmit();
         google.script.run.withSuccessHandler(_.bind(this.onCreateSuccess, this))
             .withFailureHandler(_.bind(this.onCreateFailure, this))
             .dialog_print_createEntriesSheet(this.spreadsheetId);
