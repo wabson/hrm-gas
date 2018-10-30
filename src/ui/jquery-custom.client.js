@@ -39,7 +39,7 @@ $.fn.disableSubmit = function(tempLabel)
         $buttons = this.find('button[type="submit"]');
     }
     $buttons.attr('data-orig-value', $buttons.html()).html(tempLabel).prop('disabled', true);
-    $inputs.attr('data-orig-value', $buttons.val()).val(tempLabel).prop('disabled', true);
+    $inputs.attr('data-orig-value', $inputs.val()).val(tempLabel).prop('disabled', true);
     return this;
 };
 $.fn.restoreSubmit = function()
@@ -54,6 +54,6 @@ $.fn.restoreSubmit = function()
         $buttons = this.find('button[type="submit"]');
     }
     $buttons.html($buttons.attr('data-orig-value')).prop('disabled', false);
-    $inputs.val($buttons.attr('data-orig-value')).prop('disabled', false);
+    $inputs.val($inputs.attr('data-orig-value')).prop('disabled', false);
     return this;
 };
