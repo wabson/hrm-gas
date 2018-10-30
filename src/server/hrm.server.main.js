@@ -350,7 +350,7 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
 
   var compiledTemplateId = getCompiledTemplateId_(template.getId());
 
-  if (compiledTemplateId) {
+  if (compiledTemplateId && compiledTemplateId.value) {
     var compiledTemplate = SpreadsheetApp.openById(compiledTemplateId.value), compiledSheets = compiledTemplate.getSheets();
     for (var k = 0; k < compiledSheets.length; k++) {
       compiledSheets[k].copyTo(spreadsheet).setName(compiledSheets[k].getName());
