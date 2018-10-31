@@ -173,7 +173,7 @@ function getRaceSheets(spreadsheet) {
 }
 
 function getRaceSheetNamesFromIndex(ss) {
-  var racesSheet = ss.getSheetByName('Races');
+  var racesSheet = ss.getSheetByName('Index');
   if (racesSheet !== null) {
     return tables.getRows(racesSheet).filter(function(row) {
       return row['Type'] === 'Table';

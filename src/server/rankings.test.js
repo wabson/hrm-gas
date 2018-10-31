@@ -78,7 +78,7 @@ describe('rankings', function() {
 
     beforeEach(function () {
       rankingsSS = new FakeSS();
-      templateSheet = new FakeSheet('Races', templateValues);
+      templateSheet = new FakeSheet('Index', templateValues);
       rankingsSheet = new FakeSheet('RankingsSource', rankingsValues);
       rankingsCopySheet = new FakeSheet('Rankings', []);
       rankingsSS.sheets = [ templateSheet, rankingsSheet, rankingsCopySheet ];

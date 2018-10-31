@@ -53,7 +53,7 @@ describe('templates', function() {
     sheet1 = new FakeSheet('Sheet1', values1);
     sheet2 = new FakeSheet('Sheet2', values2);
     tmplSheet1 = new FakeSheet('Tmpl1', values3);
-    racesSheet = new FakeSheet('Races', racesValues);
+    racesSheet = new FakeSheet('Index', racesValues);
     sourceSS = new FakeSS();
     destSS = new FakeSS();
   });
@@ -83,7 +83,7 @@ describe('templates', function() {
   });
 
   it('should copy from external sheets when an ID is also provided in the template sheet column', function () {
-    racesSheet = new FakeSheet('Races', racesExternalValues);
+    racesSheet = new FakeSheet('Index', racesExternalValues);
     sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet];
     templates.createFromTemplate(sourceSS, destSS);
     expect(destSS.sheets.length).to.equal(1);
@@ -148,7 +148,7 @@ describe('templates', function() {
   });
 
   it('should modify formulae from existing sheets based on the template for Table sheets', function () {
-    var racesSheet1 = new FakeSheet('Races', racesTableValues);
+    var racesSheet1 = new FakeSheet('Index', racesTableValues);
     sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet1];
     tmplSheet1.formulas = [['', ''], ['=VLOOKUP(A2, Tmpl1!A1:B2, 1)', '']];
     templates.createFromTemplate(sourceSS, destSS);
@@ -169,7 +169,7 @@ describe('templates', function() {
   });
 
   it('should create sheets in the specified order according to the index column', function () {
-    var racesSheet1 = new FakeSheet('Races', racesUnorderedValues);
+    var racesSheet1 = new FakeSheet('Index', racesUnorderedValues);
     sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet1];
     templates.createFromTemplate(sourceSS, destSS);
     expect(destSS.sheets.length).to.equal(2);
@@ -178,7 +178,7 @@ describe('templates', function() {
   });
 
   it('should set the first sheet as the active one', function () {
-    var racesSheet1 = new FakeSheet('Races', racesUnorderedValues);
+    var racesSheet1 = new FakeSheet('Index', racesUnorderedValues);
     sourceSS.sheets = [sheet1, sheet2, tmplSheet1, racesSheet1];
     templates.createFromTemplate(sourceSS, destSS);
     expect(destSS.getActiveSheet().name).to.equal('Race1');

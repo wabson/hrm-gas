@@ -1,6 +1,6 @@
 var tables = require('./tables');
 
-var RACES_SHEET_NAME = 'Races';
+var RACES_SHEET_NAME = 'Index';
 var RACES_COL_NAME = 'Name';
 var RACES_COL_TEMPLATE = 'TemplateSheet';
 var RACES_COL_HIDDEN = 'Hidden';
@@ -62,13 +62,14 @@ var createSheetsFromTemplate = function createSheetsFromTemplate(rows, templateS
     if (templateSheetName && srcSheet === null) {
       throw 'Sheet ' + templateSheetName + ' not found';
     }
-    var srcRange = srcSheet ? srcSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn()) : null;
+    var lastColumn = srcSheet ? srcSheet.getLastColumn() : null, lastRow = srcSheet ? srcSheet.getLastRow() : null;
+    var srcRange = srcSheet ? srcSheet.getRange(1, 1, lastRow, lastColumn) : null;
     var dstSheet = srcSheet ? srcSheet.copyTo(ss).setName(row[RACES_COL_NAME]) : ss.insertSheet(row[RACES_COL_NAME], i);
     if (row[RACES_COL_HIDDEN] === 1 || row[RACES_COL_HIDDEN] === true) {
       dstSheet.hideSheet();
     }
     if (srcRange && row[RACES_COL_TYPE] === RACE_TYPE_TABLE) {
-      var dstRange = dstSheet.getRange(1, 1, srcSheet.getLastRow(), srcSheet.getLastColumn());
+      var dstRange = dstSheet.getRange(1, 1, lastRow, lastColumn);
       var formulas = srcRange.getFormulas().map(function(rowFormulas) {
         return rowFormulas.map(function (formula) {
           return formula ? formula.replace(templateSheetName, row[RACES_COL_NAME]) : formula;
@@ -78,7 +79,8 @@ var createSheetsFromTemplate = function createSheetsFromTemplate(rows, templateS
         dstRange.setFormulas(formulas);
       }
       // Re-set headers after setting formulas
-      dstSheet.getRange(1, 1, 1, srcSheet.getLastColumn()).setValues(srcSheet.getRange(1, 1, 1, srcSheet.getLastColumn()).getValues());
+      var srcHeaders = srcSheet.getRange(1, 1, 1, lastColumn).getValues();
+      dstSheet.getRange(1, 1, 1, lastColumn).setValues(srcHeaders);
 
       if (row[RACES_COL_NUM_RANGE]) {
         var numRange = _createNumberValues(row[RACES_COL_NUM_RANGE], row[RACES_COL_CREW_SIZE]);
