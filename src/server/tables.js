@@ -3,16 +3,23 @@
  *
  * Return {array} Array containing each row as an object, with properties named according to the table heading name. Array will be empty if no data rows are present.
  */
-function getTableRows(sheet, convertToLowerCase) {
-  convertToLowerCase = typeof convertToLowerCase != "undefined" ? convertToLowerCase : false;
+function getTableRows(sheet, convertToLowerCase, skipCalculatedValues) {
+  convertToLowerCase = typeof convertToLowerCase !== "undefined" ? convertToLowerCase : false;
+  skipCalculatedValues = typeof skipCalculatedValues !== "undefined" ? skipCalculatedValues : false;
   if (sheet.getLastRow() < 2)
     return [];
-  var range = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()), values = range.getValues(), headers = values[0], rows = [], row = null;
+  var range = sheet.getDataRange(), values = range.getValues(),
+    formulas = skipCalculatedValues === true ? range.getFormulas() : null,
+    headers = values[0], rows = [], row = null, value;
   for (var i=1; i<values.length; i++) {
     row = {};
     for (var j=0; j<headers.length; j++) {
-      if (headers[j] && typeof headers[j] == "string") {
-        row[convertToLowerCase ? headers[j].toLowerCase() : headers[j]] = values[i][j];
+      value = values[i][j];
+      if (skipCalculatedValues === true && typeof formulas[i][j] === 'string' && formulas[i][j].length > 0) {
+        value = '';
+      }
+      if (headers[j] && typeof headers[j] === "string") {
+        row[convertToLowerCase ? headers[j].toLowerCase() : headers[j]] = value;
       }
     }
     rows.push(row);

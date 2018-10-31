@@ -37,7 +37,7 @@ exports.dialog_import_importEntries = function dialog_import_importEntries(destI
         for (var i=0; i<srcSheets.length; i++) {
             srcSheet = srcSheets[i];
             sheetName = srcSheet.getName();
-            srcRows = tables.getRows(srcSheet).filter(filterNonEmptyRows);
+            srcRows = tables.getRows(srcSheet, false, true).filter(filterNonEmptyRows);
             srcRows.forEach(function(row) {
                 row['Set'] = entrySetId;
             });
