@@ -33,6 +33,9 @@ function addEntrySets(ss, entrySets) {
   /* jshint sub:true */
   var added = new Date();
   var entrySetsSheet = getOrCreateEntrySetsSheet(ss);
+  if (entrySetsSheet.getLastRow() === 1 && entrySetsSheet.getLastColumn() === 1) {
+    entrySetsSheet.getRange(1, 1, 1, ENTRY_SETS_COLUMNS.length).setValues([ ENTRY_SETS_COLUMNS ]);
+  }
   entrySets.forEach(function(entrySet) {
     if (!entrySet.hasOwnProperty('ID')) {
       entrySet['ID'] = getNextId(entrySetsSheet);

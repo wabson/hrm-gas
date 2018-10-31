@@ -22,59 +22,92 @@ describe('entry sets', function() {
   ];
   var entrySetsSheet = new FakeSheet('Entry Sets', entrySetsSheetValues);
 
-  beforeEach(function () {
-    ss.sheets = [ sheet1 ];
-    entrySets.addEntrySets(ss, [ entrySetNew ]);
-  });
+  describe('missing Entry Sets sheet', function() {
 
-  it('should create new sheets if no Entry Sets sheet exists', function() {
+    beforeEach(function () {
+      ss.sheets = [ sheet1 ];
+      entrySets.addEntrySets(ss, [ entrySetNew ]);
+    });
 
-    expect(ss.sheets.length).to.equal(2);
-    expect(ss.sheets[1].getName()).to.equal('Entry Sets');
+    it('should create new sheets if no Entry Sets sheet exists', function() {
 
-  });
+      expect(ss.sheets.length).to.equal(2);
+      expect(ss.sheets[1].getName()).to.equal('Entry Sets');
 
-  it('should create default column names in the sheet', function() {
+    });
 
-    var sheetValues = ss.sheets[1].data;
-    expect(sheetValues[0][0]).to.equal('ID');
-    expect(sheetValues[0][1]).to.equal('Label');
-    expect(sheetValues[0][2]).to.equal('Name');
-    expect(sheetValues[0][3]).to.equal('Club');
-    expect(sheetValues[0][4]).to.equal('Email');
-    expect(sheetValues[0][5]).to.equal('Phone');
-    expect(sheetValues[0][6]).to.equal('Team Leader?');
+    it('should create default column names in the sheet', function() {
 
-  });
+      var sheetValues = ss.sheets[1].data;
+      expect(sheetValues[0][0]).to.equal('ID');
+      expect(sheetValues[0][1]).to.equal('Label');
+      expect(sheetValues[0][2]).to.equal('Name');
+      expect(sheetValues[0][3]).to.equal('Club');
+      expect(sheetValues[0][4]).to.equal('Email');
+      expect(sheetValues[0][5]).to.equal('Phone');
+      expect(sheetValues[0][6]).to.equal('Team Leader?');
 
-  it('should populate the values', function() {
-
-    var sheetValues = ss.sheets[1].data;
-    expect(sheetValues.length).to.equal(2);
-    expect(sheetValues[1][0]).to.equal(22);
-    expect(sheetValues[1][1]).to.equal('Test set');
-    expect(sheetValues[1][2]).to.equal('Bob Jones');
-    expect(sheetValues[1][4]).to.equal('bob.jones@bob.com');
+    });
 
   });
 
-  it('should generate new IDs', function() {
+  describe('empty Entry Sets sheet', function() {
 
-    ss.sheets = [ entrySetsSheet ];
-    var nextId = entrySets.generateId(ss);
-    expect(nextId).to.equal(2);
+    var emptyEntrySetsSheet;
+
+    beforeEach(function () {
+      emptyEntrySetsSheet = new FakeSheet('Entry Sets', [['']]);
+      ss.sheets = [ sheet1, emptyEntrySetsSheet ];
+      entrySets.addEntrySets(ss, [ entrySetNew ]);
+    });
+
+    it('should create column headings if the Entry Sets sheet is empty', function() {
+
+      var sheetValues = emptyEntrySetsSheet.data;
+      expect(sheetValues.length).to.equal(2);
+      expect(sheetValues[0].length).to.equal(11);
+
+    });
 
   });
 
-  it('should generate new IDs in new sets', function() {
+  describe('ID generation', function() {
 
-    ss.sheets = [ entrySetsSheet ];
-    expect(entrySetsSheet.data.length).to.equal(2);
-    entrySets.addEntrySets(ss, [{
-      'Label': 'Test set'
-    }]);
-    expect(entrySetsSheet.data.length).to.equal(3);
-    expect(entrySetsSheet.data[2][0]).to.equal(2);
+    beforeEach(function () {
+      ss.sheets = [ sheet1 ];
+      entrySets.addEntrySets(ss, [ entrySetNew ]);
+    });
+
+    it('should generate new IDs', function() {
+
+      ss.sheets = [ entrySetsSheet ];
+      var nextId = entrySets.generateId(ss);
+      expect(nextId).to.equal(2);
+
+    });
+
+    it('should generate new IDs in new sets', function() {
+
+      ss.sheets = [ entrySetsSheet ];
+      expect(entrySetsSheet.data.length).to.equal(2);
+      entrySets.addEntrySets(ss, [{
+        'Label': 'Test set'
+      }]);
+      expect(entrySetsSheet.data.length).to.equal(3);
+      expect(entrySetsSheet.data[2][0]).to.equal(2);
+
+    });
+
+    it('should populate the values', function() {
+
+      var sheetValues = ss.sheets[1].data;
+      expect(sheetValues.length).to.equal(2);
+      expect(sheetValues[1][0]).to.equal(22);
+      expect(sheetValues[1][1]).to.equal('Test set');
+      expect(sheetValues[1][2]).to.equal('Bob Jones');
+      expect(sheetValues[1][4]).to.equal('bob.jones@bob.com');
+
+    });
 
   });
 
