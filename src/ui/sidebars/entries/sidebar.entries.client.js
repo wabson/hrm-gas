@@ -335,7 +335,8 @@ var AddEntryView = BaseComponent.extend({
     },
 
     onCrewFormSubmit: function(payload) {
-        var raceName = payload.data.race, crewMembers = payload.tableData['crew-members'], isLate = payload.data.isLate === 'y';
+        var raceName = payload.data.race, crewMembers = payload.tableData['crew-members'],
+            isLate = payload.data.isLate === 'y';
         google.script.run
             .withSuccessHandler(_.bind(this.onAddCrewSuccess, this))
             .withFailureHandler(_.bind(this.onAddCrewFailure, this))

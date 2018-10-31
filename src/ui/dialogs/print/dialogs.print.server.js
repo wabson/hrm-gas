@@ -15,14 +15,14 @@ var getResultsRenditions = function getResultsRenditions(ssId) {
                 id: file.id,
                 name: file.title,
                 lastUpdated: file.modifiedDate
-            }
+            };
         }),
         resultsSheets: renditions.list(ss, 'printableResults').map(function(file) {
             return {
                 id: file.id,
                 name: file.title,
                 lastUpdated: file.modifiedDate
-            }
+            };
         })
     };
 };
@@ -33,7 +33,7 @@ var spreadsheetToJson = function(ss) {
         id: ssId,
         name: ss.getName(),
         lastUpdated: DriveApp.getFileById(ssId).getLastUpdated()
-    }
+    };
 };
 
 var createEntriesSheet = function createResultsSheet(ssId) {

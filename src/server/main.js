@@ -1,3 +1,5 @@
+/* jshint camelcase: false */
+
 var uiUtils = require('./libs/lib.utils.ui.server');
 var dialogs = require('../ui/dialogs.controller.server');
 var apiRaceDetails = require('../ui/dialogs/race-details/dialogs.race-details.server');

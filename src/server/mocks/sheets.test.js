@@ -37,13 +37,18 @@ FakeRange.prototype = {
     return this;
   },
   getEmptyData: function() {
-    return (new Array(this.numRows).fill([])).map(function() { return (new Array(this.numColumns)).fill('') }, this );
+    return (new Array(this.numRows).fill([])).map(function() { return (new Array(this.numColumns)).fill(''); }, this );
   },
   getDataValues: function(data) {
     var start = this.row - 1;
-    var base = this.getEmptyData(), items = [].concat(data.slice(start, start + this.numRows).map(function(row) { return [].concat(row) } ));
-    var ret = base.map(function(blankRow, rowIdx) { return blankRow.map(function(blankVal, colIdx) { return items[rowIdx] && items[rowIdx][colIdx] ? items[rowIdx][colIdx] : blankVal })});
-    return ret;
+    var base = this.getEmptyData(), items = [].concat(data.slice(start, start + this.numRows).map(function(row) {
+      return [].concat(row);
+    }));
+    return base.map(function(blankRow, rowIdx) {
+      return blankRow.map(function(blankVal, colIdx) {
+        return items[rowIdx] && items[rowIdx][colIdx] ? items[rowIdx][colIdx] : blankVal;
+      });
+    });
   },
   setDataValues: function(values, data) {
     var newLength = Math.max(this.row - 1 + values.length);
@@ -51,7 +56,7 @@ FakeRange.prototype = {
     this.padRows(data, newLength);
     this.padColumns(data, newRowLength);
     if (values.length > 0) {
-      if (!values.every(function(rowValues) { return this.numColumns === rowValues.length }, this)) {
+      if (!values.every(function(rowValues) { return this.numColumns === rowValues.length; }, this)) {
         throw 'No of columns in range must be equal to the no of values columns';
       }
     }
@@ -104,7 +109,7 @@ FakeRange.prototype = {
     return values.map(function(row, rowIdx) {
       return row.map(function(col, colIdx) {
         return transformFn(col, colIdx);
-      })
+      });
     });
   },
   getNumberFormats: function() {
@@ -192,7 +197,8 @@ FakeSheet.prototype = {
     return new FakeRange(this.data, this.formulas, row, column, numRows, numColumns);
   },
   getDataRange: function() {
-    return new FakeRange(this.data, this.formulas, 1, 1, Math.max(this.data.length, 1), this.data.length ? Math.max(this.data[0].length, 1) : 1);
+    return new FakeRange(this.data, this.formulas, 1, 1, Math.max(this.data.length, 1),
+      this.data.length ? Math.max(this.data[0].length, 1) : 1);
   },
   getName: function() {
     return this.name;

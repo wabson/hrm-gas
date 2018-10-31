@@ -1,7 +1,8 @@
 var tables = require('./tables');
 
 var ENTRY_SETS_SHEET_NAME = 'Entry Sets';
-var ENTRY_SETS_COLUMNS = ['ID', 'Label', 'Name', 'Club', 'Email', 'Phone', 'Team Leader?', 'Entered', 'Due', 'Paid', 'Added'];
+var ENTRY_SETS_COLUMNS =
+  ['ID', 'Label', 'Name', 'Club', 'Email', 'Phone', 'Team Leader?', 'Entered', 'Due', 'Paid', 'Added'];
 var MAX_AUTO_ID = 999;
 
 function generateId(ss) {
@@ -9,6 +10,7 @@ function generateId(ss) {
 }
 
 function getNextId(entrySetsSheet) {
+  /* jshint sub:true */
   var rows = tables.getRows(entrySetsSheet);
   var setIds = rows.map(function(entry) { return entry['ID']; });
   var indexId = 1;
@@ -28,6 +30,7 @@ function getOrCreateEntrySetsSheet(ss) {
 }
 
 function addEntrySets(ss, entrySets) {
+  /* jshint sub:true */
   var added = new Date();
   var entrySetsSheet = getOrCreateEntrySetsSheet(ss);
   entrySets.forEach(function(entrySet) {

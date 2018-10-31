@@ -1,3 +1,5 @@
+/*jshint sub:true*/
+
 var chai = require('chai'), expect = chai.expect, sinon = require('sinon');
 chai.use(require('chai-datetime'));
 
@@ -11,7 +13,10 @@ describe('tables', function() {
   var sourceSS, destSS, sheet1, sheet2, racesSheet, tmplSheet1;
 
   var values1 = [['Column1', 'Column2'], ['Value1', 'Value2']];
-  var values2 = [['Column1', 'Column2', 'Column3', 'Column4', 'Column5'], ['Value1', 'Value2', 'Value3', 'Value4', 'Value5']];
+  var values2 = [
+    ['Column1', 'Column2', 'Column3', 'Column4', 'Column5'],
+    ['Value1', 'Value2', 'Value3', 'Value4', 'Value5']
+  ];
   var valuesExternal = [['Column567', 'Column085'], ['Value320', 'Value419']];
   var formulaValues = [['', ''], ['', '=B1']];
 

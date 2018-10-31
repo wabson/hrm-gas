@@ -3,7 +3,8 @@ var entrySets = require('./entry-sets');
 var sheetMocks = require('./mocks/sheets.test');
 
 var FakeSS = sheetMocks.MockSS, FakeSheet = sheetMocks.MockSheet;
-var ENTRY_SETS_COLUMNS = ['ID', 'Label', 'Name', 'Club', 'Email', 'Phone', 'Team Leader?', 'Entered', 'Due', 'Paid', 'Added'];
+var ENTRY_SETS_COLUMNS =
+  ['ID', 'Label', 'Name', 'Club', 'Email', 'Phone', 'Team Leader?', 'Entered', 'Due', 'Paid', 'Added'];
 
 describe('entry sets', function() {
 
@@ -15,7 +16,10 @@ describe('entry sets', function() {
     'Email': 'bob.jones@bob.com'
   };
 
-  var entrySetsSheetValues = [ ENTRY_SETS_COLUMNS, [ 1, 'Set 1',  'Bill Jones', 'RIC', 'bill.jones@ntl.com', 123345, false, new Date(), 0, new Date() ] ];
+  var entrySetsSheetValues = [
+    ENTRY_SETS_COLUMNS,
+    [ 1, 'Set 1',  'Bill Jones', 'RIC', 'bill.jones@ntl.com', 123345, false, new Date(), 0, new Date() ]
+  ];
   var entrySetsSheet = new FakeSheet('Entry Sets', entrySetsSheetValues);
 
   beforeEach(function () {

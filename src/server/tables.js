@@ -6,8 +6,9 @@
 function getTableRows(sheet, convertToLowerCase, skipCalculatedValues) {
   convertToLowerCase = typeof convertToLowerCase !== "undefined" ? convertToLowerCase : false;
   skipCalculatedValues = typeof skipCalculatedValues !== "undefined" ? skipCalculatedValues : false;
-  if (sheet.getLastRow() < 2)
+  if (sheet.getLastRow() < 2) {
     return [];
+  }
   var range = sheet.getDataRange(), values = range.getValues(),
     formulas = skipCalculatedValues === true ? range.getFormulas() : null,
     headers = values[0], rows = [], row = null, value;

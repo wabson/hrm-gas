@@ -28,7 +28,11 @@ exports.sidebar_entries_race_info = function sidebar_entries_race_info(spreadshe
         rankingsSize: rankingsSize,
         lastUpdated: rankingsLastUpdated !== null ?
             Utilities.formatDate(rankingsLastUpdated, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : null,
-        raceDate: raceProps.raceDate ? Utilities.formatDate(raceProps.raceDate, spreadsheet.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : ''
+        raceDate: raceProps.raceDate ? Utilities.formatDate(
+            raceProps.raceDate,
+            spreadsheet.getSpreadsheetTimeZone(),
+            'yyyy-MM-dd'
+        ) : ''
     };
 };
 

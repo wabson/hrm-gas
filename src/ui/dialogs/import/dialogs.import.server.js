@@ -30,7 +30,8 @@ exports.dialog_import_importEntries = function dialog_import_importEntries(destI
             srcSheets = racing.getRaceSheets(sourceSS), srcSheet, sheetName, results = [];
 
         var filterNonEmptyRows = function(row) {
-            return !(row['Surname'] === '' && row['First name'] === '')
+            /*jshint sub:true*/
+            return !(row['Surname'] === '' && row['First name'] === '');
         };
         var totalCrews = 0, totalPaid = 0, srcRows;
         var entrySetId = entrySets.generateId(destSS);
@@ -39,6 +40,7 @@ exports.dialog_import_importEntries = function dialog_import_importEntries(destI
             sheetName = srcSheet.getName();
             srcRows = tables.getRows(srcSheet, false, true).filter(filterNonEmptyRows);
             srcRows.forEach(function(row) {
+                /*jshint sub:true*/
                 row['Set'] = entrySetId;
             });
             var newCrews =

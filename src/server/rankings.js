@@ -79,12 +79,13 @@ function loadRankingsSheet(sourceSheet, ss, clubName) {
     var srcRows = tables.getRows(sourceSheet);
     if (clubName) {
       srcRows = srcRows.filter(function (val) {
-        return val["Club"] == clubName;
+        /* jshint sub:true */
+        return val['Club'] === clubName;
       });
     }
     tables.appendRows(sheet, srcRows);
     // Set expiration date formats (column F)
-    var expiryColPos = headers.indexOf("Expiry");
+    var expiryColPos = headers.indexOf('Expiry');
     if (expiryColPos > -1) {
       sheet.getRange(2, expiryColPos + 1, sourceHeight - 1, 1).setNumberFormat(NUMBER_FORMAT_DATE);
     }
@@ -92,13 +93,13 @@ function loadRankingsSheet(sourceSheet, ss, clubName) {
 }
 
 function cellValueIsDate_(value) {
-  return value instanceof Date || typeof value == 'number';
+  return value instanceof Date || typeof value === 'number';
 }
 
 function cellDateValue_(value) {
   if (value instanceof Date) {
     return value;
-  } else if (typeof value == 'number') {
+  } else if (typeof value === 'number') {
     var dateVal = new Date(1899, 11, 30, 0, 0, 0);
     dateVal.setDate(dateVal.getDate() + value);
     return dateVal;
@@ -146,7 +147,8 @@ function clearRankingsIfSheetExists_(ss) {
  *
  * @param sheet {Sheet} The sheet to search within
  * @param columns {array<object{name, regexp}>}
- * @param useOr {Boolean} True if only one column in a row must match the term for a match, otherwise all columns must match
+ * @param useOr {Boolean} True if only one column in a row must match the term for a match,
+ * otherwise all columns must match
  * @return {Object[]} Set of matching rows
  * @private
  */

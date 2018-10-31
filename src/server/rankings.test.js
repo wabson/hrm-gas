@@ -69,7 +69,10 @@ describe('rankings', function() {
 
   describe('load rankings', function() {
 
-    var templateValues = [ ['Name', 'TemplateSheet', 'Hidden', 'Type', 'CrewSize', 'NumRange'], ['Rankings', 'RankingsSource', '', '' , '', ''] ];
+    var templateValues = [
+      ['Name', 'TemplateSheet', 'Hidden', 'Type', 'CrewSize', 'NumRange'],
+      ['Rankings', 'RankingsSource', '', '' , '', '']
+    ];
     var templateSheet;
     var rankingsCopySheet;
 

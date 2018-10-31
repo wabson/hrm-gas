@@ -1,3 +1,5 @@
+/* jshint sub:true */
+
 describe('Rankings search component', function() {
 
     describe('HaslerRankingDetails', function() {
@@ -197,6 +199,7 @@ describe('Rankings update check component', function() {
         });
 
         it('should render an empty div initially', function() {
+            /* jshint camelcase: false */
             google.script.run.sidebar_rankings_last_updated = function() {
             };
             this.view = new RankingsUpdateCheck({}).render();

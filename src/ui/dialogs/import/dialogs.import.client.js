@@ -38,8 +38,9 @@ var ImportDialog = BaseComponent.extend({
     },
 
     onSelectClick: function() {
+        /* jshint camelcase:false */
         google.script.run.withSuccessHandler(_.bind(this.createPicker, this))
-            .withFailureHandler(_.bind(this.onGetOAuthTokenFailure, this)).dialog_import_getOAuthToken()
+            .withFailureHandler(_.bind(this.onGetOAuthTokenFailure, this)).dialog_import_getOAuthToken();
     },
 
     createPicker: function(token) {
@@ -101,6 +102,7 @@ var ImportDialog = BaseComponent.extend({
     },
 
     onFormSubmit: function(event) {
+        /* jshint camelcase:false */
         event.preventDefault();
         var $form = $(event.target);
         $form.addClass('validate');
@@ -134,7 +136,8 @@ var ImportDialog = BaseComponent.extend({
     populateResults: function(results, fileName) {
         var crewTerm = results.numCrews === 1 ? 'crew' : 'crews';
         if (results.numCrews > 0) {
-            this.$('#import-results .summary').text('Imported ' + results.numCrews + ' ' + crewTerm  + ' from ' + fileName);
+            this.$('#import-results .summary').text('Imported ' + results.numCrews + ' ' + crewTerm  + ' from ' +
+                fileName);
         } else {
             this.$('#import-results .summary').text('No crews found in ' + fileName);
         }

@@ -40,7 +40,7 @@ var PrintDialog = BaseComponent.extend({
                         lastUpdated: this.formatDate_(rendition.lastUpdated),
                         status: this.getStatus_(rendition),
                         editHref: 'https://docs.google.com/spreadsheets/d/' + rendition.id + '/edit'
-                    })
+                    });
                 }, this
             )
         );
@@ -69,6 +69,7 @@ var PrintDialog = BaseComponent.extend({
     },
 
     loadResultsInfo: function() {
+        /* jshint camelcase:false */
         this.clearError_();
         google.script.run.withSuccessHandler(_.bind(this.onResultsInfoLoaded, this))
             .withFailureHandler(_.bind(this.onFailure, this))
@@ -84,6 +85,7 @@ var PrintDialog = BaseComponent.extend({
     },
 
     onCreateEntriesClick: function(e) {
+        /* jshint camelcase:false */
         this.clearError_();
         $(e.currentTarget).disableSubmit();
         google.script.run.withSuccessHandler(_.bind(this.onCreateSuccess, this))
@@ -92,6 +94,7 @@ var PrintDialog = BaseComponent.extend({
     },
 
     onCreateResultsClick: function() {
+        /* jshint camelcase:false */
         this.clearError_();
         this.$('button.create').disableSubmit();
         google.script.run.withSuccessHandler(_.bind(this.onCreateSuccess, this))
@@ -102,20 +105,21 @@ var PrintDialog = BaseComponent.extend({
     onPrintClick: function(e) {
         var renditionId = $(e.currentTarget).closest('div[data-spreadsheet-id]').attr('data-spreadsheet-id');
         var url = 'https://docs.google.com/spreadsheets/d/{SS_ID}/export?'.replace('{SS_ID}', renditionId);
-        var urlExt = 'format=pdf'        // export as pdf / csv / xls / xlsx
-            + '&size=a4'                           // paper size legal / letter / A4
-            + '&portrait=false'                    // orientation, false for landscape
-            + '&fitw=true'           // fit to page width, false for actual size
-            + '&sheetnames=true&printtitle=true'   // show optional headers and footers
-            + '&pagenumbers=true&gridlines=true'   // show page numbers and gridlines
-            + '&fzr=true'                          // repeat row headers (frozen rows) on each page
-            + '&attachment=false';
-        //+ '&gid=';                             // specific sheet gid to use (otherwise includes all sheets)
+        var urlExt = 'format=pdf' +        // export as pdf / csv / xls / xlsx
+            '&size=a4' +                           // paper size legal / letter / A4
+            '&portrait=false' +                    // orientation, false for landscape
+            '&fitw=true' +           // fit to page width, false for actual size
+            '&sheetnames=true&printtitle=true' +   // show optional headers and footers
+            '&pagenumbers=true&gridlines=true' +   // show page numbers and gridlines
+            '&fzr=true' +                          // repeat row headers (frozen rows) on each page
+            '&attachment=false';
+        // '&gid=';                             // specific sheet gid to use (otherwise includes all sheets)
         var win = window.open(url + urlExt, '_blank');
         win.focus();
     },
 
     onUpdateClick: function(e) {
+        /* jshint camelcase:false */
         e.preventDefault();
         this.clearError_();
         var divEl = $(e.currentTarget).closest('div[data-spreadsheet-id]');
@@ -137,6 +141,7 @@ var PrintDialog = BaseComponent.extend({
     },
 
     onDeleteClick: function(e) {
+        /* jshint camelcase:false */
         e.preventDefault();
         this.clearError_();
         var divEl = $(e.currentTarget).closest('div[data-spreadsheet-id]');

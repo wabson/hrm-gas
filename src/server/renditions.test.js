@@ -87,6 +87,6 @@ describe('renditions', function() {
       expect(destSS.sheets[0].name).to.equal('A');
     });
 
-  })
+  });
 
 });

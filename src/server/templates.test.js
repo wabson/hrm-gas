@@ -1,3 +1,5 @@
+/*jshint sub:true*/
+
 var chai = require('chai'), expect = chai.expect, sinon = require('sinon');
 chai.use(require('chai-datetime'));
 
@@ -14,10 +16,23 @@ describe('templates', function() {
   var values2 = [['Column3', 'Column4'], ['Value3', 'Value4']];
   var values3 = [['Column5', 'Column6'], ['Value51', 'Value52']];
   var valuesExternal = [['Column567', 'Column085'], ['Value320', 'Value419']];
-  var racesValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type'], ['Race1', 'Tmpl1', '', '' , '', '']];
-  var racesTableValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type'], ['Race1', 'Tmpl1', '', '' , '', 'Table']];
-  var racesUnorderedValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type', 'Index'], ['Race2', 'Tmpl1', '', '' , '', '', 2], ['Race1', 'Tmpl1', '', '' , '', '', 1]];
-  var racesExternalValues = [['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange'], ['Race77', 'MyOtherSS/Tmpl1', '', '' , '']];
+  var racesValues = [
+    ['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type'],
+    ['Race1', 'Tmpl1', '', '' , '', '']
+  ];
+  var racesTableValues = [
+    ['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type'],
+    ['Race1', 'Tmpl1', '', '' , '', 'Table']
+  ];
+  var racesUnorderedValues = [
+    ['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange', 'Type', 'Index'],
+    ['Race2', 'Tmpl1', '', '' , '', '', 2],
+    ['Race1', 'Tmpl1', '', '' , '', '', 1]
+  ];
+  var racesExternalValues = [
+    ['Name', 'TemplateSheet', 'Hidden', 'CrewSize', 'NumRange'],
+    ['Race77', 'MyOtherSS/Tmpl1', '', '' , '']
+  ];
 
   before(function () {
     global.Logger = {
@@ -54,7 +69,7 @@ describe('templates', function() {
 
   it('should throw an error when the sheet is not found', function () {
     sourceSS.sheets = [sheet1, sheet2, racesSheet];
-    expect(function() { templates.createFromTemplate(sourceSS, destSS) }).to.throw();
+    expect(function() { templates.createFromTemplate(sourceSS, destSS); }).to.throw();
   });
 
   it('should only the header row of sheets in Table mode', function () {
@@ -184,7 +199,7 @@ describe('templates', function() {
 
   it('should throw an error if there is no index sheet', function () {
     sourceSS.sheets = [sheet1, sheet2];
-    expect(function() { templates.getTemplateSheetByName(sourceSS, destSS) }).to.throw();
+    expect(function() { templates.getTemplateSheetByName(sourceSS, destSS); }).to.throw();
   });
 
 });

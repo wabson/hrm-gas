@@ -52,6 +52,7 @@ var RankingsView = BaseComponent.extend({
             ]
         });
         this.rankingDispatcher.bind('submit', function(payload) {
+            /* jshint camelcase: false */
             $('#rankings-search-errors').empty();
             var newRows = payload.tableData['rankings-search-results'];
             google.script.run
@@ -62,6 +63,7 @@ var RankingsView = BaseComponent.extend({
     },
 
     render: function() {
+        /* jshint camelcase: false */
         this.$('#rankings-search').empty().append(this.search.render().$el);
         google.script.run
             .withSuccessHandler(_.bind(this.onSpreadsheetInfoSuccess, this))
@@ -71,6 +73,7 @@ var RankingsView = BaseComponent.extend({
     },
 
     onImportClick: function(event) {
+        /* jshint camelcase: false */
         event.preventDefault();
         var $form = $(event.target);
         var formData = $form.serializeObject();
@@ -82,7 +85,7 @@ var RankingsView = BaseComponent.extend({
     },
 
     formatSummary: function(data) {
-        if (typeof data.rankingsSize == 'number') {
+        if (typeof data.rankingsSize === 'number') {
             var text = data.rankingsSize > 0 ? ('Spreadsheet has ' +
             (data.rankingsSize.toLocaleString ? data.rankingsSize.toLocaleString(): data.rankingsSize) +
             ' known marathon rankings') : 'No marathon rankings have been imported';
@@ -107,7 +110,8 @@ var RankingsView = BaseComponent.extend({
         this.$('#import-form').restoreSubmit();
     },
     onImportRankingsFailure: function(error) {
-        this.$('#rankings-messages').html('Sorry, an error occurred importing the ranking data. Please try again later.');
+        this.$('#rankings-messages').html('Sorry, an error occurred importing the ranking data. Please try again ' +
+            'later.');
         this.$('#import-form').restoreSubmit();
     },
     onFailure: function (error) {
@@ -117,7 +121,8 @@ var RankingsView = BaseComponent.extend({
         this.rankingDispatcher.trigger('submitSuccess', this);
     },
     onInsertRowsFailure: function(err) {
-        this.$('#rankings-search-errors').html('<p class="icon icon-error">Could not insert crew member: ' + err.message+ '</p>');
+        this.$('#rankings-search-errors').html('<p class="icon icon-error">Could not insert crew member: ' +
+            err.message+ '</p>');
         this.rankingDispatcher.trigger('submitFailure', this);
     }
 

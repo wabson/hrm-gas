@@ -177,7 +177,8 @@ describe('Print Sheets dialog', function() {
                 });
                 this.view.render();
 
-                expect(this.view.el.querySelector('#messages').innerHTML).toBe('<p class="icon icon-error">Sorry, an error occurred</p>');
+                expect(this.view.el.querySelector('#messages').innerHTML).toBe(
+                    '<p class="icon icon-error">Sorry, an error occurred</p>');
 
             });
 
@@ -192,7 +193,8 @@ describe('Print Sheets dialog', function() {
                 this.view.render();
                 this.view.el.querySelector('#printable-entries button.create').click();
 
-                expect(this.view.el.querySelector('#messages').innerHTML).toBe('<p class="icon icon-error">Sorry, an error occurred</p>');
+                expect(this.view.el.querySelector('#messages').innerHTML).toBe(
+                    '<p class="icon icon-error">Sorry, an error occurred</p>');
 
             });
 
@@ -207,7 +209,8 @@ describe('Print Sheets dialog', function() {
                 this.view.render();
                 this.view.el.querySelector('#printable-entries div.file-list > div:first-child .update').click();
 
-                expect(this.view.el.querySelector('#messages').innerHTML).toBe('<p class="icon icon-error">Sorry, an error occurred</p>');
+                expect(this.view.el.querySelector('#messages').innerHTML).toBe(
+                    '<p class="icon icon-error">Sorry, an error occurred</p>');
 
             });
 
@@ -222,7 +225,8 @@ describe('Print Sheets dialog', function() {
                 this.view.render();
                 this.view.el.querySelector('#printable-entries div.file-list > div:first-child .delete').click();
 
-                expect(this.view.el.querySelector('#messages').innerHTML).toBe('<p class="icon icon-error">Sorry, an error occurred</p>');
+                expect(this.view.el.querySelector('#messages').innerHTML).toBe(
+                    '<p class="icon icon-error">Sorry, an error occurred</p>');
 
             });
 
