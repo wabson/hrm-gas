@@ -33,7 +33,7 @@ function addEntrySets(ss, entrySets) {
   /* jshint sub:true */
   var added = new Date();
   var entrySetsSheet = getOrCreateEntrySetsSheet(ss);
-  if (entrySetsSheet.getLastRow() === 1 && entrySetsSheet.getLastColumn() === 1) {
+  if (entrySetsSheet.getLastRow() === 0 && entrySetsSheet.getLastColumn() === 0) {
     entrySetsSheet.getRange(1, 1, 1, ENTRY_SETS_COLUMNS.length).setValues([ ENTRY_SETS_COLUMNS ]);
   }
   entrySets.forEach(function(entrySet) {
