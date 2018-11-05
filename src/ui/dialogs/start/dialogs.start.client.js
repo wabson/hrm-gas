@@ -11,6 +11,7 @@ var StartDialog = BaseComponent.extend({
     },
 
     render: function() {
+        /* jshint camelcase:false */
         var regionSelect = new FormSelectField({
             fieldId: 'select-race-region',
             label: 'Hasler region',
@@ -41,6 +42,7 @@ var StartDialog = BaseComponent.extend({
     },
 
     onRaceTemplatesLoaded: function(data) {
+        /* jshint camelcase:false */
         var selectEl = this.$('#select-race-type'), sheets = data, sheet, html = '';
         for (var i = 0; i<sheets.length; i++) {
             sheet = sheets[i];
@@ -58,7 +60,9 @@ var StartDialog = BaseComponent.extend({
     },
 
     onRaceTemplatesFailure: function(error) {
-        this.$('#messages').addClass('message error').html('<p class="icon icon-error">Could not load race templates</p>');
+        this.$('#messages').addClass('message error').html(
+            '<p class="icon icon-error">Could not load race templates</p>'
+        );
     },
 
     onRaceInfoLoaded: function(data) {
@@ -74,7 +78,9 @@ var StartDialog = BaseComponent.extend({
     },
 
     onRaceInfoFailure: function(error) {
-        this.$('#messages').addClass('message error').html('<p class="icon icon-error">Sorry, an error occurred looking up race info</p>');
+        this.$('#messages').addClass('message error').html(
+            '<p class="icon icon-error">Sorry, an error occurred looking up race info</p>'
+        );
         console.error(error);
     },
 
@@ -83,12 +89,13 @@ var StartDialog = BaseComponent.extend({
         var regionSelectEl = this.$('#select-race-region'),
             raceTypeSelectEl = this.$('#select-race-type option:selected'),
             raceTypeName = raceTypeSelectEl.val(),
-            regionInUse = raceTypeName == 'HRM';
+            regionInUse = raceTypeName === 'HRM';
         regionSelectEl.prop('disabled', !regionInUse);
         regionSelectEl.prop('required', regionInUse);
     },
 
     onFormSubmit: function(event) {
+        /* jshint camelcase:false */
         event.preventDefault();
         var $form = $(event.target);
         $form.addClass('validate');

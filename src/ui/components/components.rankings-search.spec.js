@@ -221,13 +221,15 @@ describe('Rankings update check component', function() {
                 });
             });
 
-            it('should show confirmation that the latest version of the ranking list is present when updated date is the same', function() {
+            it('should show confirmation that the latest version of the ranking list is present when updated date is ' +
+                'the same', function() {
                 google.script.run.addData('sidebar_rankings_last_updated', '2016-06-03');
                 this.view.render();
                 expect(this.view.el.innerText).toEqual('You have the latest version of the ranking list');
             });
 
-            it('should show confirmation that the latest version of the ranking list is present when updated date is later than web date', function() {
+            it('should show confirmation that the latest version of the ranking list is present when updated date is ' +
+                'later than web date', function() {
                 google.script.run.addData('sidebar_rankings_last_updated', '2016-05-03');
                 this.view.render();
                 expect(this.view.el.innerText).toEqual('You have the latest version of the ranking list');
