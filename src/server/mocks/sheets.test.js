@@ -176,10 +176,10 @@ FakeSheet.prototype = {
     return newSheet;
   },
   getLastColumn: function() {
-    return this.data.length ? this.data[0].length : 1;
+    return this.isEmpty_() ? 0 : (this.data.length ? this.data[0].length : 1);
   },
   getLastRow: function() {
-    return Math.max(this.data.length, this.formulas.length, 1);
+    return this.isEmpty_() ? 0 : Math.max(this.data.length, this.formulas.length, 1);
   },
   getRange: function(row, column, numRows, numColumns) {
     if (row < 1) {
@@ -230,6 +230,9 @@ FakeSheet.prototype = {
   getColumnWidth: function() {
   },
   setColumnWidth: function() {
+  },
+  isEmpty_: function() {
+    return this.data.length === 1 && this.data[0].length === 1 && this.data[0][0] === '';
   }
 };
 
