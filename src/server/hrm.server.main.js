@@ -358,7 +358,7 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
     var templateRows = templates.getTemplateRows(spreadsheet);
     templates.refreshFormulasAndValidations(templateRows, spreadsheet);
   } else {
-    if (template.getSheetByName('Races')) {
+    if (template.getSheetByName('Index')) {
       templates.createFromTemplate(template, spreadsheet);
     } else {
       // Copy all template sheets into current
