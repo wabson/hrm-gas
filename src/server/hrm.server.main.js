@@ -348,7 +348,8 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
     spreadsheet.deleteSheet(sheets[i]);
   }
 
-  var compiledTemplateId = getCompiledTemplateId_(template.getId());
+  var templateId = template.getId();
+  var compiledTemplateId = getCompiledTemplateId_(templateId);
 
   if (compiledTemplateId && compiledTemplateId.value) {
     var compiledTemplate = SpreadsheetApp.openById(compiledTemplateId.value), compiledSheets = compiledTemplate.getSheets();
@@ -375,13 +376,18 @@ function setupRaceFromTemplate(spreadsheet, template, options) {
     raceName: options.raceName
   }, spreadsheet);
 
-  var sourceRaceType = getRaceType_(template.getId());
+  var ssId = spreadsheet.getId(), sourceRaceType = getRaceType_(templateId);
+  setRaceTemplate_(ssId, templateId);
   if (sourceRaceType) {
-    setRaceType_(spreadsheet.getId(), sourceRaceType.value);
+    setRaceType_(ssId, sourceRaceType.value);
   }
 }
 
 exports.setupRaceFromTemplate = setupRaceFromTemplate;
+
+function setRaceTemplate_(spreadsheetId, templateId) {
+  drive.savePublicProperty(spreadsheetId, 'hrmTemplate', templateId);
+}
 
 function setRaceType_(spreadsheetId, raceType) {
   drive.savePublicProperty(spreadsheetId, 'hrmType', raceType);
