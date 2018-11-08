@@ -7,16 +7,19 @@ var Configuration = require('../../../server/libs/lib.configuration');
 exports.dialog_start_getRaceTemplates = function dialog_start_getRaceTemplates() {
     var config = Configuration.getCurrent(),
         templatesFolder = DriveApp.getFolderById(config.app.raceTemplatesFolderId),
-        sheets, sheet, data = [];
+        sheets, sheet, data = [], hrmType;
     if (templatesFolder !== null) {
         sheets = templatesFolder.getFilesByType(MimeType.GOOGLE_SHEETS);
         while (sheets.hasNext()) {
             sheet = sheets.next();
-            data.push({
-                id: sheet.getId(),
-                type: drive.getDriveProperties(sheet.getId()).hrmType || '',
-                name: sheet.getName()
-            });
+            hrmType = drive.getDriveProperties(sheet.getId()).hrmType;
+            if (hrmType !== undefined) {
+                data.push({
+                    id: sheet.getId(),
+                    type: drive.getDriveProperties(sheet.getId()).hrmType || '',
+                    name: sheet.getName()
+                });
+            }
         }
     }
     return data;
