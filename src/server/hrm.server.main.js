@@ -338,7 +338,7 @@ exports.getClubRows = getClubRows;
  */
 function setupRaceFromTemplate(spreadsheet, template, options) {
 
-  var tempSheet = spreadsheet.insertSheet(0, 'Temp' + Date.now()),
+  var tempSheet = spreadsheet.insertSheet('Temp' + Math.floor(Date.now() / 1000), 0),
     sheets = spreadsheet.getSheets(), templateSheets = template.getSheets();
 
   options = options || {};
