@@ -99,7 +99,10 @@ var DataForm = Backbone.View.extend({
 
     setFormData: function(formData) {
         _.each(formData.values, function(value, key) {
-            this.$el.find('input[name="' + key + '"], select[name="' + key + '"]').val(value);
+            var inputEl = this.$el.find('input[name="' + key + '"], select[name="' + key + '"]').val(value);
+            if (inputEl.prop('selectedIndex') === -1) {
+                inputEl.val('');
+            }
         }, this);
     }
 

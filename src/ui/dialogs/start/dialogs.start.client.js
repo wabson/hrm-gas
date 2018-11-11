@@ -32,13 +32,12 @@ var StartDialog = BaseComponent.extend({
     },
 
     setFormValues_: function(values) {
-        var elName;
-        _.each(this.$('input[type=text], input[type=date], select'), (function(el) {
-            elName = el.name;
-            if (elName && values[elName]) {
-                $(el).val(values[elName]);
+        _.each(values, function(value, key) {
+            var inputEl = this.$el.find('input[name="' + key + '"], select[name="' + key + '"]').val(value);
+            if (inputEl.prop('selectedIndex') === -1) {
+                inputEl.val('');
             }
-        }));
+        }, this);
     },
 
     onRaceTemplatesLoaded: function(data) {
@@ -46,7 +45,7 @@ var StartDialog = BaseComponent.extend({
         var selectEl = this.$('#select-race-type'), sheets = data, sheet, html = '';
         for (var i = 0; i<sheets.length; i++) {
             sheet = sheets[i];
-            html += '<option value="'+sheet.type+'" data-drive-file-id="' + sheet.id + '">' + sheet.name + '</option>';
+            html += '<option value="'+sheet.id+'" data-hrm-file-type="' + sheet.type + '">' + sheet.name + '</option>';
         }
         selectEl.append(html).prop('disabled', false);
         this.$('#btn-start').prop('disabled', false);
@@ -68,7 +67,7 @@ var StartDialog = BaseComponent.extend({
     onRaceInfoLoaded: function(data) {
         this.setFormValues_({
             name: data.raceName,
-            type: data.raceType,
+            type: data.templateId,
             region: data.regionId
         });
         this.$('select[name=type]').trigger('change');
@@ -88,7 +87,7 @@ var StartDialog = BaseComponent.extend({
         event.preventDefault();
         var regionSelectEl = this.$('#select-race-region'),
             raceTypeSelectEl = this.$('#select-race-type option:selected'),
-            raceTypeName = raceTypeSelectEl.val(),
+            raceTypeName = raceTypeSelectEl.attr('data-hrm-file-type'),
             regionInUse = raceTypeName === 'HRM';
         regionSelectEl.prop('disabled', !regionInUse);
         regionSelectEl.prop('required', regionInUse);
@@ -105,10 +104,6 @@ var StartDialog = BaseComponent.extend({
             console.log('Validation failed for some fields', failedFields);
         } else {
             var formData = $form.serializeObject();
-            var typeSelectEl = this.$('select[name=type]')[0];
-            if (typeSelectEl) {
-                formData.type = $(typeSelectEl.options[typeSelectEl.selectedIndex]).attr('data-drive-file-id');
-            }
             $form.disableSubmit();
             google.script.run
                 .withSuccessHandler(_.bind(function() {

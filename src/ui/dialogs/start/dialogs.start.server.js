@@ -32,6 +32,7 @@ exports.dialog_start_getRaceInfo = function dialog_start_getRaceInfo(spreadsheet
     return {
         raceName: inlineInfo.raceName || spreadsheet.getName(),
         raceType: driveProps.hrmType || '',
+        templateId: driveProps.hrmTemplate || '',
         regionId: inlineInfo.regionId || '',
         hasContent: spreadsheet.getNumSheets() > 1 || spreadsheet.getSheets()[0].getLastRow() > 0
     };
