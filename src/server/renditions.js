@@ -67,7 +67,6 @@ function getOrCreateRendition(ss, renditionType, spreadsheetName) {
 }
 
 function formatEntrySheet(sheet) {
-  // TODO Copy number formats, fonts, BG colours from source ranges
   sheet.getDataRange().setFontFamily(SHEET_FONT_FAMILY);
   sheet.getRange(1, 1, 1, sheet.getLastColumn())
     .setBorder(true, true, true, true, true, true)
@@ -114,6 +113,19 @@ function copyRenditionSheetValues(entries, destSheet, columnNames, sortColumn, t
   tables.setRangeValues(destSheet, sortedRows, 2);
 }
 
+function copyNumberFormats(srcSheet, dstSheet, columnNames) {
+  var srcHeaders = tables.getHeaders(srcSheet), range, srcPos, destPos, srcFormats, dstFormats = [];
+  srcFormats = srcSheet.getDataRange().getNumberFormats();
+  dstFormats = srcFormats.map(function(formats) {
+    return columnNames.map(function(columnName) {
+      srcPos = srcHeaders.indexOf(columnName);
+      return srcPos !== -1 ? formats[srcPos] : '';
+    });
+  });
+  dstFormats = dstFormats.slice(0, dstSheet.getDataRange().getLastRow()); // remove formats of truncated rows
+  dstSheet.getDataRange().setNumberFormats(dstFormats);
+}
+
 function copyRacingSheetsIntoRendition(ss, destSS, columnNames, sortColumn, truncateEmpty) {
 
   var srcSheet, destSheet, srcRows;
@@ -131,6 +143,7 @@ function copyRacingSheetsIntoRendition(ss, destSS, columnNames, sortColumn, trun
     srcRows = tables.getRows(srcSheet);
     copyRenditionSheetValues(crewSheets.groupRows(srcRows, 'Number'), destSheet, columnNames, sortColumn,
       truncateEmpty);
+    copyNumberFormats(srcSheet, destSheet, columnNames);
     formatEntrySheet(destSheet);
     copyColumnWidths(srcSheet, destSheet, columnNames);
     copyFrozenRows(srcSheet, destSheet);

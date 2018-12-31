@@ -8,6 +8,7 @@ var FakeRange = function(data, formulas, row, column, numRows, numColumns) {
   this.column = column;
   this.numRows = numRows;
   this.numColumns = numColumns;
+  this.numberFormats = this.getEmptyData();
 };
 FakeRange.prototype = {
   getWidth: function() {
@@ -61,7 +62,7 @@ FakeRange.prototype = {
       }
     }
     if (values.length !== this.numRows) {
-      throw 'No of rows must be equal to the number of rows in the range';
+      throw 'No of rows ' + values.length + ' must be equal to the number of rows in the range ' + this.numRows;
     }
     var rowsSlice = data.slice(this.row - 1, this.row - 1 + values.length);
     rowsSlice.forEach(function(rowData, index) {
@@ -113,11 +114,12 @@ FakeRange.prototype = {
     });
   },
   getNumberFormats: function() {
-    return this.getEmptyValues(this.data);
+    return this.getDataValues(this.numberFormats);
   },
   setNumberFormat: function() {
   },
-  setNumberFormats: function() {
+  setNumberFormats: function(formats) {
+    this.setDataValues(formats, this.numberFormats);
     return this;
   },
   getDataValidations: function() {
@@ -165,6 +167,7 @@ var FakeSheet = function(name, data) {
   this.data = (data || []).concat([]);
   this.hidden = false;
   this.formulas = [];
+  this.numberFormats = [];
   this.numFrozenRows = 0;
 };
 FakeSheet.prototype = {
@@ -172,6 +175,7 @@ FakeSheet.prototype = {
     var newSheet = new FakeSheet(this.name, this.data);
     newSheet.hidden = this.hidden;
     newSheet.formulas = this.formulas;
+    newSheet.numberFormats = this.numberFormats;
     ss.sheets.push(newSheet);
     return newSheet;
   },
@@ -194,11 +198,15 @@ FakeSheet.prototype = {
     if (numColumns < 1) {
       throw 'Number of columns must be greater than 1';
     }
-    return new FakeRange(this.data, this.formulas, row, column, numRows, numColumns);
+    var range = new FakeRange(this.data, this.formulas, row, column, numRows, numColumns);
+    range.numberFormats = this.numberFormats;
+    return range;
   },
   getDataRange: function() {
-    return new FakeRange(this.data, this.formulas, 1, 1, Math.max(this.data.length, 1),
+    var range = new FakeRange(this.data, this.formulas, 1, 1, Math.max(this.data.length, 1),
       this.data.length ? Math.max(this.data[0].length, 1) : 1);
+    range.numberFormats = this.numberFormats;
+    return range;
   },
   getName: function() {
     return this.name;

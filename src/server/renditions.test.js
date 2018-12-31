@@ -55,11 +55,18 @@ describe('renditions', function() {
       expect(destSS.sheets[0].data[1][2]).to.equal(undefined);
     });
 
-    it('should trancate empty rows', function() {
+    it('should truncate empty rows', function() {
 
       sourceSS.sheets = [ sheet4 ];
       renditions.createRaceSheets(sourceSS, destSS, ['Number', 'Column1', 'Column2'], null, true);
       expect(destSS.sheets[0].data.length).to.equal(2);
+    });
+
+    it('should copy number formats', function() {
+
+      sheet1.numberFormats = [['', '', ''], ['#', '', '']];
+      renditions.createRaceSheets(sourceSS, destSS, ['Number', 'Column1', 'Column2'], null, false);
+      expect(destSS.sheets[0].numberFormats).to.eql([['', '', ''], ['#', '', '']]);
     });
 
   });
