@@ -93,10 +93,10 @@ var PrintDialog = BaseComponent.extend({
             .dialog_print_createEntriesSheet(this.spreadsheetId);
     },
 
-    onCreateResultsClick: function() {
+    onCreateResultsClick: function(e) {
         /* jshint camelcase:false */
         this.clearError_();
-        this.$('button.create').disableSubmit();
+        $(e.currentTarget).disableSubmit();
         google.script.run.withSuccessHandler(_.bind(this.onCreateSuccess, this))
             .withFailureHandler(_.bind(this.onCreateFailure, this))
             .dialog_print_createResultsSheet(this.spreadsheetId);
