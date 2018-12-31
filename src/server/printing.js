@@ -37,7 +37,7 @@ var printableEntriesColumnNames =[
 ];
 
 exports.updatePrintableEntries = function createPrintableEntries(sourceSS, destSS) {
-  return renditions.createRaceSheets(sourceSS, destSS, printableEntriesColumnNames, null, false);
+  return renditions.createRaceSheets(sourceSS, destSS, printableEntriesColumnNames, null, true);
 };
 
 /**
