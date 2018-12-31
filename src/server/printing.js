@@ -1,8 +1,40 @@
 var renditions = require('./renditions');
 
-var printableResultColumnNames = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn"];
-var printableResultColumnNamesHasler = ["Number", "Surname", "First name", "Club", "Class", "Div", "Elapsed", "Posn", "P/D", "Points"];
-var printableEntriesColumnNames = ["Number", "Surname", "First name", "BCU Number", "Expiry", "Club", "Class", "Div", "Due", "Paid"];
+var printableResultColumnNames = [
+  'Number',
+  'Surname',
+  'First name',
+  'Club',
+  'Class',
+  'Div',
+  'Elapsed',
+  'Posn'
+];
+var printableResultColumnNamesHasler =[
+  'Number',
+  'Surname',
+  'First name',
+  'Club',
+  'Class',
+  'Div',
+  'Elapsed',
+  'Posn',
+  'P/D',
+  'Points'
+];
+var printableEntriesColumnNames =[
+  'Number',
+  'Surname',
+  'First name',
+  'BCU Number',
+  'Expiry',
+  'Club',
+  'Class',
+  'Div',
+  'Due',
+  'Paid',
+  'Start Group'
+];
 
 exports.updatePrintableEntries = function createPrintableEntries(sourceSS, destSS) {
   return renditions.createRaceSheets(sourceSS, destSS, printableEntriesColumnNames, null, false);
