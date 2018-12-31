@@ -9,6 +9,8 @@ var apiPrint = require('../ui/dialogs/print/dialogs.print.server');
 var apiEntries = require('../ui/sidebars/entries/sidebar.entries.server');
 var apiRankings = require('../ui/sidebars/rankings/sidebar.rankings.server');
 
+var functions = require('./functions');
+
 global.dialog_start_getRaceTemplates = apiStart.dialog_start_getRaceTemplates;
 global.dialog_start_getRaceInfo = apiStart.dialog_start_getRaceInfo;
 global.dialog_start_submit = apiStart.dialog_start_submit;
@@ -45,6 +47,8 @@ global.openRankingsSidebar = dialogs.openRankingsSidebar;
 global.openEntriesSidebar = dialogs.openEntriesSidebar;
 
 global.include = uiUtils.includeHTML;
+
+global.addEntrySets = functions.addEntrySets;
 
 /**
  * Called when an add-on is installed.
