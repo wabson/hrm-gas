@@ -378,7 +378,7 @@ function showResultsSummary(races, options) {
         }).withFailureHandler(function() {
           $("#pd-result").html('An error occurred while sending SMS messages');
           $(btnSelector).button("enable");
-        }).sendRaceResultsSms(ssKey, sheets);
+        }).sendAllResultsSms(ssKey, sheets);
       });
     }
     enableSmsButton("send-sms-div1", ['Div1', 'Div2', 'Div3']);

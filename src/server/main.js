@@ -8,6 +8,7 @@ var apiImport = require('../ui/dialogs/import/dialogs.import.server');
 var apiPrint = require('../ui/dialogs/print/dialogs.print.server');
 var apiEntries = require('../ui/sidebars/entries/sidebar.entries.server');
 var apiRankings = require('../ui/sidebars/rankings/sidebar.rankings.server');
+var apiSendSms = require('../ui/sidebars/sms/sidebar.sms.server');
 
 var functions = require('./functions');
 
@@ -39,12 +40,16 @@ global.sidebar_rankings_info = apiRankings.sidebar_rankings_info;
 global.sidebar_rankings_last_updated = apiRankings.sidebar_rankings_last_updated;
 global.sidebar_rankings_insert = apiRankings.sidebar_rankings_insert;
 
+global.sidebar_sendSms_get = apiSendSms.sidebar_sendSms_get;
+global.sidebar_sendSms_send = apiSendSms.sidebar_sendSms_send;
+
 global.openStartDialog = dialogs.openStartDialog;
 global.openRaceDetailsDialog = dialogs.openRaceDetailsDialog;
 global.openImportDialog = dialogs.openImportDialog;
 global.openPrintDialog = dialogs.openPrintDialog;
 global.openRankingsSidebar = dialogs.openRankingsSidebar;
 global.openEntriesSidebar = dialogs.openEntriesSidebar;
+global.openSmsSidebar = dialogs.openSmsSidebar;
 
 global.include = uiUtils.includeHTML;
 
@@ -65,10 +70,14 @@ global.onInstall = function onInstall(e) {
 global.onOpen = function onOpen(e) {
   var ui = SpreadsheetApp.getUi(), menu = ui.createAddonMenu();
   menu.addItem('Start', 'openStartDialog')
+    .addItem('Race Details', 'openRaceDetailsDialog')
+    .addSeparator()
     .addItem('Rankings', 'openRankingsSidebar')
+    .addSeparator()
     .addItem('Add Entries', 'openEntriesSidebar')
     .addItem('Import Entries', 'openImportDialog')
-    .addItem('Race Details', 'openRaceDetailsDialog')
-    .addItem('Print Sheets', 'openPrintDialog');
+    .addSeparator()
+    .addItem('Print Sheets', 'openPrintDialog')
+    .addItem('Send SMS Results', 'openSmsSidebar');
   menu.addToUi();
 };

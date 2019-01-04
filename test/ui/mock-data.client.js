@@ -99,4 +99,13 @@
           numCrews: 1}
       }]
     });
+    runner.addData('sidebar_sendSms_get', {
+      raceShortName: 'Test Race',
+      resultsShortUrl: 'http://goo.gl/blah',
+      race: 'current'
+    });
+    runner.addData('sidebar_sendSms_send', {
+      sheetName: 'SMA',
+      messages: [{}]
+    })
 })();

@@ -13,7 +13,6 @@ var racing = require('./racing');
 var publishing = require('./publishing');
 var rankings = require('./rankings');
 var tables = require('./tables');
-var twilio = require('./twilio');
 
 var rankingProps = ["Surname", "First name", "Club", "Class", "BCU Number", "Expiry", "Division"];
 
@@ -275,59 +274,6 @@ exports.calculatePointsFromWeb = function calculatePointsFromWeb(ss) {
     ss = SpreadsheetApp.openById(ss);
   }
   return hrm.calculatePoints(null, ss);
-};
-
-exports.sendRaceResultsSms = function sendRaceSms(ssKey, races) {
-  var ss = ssKey ? SpreadsheetApp.openById(ssKey) : SpreadsheetApp.getActiveSpreadsheet();
-  for (var i=0; i<races.length; i++) {
-    exports.sendResultsSms(ss, races[i]);
-  }
-};
-
-exports.sendResultsSms = function sendResultsSms(ss, sheetName) {
-  var resultsName = 'RIC Hasler';
-  var resultsUrl = 'https://goo.gl/A2r3y3';
-  ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = sheetName ? ss.getSheetByName(sheetName) : ss.getActiveSheet();
-  var results = racing.getRaceResultsFromSpreadsheet(tables.getRows(sheet));
-  var entrySetsSheet = ss.getSheetByName('Entry Sets');
-  if (entrySetsSheet === null) {
-    throw 'Could not find Entry Sets sheet';
-  }
-  var entrySets = tables.getRows(entrySetsSheet);
-  var numStarters = results.filter(function(result) {
-    return result.time !== 'dns';
-  }).length;
-  results.forEach(function(result) {
-    if (!result.setId) {
-      return;
-    }
-    if (!result.posn) {
-      return;
-    }
-    var matchingEntrySets = entrySets.filter(function(entrySet) {
-      return entrySet['ID'] == result.setId;
-    });
-    if (matchingEntrySets.length !== 1) {
-      Logger.log('Could not find entry set ' + result.setId);
-      return;
-    }
-    var phoneNumber = matchingEntrySets[0]['Phone'];
-    if (phoneNumber) {
-      var phoneLookup = twilio.lookupNationalPhoneNumber(phoneNumber);
-      if (phoneLookup.getResponseCode() == 200) {
-        var phoneData = JSON.parse(phoneLookup);
-        var intlNumber = phoneData['phone_number'];
-        if (intlNumber && intlNumber.indexOf('+447') === 0) {
-          var messageBody = resultsName + ': Boat ' + result.num + ' ' + result.names.join(', ') + ' finished in ' + result.time + ' in posn ' + result.posn + ' of ' + numStarters + ' in ' + sheet.getName() + '. Full results: ' + resultsUrl;
-          Logger.log('sending SMS to ' + intlNumber + ': "' + messageBody + '" (' + messageBody.length + ' characters)');
-          twilio.sendSms(intlNumber, messageBody);
-        }
-      }
-    } else {
-      Logger.log('Ignoring empty phone number for boat ' + result.num);
-    }
-  });
 };
 
 function getRaceEntriesSummary(key) {

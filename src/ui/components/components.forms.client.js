@@ -11,6 +11,7 @@ var DataForm = Backbone.View.extend({
 
         this.dispatcher = options.dispatcher;
         this.blocks = options.blocks || [];
+        this.clearOnSubmit = options.clearOnSubmit !== false;
 
         if (this.dispatcher) {
             this.dispatcher.bind('submitSuccess', this.onSubmitSuccess, this);
@@ -65,7 +66,9 @@ var DataForm = Backbone.View.extend({
     },
 
     onSubmitSuccess: function() {
-        this.resetFormFields_();
+        if (this.clearOnSubmit) {
+            this.resetFormFields_();
+        }
         this.setButtonsDisabled_(false, 'submit');
     },
 
@@ -154,6 +157,8 @@ var FormDialog = Backbone.View.extend({
         this.spreadsheetId = options.spreadsheetId;
         this.dataGetFn = options.dataGetFn;
         this.dataSetFn = options.dataSetFn;
+        this.closeOnSubmit = options.closeOnSubmit !== false;
+        this.clearOnSubmit = options.clearOnSubmit !== false;
 
         this.dispatcher = options.dispatcher || _.extend({}, Backbone.Events);
         this.dispatcher.bind('submit', this.onFormSubmit, this);
@@ -197,7 +202,10 @@ var FormDialog = Backbone.View.extend({
     },
 
     onDataSetSuccess: function(data) {
-        this.closeDialog_();
+        this.dispatcher.trigger('submitSuccess', data);
+        if (this.closeOnSubmit) {
+            this.closeDialog_();
+        }
     },
 
     onDataSetFailure: function(error) {
@@ -226,7 +234,8 @@ var FormDialog = Backbone.View.extend({
             dispatcher: dispatcher,
             blocks: _.map(formFields, this.buildFormBlock_, this).concat([new FormBlock({
                 controls: buttons
-            })])
+            })]),
+            clearOnSubmit: this.clearOnSubmit
         });
     },
 

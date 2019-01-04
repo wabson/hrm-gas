@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <?!= include('forms.head.include'); ?>
+    <?!= include('sidebars/sidebar.head.include'); ?>
+</head>
+<body>
+<?!= include('forms.script.include'); ?>
+<?!= include('components/components.base'); ?>
+<?!= include('components/components.forms'); ?>
+<script>
+    var spreadSheetId = '<?= spreadsheetId ?>';
+</script>
+<div class="sidebar-content">
+    <div id="send-sms-sidebar">
+        <div id="sms-form-sidebar">
+            <div class="messages"></div>
+        </div>
+        <div id="sms-form-result"></div>
+    </div>
+</div>
+<script>
+    //=require ./sidebar.sms.client.js
+    $(function() {
+        new SendSmsSidebar({
+            el: '#send-sms-sidebar',
+            spreadsheetId: spreadSheetId
+        }).render();
+    });
+</script>
+<!--=include mock-services.html -->
+</body>
+</html>

@@ -73,3 +73,8 @@ exports.openEntriesSidebar = function openEntriesSidebar() {
         title: 'Add Entries'
     });
 };
+exports.openSmsSidebar = function openSmsSidebar() {
+    openSidebar_('sidebar.sms.view', {
+        title: 'Send SMS Messages'
+    });
+};
